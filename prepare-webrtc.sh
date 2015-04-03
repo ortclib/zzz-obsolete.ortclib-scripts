@@ -5,13 +5,13 @@ echo
 echo Preparing symbolic links for webrtc...
 echo
 
-startWebRTC()
+precheck()
 {
-	if [ ! -d "$1" ]; then
-		echo ERROR: Path to WebRTC does not exist \"$1\" !
+	if [ -d "../bin" ]; then
+		echo Do not change into the bin directory to run scripts.
+		echo
 		exit -1
 	fi
-	pushd $1 > /dev/null
 }
 
 preparelink()
@@ -31,7 +31,7 @@ preparelink()
 		ln -s $3 $2
 		if [ $? -ne 0 ]; then
 			failure=$?
-			echo Faield to create symbolic link
+			echo Failed to create symbolic link
 			popd > /dev/null
 			exit $failure
 		fi
@@ -39,13 +39,7 @@ preparelink()
 	popd > /dev/null
 }
 
-
-endWebRTC()
-{
-	popd > /dev/null
-}
-
-startWebRTC "libs/webrtc"
+precheck
 
 preparelink "third_party/yasm/source" "patched-yasm" "../../../../webrtc-deps/patched-yasm/"
 preparelink "third_party/opus" "src" "../../../webrtc-deps/opus/"
@@ -60,8 +54,6 @@ preparelink "." "build" "../webrtc-deps/build/"
 preparelink ".." "third_party" "webrtc/third_party/"
 preparelink ".." "build" "webrtc-deps/build/"
 preparelink "../webrtc-deps" "yasm" "../webrtc/third_party/yasm"
-
-endWebRTC
 
 echo
 echo WebRTC ready.

@@ -25,9 +25,18 @@ prepare()
 	echo
 }
 
+precheck()
+{
+	if [ -d "../bin" ]; then
+		echo Do not change into the bin directory to run scripts.
+		echo
+		exit -1
+	fi
+}
 
-prepare "." "prepare-webrtc.sh" "WebRTC"
-#prepare libs/curl" "prepare.sh" "curl"
+precheck
+prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
+prepare libs/curl" "prepare.sh" "curl"
 
 echo 
 echo Success: ortc-lib SDK is prepared.

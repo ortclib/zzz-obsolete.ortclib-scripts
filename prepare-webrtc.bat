@@ -4,12 +4,9 @@ echo Preparing symbolic links for WebRTC...
 echo.
 
 set failure=0
-set cdwebrtcdir=0
 
-call:startWebRTC libs\webrtc
+if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
-
-set cdwebrtcdir=1
 
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
@@ -32,25 +29,7 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink tools gyp ..\..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
 
-call:endWebRTC
-
 goto:done
-
-:startWebRTC
-
-if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
-if "%failure%" neq "0" goto:eof
-
-pushd %~1
-
-goto:eof
-
-:endWebRTC
-
-popd
-
-goto:eof
-
 
 :dolink
 if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
@@ -88,16 +67,10 @@ goto:eof
 
 :done_with_error
 
-if "%cdwebrtcdir%" neq "0" popd
-set cdwebrtcdir=0
-
 exit /b %failure%
 goto:eof
 
 :done
-
-if "%cdwebrtcdir%" neq "0" popd
-set cdwebrtcdir=0
 
 echo.
 echo Success: WebRTC ready.

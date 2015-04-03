@@ -5,7 +5,10 @@ echo.
 
 set failure=0
 
-call:doprepare . prepare-webrtc.bat WebRTC
+if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
+if "%failure%" neq "0" goto:eof
+
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC
 if "%failure%" neq "0" goto:eof
 
 call:doprepare libs\curl prepare.bat curl
