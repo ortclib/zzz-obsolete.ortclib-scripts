@@ -35,8 +35,8 @@ precheck()
 }
 
 precheck
-prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
-prepare libs/curl" "prepare.sh" "curl"
+#prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
+prepare "libs/curl" "prepare.sh" "curl"
 
 echo 
 echo Success: ortc-lib SDK is prepared.
