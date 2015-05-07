@@ -8,26 +8,71 @@ set failure=0
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
+
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party\yasm\source patched-yasm ..\..\..\..\webrtc-deps\patched-yasm
+
+call:dolink . chromium\src ..\webrtc-deps\chromium
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party\opus src ..\..\..\webrtc-deps\opus
+
+call:dolink . testing chromium\src\testing
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party\colorama src ..\..\..\webrtc-deps\colorama
+
+call:dolink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party libsrtp ..\..\webrtc-deps\libsrtp
+
+call:dolink . third_party\yasm chromium\src\third_party\yasm
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party libvpx ..\..\webrtc-deps\libvpx
+call:dolink . third_party\yasm\binaries ..\webrtc-deps\yasm\binaries
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party libyuv ..\..\webrtc-deps\libyuv
+call:dolink . third_party\yasm\source\patched-yasm ..\webrtc-deps\patched-yasm
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party openmax_dl ..\..\webrtc-deps\openmax
+
+call:dolink . third_party\opus chromium\src\third_party\opus
 if "%failure%" neq "0" goto:done_with_error
-call:dolink third_party libjpeg_turbo ..\..\webrtc-deps\libjpeg_turbo
+call:dolink . third_party\opus\src ..\webrtc-deps\opus
 if "%failure%" neq "0" goto:done_with_error
-call:dolink tools gyp ..\..\webrtc-deps\gyp
+
+call:dolink . third_party\colorama chromium\src\third_party\colorama
 if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\colorama\src ..\webrtc-deps\colorama
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . third_party\boringssl chromium\src\third_party\boringssl
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\boringssl\src ..\webrtc-deps\boringssl
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . third_party\usrsctp chromium\src\third_party\usrsctp
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\usrsctp\usrsctplib ..\webrtc-deps\usrsctp
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . third_party\protobuf chromium\src\third_party\protobuf
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . third_party\libsrtp ..\webrtc-deps\libsrtp
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\libvpx ..\webrtc-deps\libvpx
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\libyuv ..\webrtc-deps\libyuv
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\openmax_dl ..\webrtc-deps\openmax
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\libjpeg_turbo ..\webrtc-deps\libjpeg_turbo
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . tools\gyp ..\webrtc-deps\gyp
+if "%failure%" neq "0" goto:done_with_error
+
+
+call:make_directory third_party\jsoncpp
+copy ..\..\bin\bogus_jsoncpp.gyp third_party\jsoncpp\jsoncpp.gyp
+
+call:make_directory third_party\expat
+copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
+
+python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0
+
 
 goto:done
 
@@ -49,6 +94,10 @@ if %errorlevel% neq 0 call:failure %errorlevel% "Could not create symbolic link 
 popd
 if "%failure%" neq "0" goto:eof
 
+goto:eof
+
+:make_directory
+if NOT EXIST %~1\nul mkdir %~1
 goto:eof
 
 :alreadyexists
