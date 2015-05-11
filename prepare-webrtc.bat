@@ -12,7 +12,28 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
 
-call:dolink . chromium\src ..\webrtc-deps\chromium
+call:make_directory chromium\src
+call:make_directory chromium\src\third_party
+
+call:dolink . chromium\src\third_party\yasm ..\webrtc-deps\chromium\third_party\yasm
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\opus ..\webrtc-deps\chromium\third_party\opus
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\colorama ..\webrtc-deps\chromium\third_party\colorama
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\boringssl ..\webrtc-deps\chromium\third_party\boringssl
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\usrsctp ..\webrtc-deps\chromium\third_party\usrsctp
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\testing ..\webrtc-deps\chromium\testing
+if "%failure%" neq "0" goto:done_with_error
+
+rem call:dolink . chromium\src ..\webrtc-deps\chromium
 if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . testing chromium\src\testing
