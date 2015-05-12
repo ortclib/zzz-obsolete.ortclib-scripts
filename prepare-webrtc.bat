@@ -15,6 +15,9 @@ if "%failure%" neq "0" goto:done_with_error
 call:make_directory chromium\src
 call:make_directory chromium\src\third_party
 
+call:dolink . chromium\src\tools\protoc_wrapper ..\webrtc-deps\chromium\tools\protoc_wrapper
+if "%failure%" neq "0" goto:done_with_error
+
 call:dolink . chromium\src\third_party\protobuf ..\webrtc-deps\chromium\third_party\protobuf
 if "%failure%" neq "0" goto:done_with_error
 
