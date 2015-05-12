@@ -15,6 +15,9 @@ if "%failure%" neq "0" goto:done_with_error
 call:make_directory chromium\src
 call:make_directory chromium\src\third_party
 
+call:dolink . chromium\src\third_party\protobuf ..\webrtc-deps\chromium\third_party\protobuf
+if "%failure%" neq "0" goto:done_with_error
+
 call:dolink . chromium\src\third_party\yasm ..\webrtc-deps\chromium\third_party\yasm
 if "%failure%" neq "0" goto:done_with_error
 
@@ -40,6 +43,9 @@ call:dolink . testing chromium\src\testing
 if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . third_party\protobuf chromium\src\third_party\protobuf
 if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . third_party\yasm chromium\src\third_party\yasm
@@ -83,6 +89,8 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink . third_party\libjpeg_turbo ..\webrtc-deps\libjpeg_turbo
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\gyp ..\webrtc-deps\gyp
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . testing\gtest ..\webrtc-deps\gtest
 if "%failure%" neq "0" goto:done_with_error
 
 
