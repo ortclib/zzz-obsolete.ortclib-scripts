@@ -11,8 +11,6 @@ iF /I NOT "%TARGET%"=="phone" set TARGET=desktop
 
 echo Target is %TARGET%...
 
-goto:eof
-
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
 

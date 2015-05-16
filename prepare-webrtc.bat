@@ -15,7 +15,11 @@ if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
 where python > NUL 2>&1
-if ERRORLEVEL 1 call:failure %errorlevel% "Could not local python for windows"
+if ERRORLEVEL 1 call:setup_python
+if "%failure%" neq "0" goto:done_with_error
+
+where python > NUL 2>&1
+if ERRORLEVEL 1 call:failure %errorlevel% "Could not locate python for windows"
 if "%FAILURE%" NEQ "0" goto:eof
 
 call:dolink . build ..\webrtc-deps\build
@@ -25,7 +29,7 @@ call:make_directory chromium\src
 call:make_directory chromium\src\third_party
 call:make_directory chromium\src\tools
 
-call:dolink . chromium\src\third_party\jsoncpp ..\webrtc-deps\chromium\tools\jsoncpp
+call:dolink . chromium\src\third_party\jsoncpp ..\webrtc-deps\chromium\third_party\jsoncpp
 if "%failure%" neq "0" goto:done_with_error
 
 call:make_directory chromium\src\third_party\jsoncpp\source
@@ -124,10 +128,22 @@ if "%failure%" neq "0" goto:done_with_error
 call:make_directory third_party\expat
 copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 
-python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0
+set DEPOT_TOOLS_WIN_TOOLCHAIN=0
+set GYP_GENERATORS=msvs-winrt
 
+iF /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
+iF /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0
 
 goto:done
+
+:setup_python
+
+if NOT EXIST \Python27\nul call:failure -1 "Could not locate python path"
+if "%failure%" neq "0" goto:eof
+
+set PATH=%PATH%;\Python27
+
+goto:eof
 
 :dolink
 if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
