@@ -5,10 +5,18 @@ echo.
 
 set failure=0
 
+set TARGET=%~1
+iF /I "%TARGET%"=="phone" set TARGET=phone
+iF /I NOT "%TARGET%"=="phone" set TARGET=desktop
+
+echo Target is %TARGET%...
+
+goto:eof
+
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
 
-call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC %TARGET%
 if "%failure%" neq "0" goto:eof
 
 call:doprepare libs\curl prepare.bat curl
@@ -24,7 +32,7 @@ if "%failure%" neq "0" goto:eof
 
 pushd %~1 > NUL
 if ERRORLEVEL 1 call:failure %errorlevel% "%~3 preparation failed."
-call %~2
+call %~2 %~4%
 if ERRORLEVEL 1 call:failure %errorlevel% "%~3 preparation failed."
 popd > NUL
 if "%failure%" neq "0" goto:eof

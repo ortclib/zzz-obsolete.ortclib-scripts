@@ -5,9 +5,18 @@ echo.
 
 set failure=0
 
+set TARGET=%~1
+iF /I "%TARGET%"=="phone" set TARGET=phone
+iF /I NOT "%TARGET%"=="phone" set TARGET=desktop
+
+echo WebRTC target is %TARGET%...
+
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
+where python > NUL 2>&1
+if ERRORLEVEL 1 call:failure %errorlevel% "Could not local python for windows"
+if "%FAILURE%" NEQ "0" goto:eof
 
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
@@ -15,6 +24,18 @@ if "%failure%" neq "0" goto:done_with_error
 call:make_directory chromium\src
 call:make_directory chromium\src\third_party
 call:make_directory chromium\src\tools
+
+call:dolink . chromium\src\third_party\jsoncpp ..\webrtc-deps\chromium\tools\jsoncpp
+if "%failure%" neq "0" goto:done_with_error
+
+call:make_directory chromium\src\third_party\jsoncpp\source
+call:make_directory chromium\src\third_party\jsoncpp\source\src
+
+call:dolink . chromium\src\third_party\jsoncpp\source\include ..\webrtc-deps\jsoncpp\include
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\jsoncpp\source\src\lib_json ..\webrtc-deps\jsoncpp\lib_json
+if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . chromium\src\tools\protoc_wrapper ..\webrtc-deps\chromium\tools\protoc_wrapper
 if "%failure%" neq "0" goto:done_with_error
@@ -92,14 +113,13 @@ call:dolink . third_party\openmax_dl ..\webrtc-deps\openmax
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . third_party\libjpeg_turbo ..\webrtc-deps\libjpeg_turbo
 if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\jsoncpp chromium\src\third_party\jsoncpp
+if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\gyp ..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gtest ..\webrtc-deps\gtest
 if "%failure%" neq "0" goto:done_with_error
 
-
-call:make_directory third_party\jsoncpp
-copy ..\..\bin\bogus_jsoncpp.gyp third_party\jsoncpp\jsoncpp.gyp
 
 call:make_directory third_party\expat
 copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
