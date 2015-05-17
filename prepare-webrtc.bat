@@ -131,8 +131,8 @@ copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 set GYP_GENERATORS=msvs-winrt
 
-iF /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
-iF /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Denable_protobuf=0 -Dbuild_with_libjingle=0
+iF /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
+iF /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0
 
 goto:done
 
