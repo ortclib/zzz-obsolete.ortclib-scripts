@@ -134,6 +134,9 @@ set GYP_GENERATORS=msvs-winrt
 iF /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
 iF /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0
 
+if %errorlevel% neq 0 call:failure %errorlevel% "Could not generate projects for WebRTC"
+if "%failure%" neq "0" goto:done_with_error
+
 goto:done
 
 :setup_python
