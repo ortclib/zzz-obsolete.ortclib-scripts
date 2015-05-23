@@ -32,13 +32,7 @@ call:make_directory chromium\src\tools
 call:dolink . chromium\src\third_party\jsoncpp ..\webrtc-deps\chromium\third_party\jsoncpp
 if "%failure%" neq "0" goto:done_with_error
 
-call:make_directory chromium\src\third_party\jsoncpp\source
-call:make_directory chromium\src\third_party\jsoncpp\source\src
-
-call:dolink . chromium\src\third_party\jsoncpp\source\include ..\webrtc-deps\jsoncpp\include
-if "%failure%" neq "0" goto:done_with_error
-
-call:dolink . chromium\src\third_party\jsoncpp\source\src\lib_json ..\webrtc-deps\jsoncpp\lib_json
+call:dolink . chromium\src\third_party\jsoncpp\source ..\webrtc-deps\jsoncpp
 if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . chromium\src\tools\protoc_wrapper ..\webrtc-deps\chromium\tools\protoc_wrapper
