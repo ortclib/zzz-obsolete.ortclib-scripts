@@ -5,6 +5,22 @@ echo
 
 set -e
 
+TARGET="$1"
+
+if [ -z "$TARGET" ]; then
+	echo "Usage: prepare.sh [ios | osx]"
+	echo Defaulting to osx target...
+	echo
+	TARGET=osx
+fi
+
+if [ `echo $TARGET | tr [:upper:] [:lower:]` = `echo ios | tr [:upper:] [:lower:]` ]; then
+	TARGET=ios
+else
+	TARGET=osx
+fi
+
+echo Target found=$TARGET
 
 prepare()
 {
@@ -19,7 +35,7 @@ prepare()
 	echo
 
 	pushd $1 > /dev/null
-	sh $2
+	sh $2 $TARGET
 	popd > /dev/null
 
 	echo
@@ -35,7 +51,7 @@ precheck()
 }
 
 precheck
-#prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
+prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
 prepare "libs/curl" "prepare.sh" "curl"
 
 echo 

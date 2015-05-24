@@ -59,9 +59,6 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink . chromium\src\testing ..\webrtc-deps\chromium\testing
 if "%failure%" neq "0" goto:done_with_error
 
-rem call:dolink . chromium\src ..\webrtc-deps\chromium
-if "%failure%" neq "0" goto:done_with_error
-
 call:dolink . testing chromium\src\testing
 if "%failure%" neq "0" goto:done_with_error
 
@@ -125,8 +122,8 @@ copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 set GYP_GENERATORS=msvs-winrt
 
-iF /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
-iF /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0
+if /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
+if /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0
 
 if %errorlevel% neq 0 call:failure %errorlevel% "Could not generate projects for WebRTC"
 if "%failure%" neq "0" goto:done_with_error
