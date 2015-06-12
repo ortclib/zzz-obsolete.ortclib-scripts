@@ -24,6 +24,70 @@ fi
 echo WebRTC target found=$TARGET
 echo
 
+BUILD_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/build/
+BORINGSSL_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/boringssl/src/
+COLORAMA_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/colorama/src/
+JSONCPP_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/jsoncpp/source/
+LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/libjpeg_turbo/
+
+LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/libsrtp/
+LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/libvpx/
+LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/libyuv/
+OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/openmax_dl/
+OPUS_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/opus/src/
+
+USRSCTP_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/usrsctp/usrsctplib/
+PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/yasm/source/patched-yasm/
+YASM_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/yasm/binaries/
+GYP_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/tools/gyp/
+GTEST_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gtest/
+
+makeFolderStructure()
+{
+	echo Creating temporary folders
+	
+	cp -r ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/boringssl/ $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/jsoncpp/ $JSONCPP_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/libjpeg_turbo/ $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
+	
+	cp -r ../webrtc-deps/libsrtp/ $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/libvpx/ $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/libyuv/ $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/opus/ $OPUS_FOLDER_CHROMIUM_DESTINATION
+	
+	cp -r ../webrtc-deps/usrsctp/ $USRSCTP_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/patched-yasm/ $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/yasm/ $YASM_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/gyp/ $GYP_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/gtest/ $GTEST_FOLDER_CHROMIUM_DESTINATION
+}
+
+removeFolderStructure()
+{
+   	echo Removing temporary folders
+   	
+	rm -r $BUILD_FOLDER_CHROMIUM_DESTINATION
+	rm -r $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
+	rm -r $COLORAMA_FOLDER_CHROMIUM_DESTINATION
+	rm -r $JSONCPP_FOLDER_CHROMIUM_DESTINATION
+	rm -r $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
+
+	rm -r $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
+	rm -r $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	rm -r $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
+	rm -r $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	rm -r $OPUS_FOLDER_CHROMIUM_DESTINATION
+	
+	rm -r $USRSCTP_FOLDER_CHROMIUM_DESTINATION
+	rm -r $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
+	rm -r $YASM_FOLDER_CHROMIUM_DESTINATION
+	rm -r $GYP_FOLDER_CHROMIUM_DESTINATION
+	rm -r $GTEST_FOLDER_CHROMIUM_DESTINATION
+}
+
 precheck()
 {
 	if [ -d "../bin" ]; then
@@ -62,66 +126,110 @@ make_directory()
 {
 	if [ ! -d "$1" ]; then
 		echo Creating directory \"$1\"...
-		mkdir $1
+		mkdir -p $1
 	fi
 }
 
+make_ios_project()
+{
+	echo "Generating ios project ..."
+	
+	export GYP_CROSSCOMPILE=1
+	export GYP_DEFINES="OS=ios target_arch=arm"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS output_dir=out_ios"
+	export GYP_GENERATORS="ninja,xcode-ninja"
+
+	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0 2>&1)
+
+	if [ -d "./all.ninja.xcodeproj" ]; then
+		echo "Renaming ios project"
+		mv all.ninja.xcodeproj all_ios.xcodeproj
+	fi
+}
+
+make_mac_project()
+{
+	echo "Generating mac project ..."
+	
+	export GYP_CROSSCOMPILE=1
+	export GYP_DEFINES="OS=mac target_arch=x64"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS output_dir=out_mac"
+	export GYP_GENERATORS="ninja,xcode-ninja"
+
+	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0 2>&1)
+	echo $result
+
+	if [ -d "./all.ninja.xcodeproj" ]; then
+		echo "Renaming mac project"
+		mv all.ninja.xcodeproj all_osx.xcodeproj
+	fi
+}
+
+makeLinks()
+{
+	echo Creating links
+	
+	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
+	preparelink "chromium" "src" "../../webrtc-deps/chromium/"
+	preparelink "." "testing" "chromium/src/testing"
+	preparelink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
+	preparelink "tools" "gyp" "../chromium/src/tools/gyp"
+	preparelink "tools" "clang" "../chromium/src/tools/clang"
+
+	preparelink "third_party" "protobuf" "../chromium/src/third_party/protobuf"
+	preparelink "third_party" "yasm" "../chromium/src/third_party/yasm"
+	preparelink "third_party" "opus" "../chromium/src/third_party/opus"
+	preparelink "third_party" "colorama" "../chromium/src/third_party/colorama"
+	preparelink "third_party" "boringssl" "../chromium/src/third_party/boringssl"
+	preparelink "third_party" "usrsctp" "../chromium/src/third_party/usrsctp"
+	preparelink "third_party" "jsoncpp" "../chromium/src/third_party/jsoncpp"
+	preparelink "third_party" "protobuf" "../chromium/src/third_party/protobuf"
+	preparelink "third_party" "libsrtp" "../chromium/src/third_party/libsrtp"
+	preparelink "third_party" "libvpx" "../chromium/src/third_party/libvpx"
+	preparelink "third_party" "libyuv" "../chromium/src/third_party/libyuv"
+	preparelink "third_party" "openmax_dl" "../chromium/src/third_party/openmax_dl"
+	preparelink "third_party" "libjpeg_turbo" "../chromium/src/third_party/libjpeg_turbo"
+	preparelink "third_party" "ocmock" "../chromium/src/third_party/ocmock"
+}
+
+setBogusGypFiles()
+{
+	echo Placing bogus gyp files
+
+	make_directory "third_party/expat"
+	cp ../../bin/bogus_expat.gyp third_party/expat/expat.gyp
+
+	make_directory "testing/iossim/third_party/class-dump"
+	cp ../../bin/bogus_class-dump.gyp testing/iossim/third_party/class-dump/class-dump.gyp
+}
+
+updateClang()
+{
+	echo Runing clang update
+	result=$(python tools/clang/scripts/update.py 2>&1)
+	echo $result
+	
+	preparelink "third_party" "llvm" "../chromium/src/third_party/llvm"
+	preparelink "third_party" "llvm-build" "../chromium/src/third_party/llvm-build"
+	
+}
+
+
 precheck
 
-preparelink "." "build" "../webrtc-deps/build/"
+makeFolderStructure
 
-make_directory "chromium/src"
-make_directory "chromium/src/third_party"
-make_directory "chromium/src/tools"
+makeLinks
 
+setBogusGypFiles
 
-preparelink "chromium/src/third_party" "jsoncpp" "../../../../webrtc-deps/chromium/third_party/jsoncpp"
-preparelink "chromium/src/third_party/jsoncpp" "source" "../../../../webrtc-deps/jsoncpp"
-preparelink "chromium/src/tools" "protoc_wrapper" "../../../../webrtc-deps/chromium/tools/protoc_wrapper"
-preparelink "chromium/src/third_party" "protobuf" "../../../../webrtc-deps/chromium/third_party/protobuf"
-preparelink "chromium/src/third_party" "yasm" "../../../../webrtc-deps/chromium/third_party/yasm"
-preparelink "chromium/src/third_party" "opus" "../../../../webrtc-deps/chromium/third_party/opus"
-preparelink "chromium/src/third_party" "colorama" "../../../../webrtc-deps/chromium/third_party/colorama"
-preparelink "chromium/src/third_party" "boringssl" "../../../../webrtc-deps/chromium/third_party/boringssl"
-preparelink "chromium/src/third_party" "usrsctp" "../../../../webrtc-deps/chromium/third_party/usrsctp"
-preparelink "chromium/src" "testing" "../../../webrtc-deps/chromium/testing"
-preparelink "." "testing" "chromium/src/testing"
-preparelink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
-preparelink "third_party" "protobuf" "../chromium/src/third_party/protobuf"
-preparelink "third_party" "yasm" "../chromium/src/third_party/yasm"
-preparelink "third_party/yasm" "binaries" "../../../../webrtc-deps/yasm/binaries"
-preparelink "third_party/yasm/source" "patched-yasm" "../../../../../webrtc-deps/patched-yasm"
-preparelink "third_party" "opus" "../chromium/src/third_party/opus"
-preparelink "third_party/opus" "src" "../../../../webrtc-deps/opus"
-preparelink "third_party" "colorama" "../chromium/src/third_party/colorama"
-preparelink "third_party/colorama" "src" "../../../../webrtc-deps/colorama"
-preparelink "third_party" "boringssl" "../chromium/src/third_party/boringssl"
-preparelink "third_party/boringssl" "src" "../../../../webrtc-deps/boringssl"
-preparelink "third_party" "usrsctp" "../chromium/src/third_party/usrsctp"
-preparelink "third_party/usrsctp" "usrsctplib" "../../../../webrtc-deps/usrsctp"
-preparelink "third_party" "protobuf" "../chromium/src/third_party/protobuf"
-preparelink "third_party" "libsrtp" "../../webrtc-deps/libsrtp"
-preparelink "third_party" "libvpx" "../../webrtc-deps/libvpx"
-preparelink "third_party" "libyuv" "../../webrtc-deps/libyuv"
-preparelink "third_party" "openmax_dl" "../../webrtc-deps/openmax"
-preparelink "third_party" "libjpeg_turbo" "../../webrtc-deps/libjpeg_turbo"
-preparelink "third_party" "jsoncpp" "../chromium/src/third_party/jsoncpp"
-preparelink "tools" "gyp" "../../webrtc-deps/gyp"
-preparelink "testing" "gtest" "../../../webrtc-deps/gtest"
+updateClang
 
-make_directory "third_party/expat"
-cp ../../bin/bogus_expat.gyp third_party/expat/expat.gyp
+make_ios_project
 
-echo DEPOT_TOOLS_WIN_TOOLCHAIN=0
-echo GYP_GENERATORS=msvs-winrt
+make_mac_project
 
-if [ "$TARGET" = "osx" ]; then
-	echo python webrtc/build/gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
-fi
-
-if [ "$TARGET" = "ios" ]; then
-	echo python webrtc/build/gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
-fi
+#removeFolderStructure
 
 echo
 echo WebRTC ready.
