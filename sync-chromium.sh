@@ -67,7 +67,7 @@ copy_path()
 
 	if [ ! -d "$DEST/$1" ]; then
 		echo Creating directory \"$DEST/$1\"...
-		mkdir "$DEST/$1"
+		mkdir -p "$DEST/$1"
 	fi
 
 	cp -R "$SOURCE/$1/" "$DEST/$1"
@@ -93,10 +93,12 @@ copy_path "testing"
 copy_path "third_party/boringssl"
 copy_path "third_party/colorama"
 copy_path "third_party/jsoncpp"
+copy_path "third_party/ocmock"
 copy_path "third_party/opus"
 copy_path "third_party/protobuf"
 copy_path "third_party/usrsctp"
 copy_path "third_party/yasm"
+copy_path "tools/clang"
 
 echo
 echo Chromium synchronized.
