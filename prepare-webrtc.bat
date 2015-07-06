@@ -110,9 +110,13 @@ call:dolink . third_party\libjpeg_turbo ..\webrtc-deps\libjpeg_turbo
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . third_party\jsoncpp chromium\src\third_party\jsoncpp
 if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\gflags\src ..\webrtc-deps\gflags
+if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\gyp ..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gtest ..\webrtc-deps\gtest
+if "%failure%" neq "0" goto:done_with_error
+call:dolink . testing\gmock ..\webrtc-deps\gmock
 if "%failure%" neq "0" goto:done_with_error
 
 
