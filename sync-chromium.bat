@@ -13,6 +13,10 @@ if "%failure%" neq "0" goto:done_with_error
 set SOURCE=..\chromium
 
 if NOT EXIST %SOURCE%\nul set SOURCE=..\RTC_chromium
+if NOT EXIST %SOURCE%\nul set SOURCE=..\..\chromium
+if NOT EXIST %SOURCE%\nul set SOURCE=..\..\RTC_chromium
+if NOT EXIST %SOURCE%\nul set SOURCE=..\..\..\chromium
+if NOT EXIST %SOURCE%\nul set SOURCE=..\..\..\RTC_chromium
 if NOT EXIST %SOURCE%\nul call:failure -2 "Could not find chromium source directory"
 if "%failure%" neq "0" goto:done_with_error
 
