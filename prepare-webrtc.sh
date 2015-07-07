@@ -42,33 +42,39 @@ YASM_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/yasm/binari
 GYP_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/tools/gyp/
 GTEST_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gtest/
 
+GFLAGS_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/gflags/src/
+GMOCK_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gmock/
+
 makeFolderStructure()
 {
 	echo Creating temporary folders
-	
+
 	cp -r ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/boringssl/ $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/jsoncpp/ $JSONCPP_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/libjpeg_turbo/ $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
-	
+
 	cp -r ../webrtc-deps/libsrtp/ $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/libvpx/ $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/libyuv/ $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/opus/ $OPUS_FOLDER_CHROMIUM_DESTINATION
-	
+
 	cp -r ../webrtc-deps/usrsctp/ $USRSCTP_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/patched-yasm/ $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/yasm/ $YASM_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/gyp/ $GYP_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/gtest/ $GTEST_FOLDER_CHROMIUM_DESTINATION
+
+	mkdir -p $GFLAGS_FOLDER_CHROMIUM_DESTINATION && cp -r ../webrtc-deps/gflags/ $GFLAGS_FOLDER_CHROMIUM_DESTINATION
+	cp -r ../webrtc-deps/gmock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
 }
 
 removeFolderStructure()
 {
    	echo Removing temporary folders
-   	
+
 	rm -r $BUILD_FOLDER_CHROMIUM_DESTINATION
 	rm -r $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
 	rm -r $COLORAMA_FOLDER_CHROMIUM_DESTINATION
@@ -80,12 +86,15 @@ removeFolderStructure()
 	rm -r $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
 	rm -r $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	rm -r $OPUS_FOLDER_CHROMIUM_DESTINATION
-	
+
 	rm -r $USRSCTP_FOLDER_CHROMIUM_DESTINATION
 	rm -r $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
 	rm -r $YASM_FOLDER_CHROMIUM_DESTINATION
 	rm -r $GYP_FOLDER_CHROMIUM_DESTINATION
 	rm -r $GTEST_FOLDER_CHROMIUM_DESTINATION
+
+	rm -r $GFLAGS_FOLDER_CHROMIUM_DESTINATION
+	rm -r $GMOCK_FOLDER_CHROMIUM_DESTINATION
 }
 
 precheck()
@@ -133,13 +142,14 @@ make_directory()
 make_ios_project()
 {
 	echo "Generating ios project ..."
-	
+
 	export GYP_CROSSCOMPILE=1
 	export GYP_DEFINES="OS=ios target_arch=arm"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS output_dir=out_ios"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_ios"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
-	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0 2>&1)
+	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
+	echo $result
 
 	if [ -d "./all.ninja.xcodeproj" ]; then
 		echo "Renaming ios project"
@@ -150,13 +160,13 @@ make_ios_project()
 make_mac_project()
 {
 	echo "Generating mac project ..."
-	
+
 	export GYP_CROSSCOMPILE=1
 	export GYP_DEFINES="OS=mac target_arch=x64"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS output_dir=out_mac"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_iOS xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_mac"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
-	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0 2>&1)
+	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
 	echo $result
 
 	if [ -d "./all.ninja.xcodeproj" ]; then
@@ -168,7 +178,9 @@ make_mac_project()
 makeLinks()
 {
 	echo Creating links
-	
+
+	echo Current path: ${PWD}
+
 	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
 	preparelink "chromium" "src" "../../webrtc-deps/chromium/"
 	preparelink "." "testing" "chromium/src/testing"
@@ -190,6 +202,8 @@ makeLinks()
 	preparelink "third_party" "openmax_dl" "../chromium/src/third_party/openmax_dl"
 	preparelink "third_party" "libjpeg_turbo" "../chromium/src/third_party/libjpeg_turbo"
 	preparelink "third_party" "ocmock" "../chromium/src/third_party/ocmock"
+
+	preparelink "third_party/gflags" "src" "../../chromium/src/third_party/gflags/src"
 }
 
 setBogusGypFiles()
@@ -208,10 +222,10 @@ updateClang()
 	echo Runing clang update
 	result=$(python tools/clang/scripts/update.py 2>&1)
 	echo $result
-	
+
 	preparelink "third_party" "llvm" "../chromium/src/third_party/llvm"
 	preparelink "third_party" "llvm-build" "../chromium/src/third_party/llvm-build"
-	
+
 }
 
 
