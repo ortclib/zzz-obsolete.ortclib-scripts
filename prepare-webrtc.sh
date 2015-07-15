@@ -45,6 +45,30 @@ GTEST_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gtest/
 GFLAGS_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/gflags/src/
 GMOCK_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gmock/
 
+NINJA_PATH=../../bin/ninja/
+NINJA_PATH_TO_REPLACE_WITH=""
+NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
+NINJA_ZIP_FILE="ninja-mac.zip"
+
+setNinja()
+{
+	if type ninja > /dev/null gdate 2>/dev/null || type $NINJA_PATH/ninja > /dev/null; then
+		echo "Ninja already installed"
+	else
+		echo  $PWD
+		echo "Downloading ninja"
+		#rm -r $NINJA_PATH
+		mkdir $NINJA_PATH                        		&& \
+		pushd $NINJA_PATH                          		&& \
+		curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
+		unzip $NINJA_ZIP_FILE                       && \
+		rm $NINJA_ZIP_FILE
+		popd
+		NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
+		echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+	fi
+}
+
 makeFolderStructure()
 {
 	echo Creating temporary folders
@@ -152,9 +176,17 @@ make_ios_project()
 	echo $result
 
 	if [ -d "./all.ninja.xcodeproj" ]; then
+		#Add ninja to path
+		if [ -n "$NINJA_PATH_TO_REPLACE_WITH" ]; then
+			echo "Adding ninja path: $NINJA_PATH_TO_REPLACE_WITH"
+			sed -i -e "s/PATH=/PATH=$NINJA_PATH_TO_REPLACE_WITH:/g" all.ninja.xcodeproj/project.pbxproj
+		fi
 		echo "Renaming ios project"
 		mv all.ninja.xcodeproj all_ios.xcodeproj
 	fi
+
+
+
 }
 
 make_mac_project()
@@ -170,6 +202,11 @@ make_mac_project()
 	echo $result
 
 	if [ -d "./all.ninja.xcodeproj" ]; then
+		#Add ninja to path
+		if [ -n "$NINJA_PATH_TO_REPLACE_WITH" ]; then
+			echo "Adding ninja path: $NINJA_PATH_TO_REPLACE_WITH"
+			sed -i -e "s/PATH=/PATH=$NINJA_PATH_TO_REPLACE_WITH:/g" all.ninja.xcodeproj/project.pbxproj
+		fi
 		echo "Renaming mac project"
 		mv all.ninja.xcodeproj all_osx.xcodeproj
 	fi
@@ -229,6 +266,7 @@ updateClang()
 
 }
 
+setNinja
 
 precheck
 
