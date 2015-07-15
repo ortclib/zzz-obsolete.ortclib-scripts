@@ -50,22 +50,67 @@ NINJA_PATH_TO_REPLACE_WITH=""
 NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
 NINJA_ZIP_FILE="ninja-mac.zip"
 
+PROJECT_FILE=all.ninja.xcworkspace
+PROJECT_MAC_FILE=all_osx.xcodeproj
+PROJECT_IOS_FILE=all_ios.xcodeproj
+
+OUTPUT_IOS=out_ios
+OUTPUT_MAC=out_mac
+
+cleanPreviousResults()
+{
+	echo Cleaning old data from $PWD
+
+	if [ -d "$PROJECT_FILE" ]; then
+		echo Deleting $PROJECT_FILE
+		rm -r $PROJECT_FILE
+	fi
+
+	if [ -d "$PROJECT_IOS_FILE" ]; then
+		echo Deleting $PROJECT_IOS_FILE
+		rm -r $PROJECT_IOS_FILE
+	fi
+
+	if [ -d "$PROJECT_MAC_FILE" ]; then
+		echo Deleting $PROJECT_MAC_FILE
+		rm -r $PROJECT_MAC_FILE
+	fi
+
+	if [ -d "$OUTPUT_IOS" ]; then
+		rm -r $OUTPUT_IOS
+	fi
+
+	if [ -d "$OUTPUT_MAC" ]; then
+		rm -r $OUTPUT_MAC
+	fi
+
+}
+
 setNinja()
 {
-	if type ninja > /dev/null gdate 2>/dev/null || type $NINJA_PATH/ninja > /dev/null; then
-		echo "Ninja already installed"
+	echo Start
+
+	if  hash ninja 2>/dev/null; then
+		echo "Ninja is present in the PATH"
 	else
-		echo  $PWD
-		echo "Downloading ninja"
-		#rm -r $NINJA_PATH
-		mkdir $NINJA_PATH                        		&& \
-		pushd $NINJA_PATH                          		&& \
-		curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
-		unzip $NINJA_ZIP_FILE                       && \
-		rm $NINJA_ZIP_FILE
-		popd
-		NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
-		echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+	#if type ninja > /dev/null gdate 2>/dev/null || type $NINJA_PATH/ninja > /dev/null; then
+		if [ -f "$NINJA_PATH/ninja" ]; then
+			echo "Ninja already installed"
+			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
+			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+		else
+			echo  $PWD
+			echo "Downloading ninja"
+			#rm -r $NINJA_PATH
+			mkdir -p $NINJA_PATH                        		&& \
+			pushd $NINJA_PATH                          		&& \
+			curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
+			unzip $NINJA_ZIP_FILE                       && \
+			rm $NINJA_ZIP_FILE
+			popd
+			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
+			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+		fi
 	fi
 }
 
@@ -265,6 +310,8 @@ updateClang()
 	preparelink "third_party" "llvm-build" "../chromium/src/third_party/llvm-build"
 
 }
+
+cleanPreviousResults
 
 setNinja
 
