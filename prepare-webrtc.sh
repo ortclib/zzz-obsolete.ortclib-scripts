@@ -6,24 +6,6 @@ echo
 echo Preparing symbolic links for WebRTC...
 echo
 
-TARGET="$1"
-
-if [ -z "$TARGET" ]; then
-	echo "Usage: prepare-webrtc.sh [ios | osx]"
-	echo Defaulting to osx target...
-	echo
-	TARGET=osx
-fi
-
-if [ `echo $TARGET | tr [:upper:] [:lower:]` = `echo ios | tr [:upper:] [:lower:]` ]; then
-	TARGET=ios
-else
-	TARGET=osx
-fi
-
-echo WebRTC target found=$TARGET
-echo
-
 BUILD_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/build/
 BORINGSSL_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/boringssl/src/
 COLORAMA_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/colorama/src/
@@ -263,8 +245,8 @@ makeLinks()
 
 	echo Current path: ${PWD}
 
-	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
-	preparelink "chromium" "src" "../../webrtc-deps/chromium/"
+	preparelink "." "build" "chromium/src/build"
+	#preparelink "chromium" "src" "../../webrtc-deps/chromium/"
 	preparelink "." "testing" "chromium/src/testing"
 	preparelink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
 	preparelink "tools" "gyp" "../chromium/src/tools/gyp"
@@ -317,7 +299,7 @@ setNinja
 
 precheck
 
-makeFolderStructure
+#makeFolderStructure
 
 makeLinks
 

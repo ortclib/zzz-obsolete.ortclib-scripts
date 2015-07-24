@@ -15,12 +15,15 @@ if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
 where python > NUL 2>&1
-if ERRORLEVEL 1 call:setup_python
-if "%failure%" neq "0" goto:done_with_error
+if ERRORLEVEL 1 call:install_python
+REM if ERRORLEVEL 1 call:download_python
+if "%failure%" NEQ "0" goto:eof
+
+REM call:install_python
 
 where python > NUL 2>&1
-if ERRORLEVEL 1 call:failure %errorlevel% "Could not locate python for windows"
-if "%FAILURE%" NEQ "0" goto:eof
+if ERRORLEVEL 1 call:setup_python
+if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
@@ -143,6 +146,26 @@ set PATH=%PATH%;\Python27
 
 goto:eof
 
+:download_python
+
+call:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
+if "%FAILURE%" NEQ "0" goto:eof
+goto:eof
+
+:install_python
+
+call:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
+if "%FAILURE%" NEQ "0" (
+	echo "Failed downloading python."
+	goto:eof
+) else (
+	start "Python install" /wait msiexec /i python-2.7.6.msi /quiet
+	if %errorlevel% neq 0 call:failure %errorlevel% "Could not install python."
+	echo "Deleting downloaded file."
+	del python-2.7.6.msi
+)
+goto:eof
+
 :dolink
 if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
 if "%failure%" neq "0" goto:eof
@@ -161,6 +184,17 @@ if %errorlevel% neq 0 call:failure %errorlevel% "Could not create symbolic link 
 popd
 if "%failure%" neq "0" goto:eof
 
+goto:eof
+
+:download
+if EXIST %~2 goto:eof
+
+powershell.exe "Start-BitsTransfer %~1 -Destination %~2"
+if ERRORLEVEL 1 call:failure %errorlevel% "Could not download %~2"
+if "%FAILURE%" NEQ "0" goto:eof
+echo.
+echo Downloaded %~1
+echo.
 goto:eof
 
 :make_directory

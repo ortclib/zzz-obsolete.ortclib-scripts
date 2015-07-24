@@ -5,23 +5,6 @@ echo
 
 set -e
 
-TARGET="$1"
-
-if [ -z "$TARGET" ]; then
-	echo "Usage: prepare.sh [ios | osx]"
-	echo Defaulting to osx target...
-	echo
-	TARGET=osx
-fi
-
-if [ `echo $TARGET | tr [:upper:] [:lower:]` = `echo ios | tr [:upper:] [:lower:]` ]; then
-	TARGET=ios
-else
-	TARGET=osx
-fi
-
-echo Target found=$TARGET
-
 prepare()
 {
 	if [ ! -e $1/$2 ]; then
@@ -54,6 +37,6 @@ precheck
 prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
 prepare "libs/curl" "prepare.sh" "curl"
 
-echo 
+echo
 echo Success: ortc-lib SDK is prepared.
 echo
