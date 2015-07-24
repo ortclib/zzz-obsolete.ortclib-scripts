@@ -245,8 +245,8 @@ makeLinks()
 
 	echo Current path: ${PWD}
 
-	preparelink "." "build" "chromium/src/build"
-	#preparelink "chromium" "src" "../../webrtc-deps/chromium/"
+	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
+	preparelink "chromium" "src" "../../webrtc-deps/chromium/"
 	preparelink "." "testing" "chromium/src/testing"
 	preparelink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
 	preparelink "tools" "gyp" "../chromium/src/tools/gyp"
@@ -299,7 +299,7 @@ setNinja
 
 precheck
 
-#makeFolderStructure
+makeFolderStructure
 
 makeLinks
 
