@@ -196,7 +196,7 @@ make_ios_project()
 
 	export GYP_CROSSCOMPILE=1
 	export GYP_DEFINES="OS=ios target_arch=arm"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=all_ios|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_ios"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=all_ios|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv|usrsctp xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_ios"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
 	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
@@ -222,7 +222,7 @@ make_mac_project()
 
 	export GYP_CROSSCOMPILE=1
 	export GYP_DEFINES="OS=mac target_arch=x64"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_Mac|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_mac"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_Mac|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv|usrsctp xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_mac"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
 	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
