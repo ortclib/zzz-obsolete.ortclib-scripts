@@ -27,6 +27,9 @@ GTEST_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gtest/
 GFLAGS_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/gflags/src/
 GMOCK_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gmock/
 
+SRC_FILES_PATH=./chromium/src/
+SRC_FILES_DESTINATION=../webrtc/chromium/src/
+
 NINJA_PATH=../../bin/ninja/
 NINJA_PATH_TO_REPLACE_WITH=""
 NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
@@ -64,6 +67,10 @@ cleanPreviousResults()
 
 	if [ -d "$OUTPUT_MAC" ]; then
 		rm -r $OUTPUT_MAC
+	fi
+
+	if [ -d "$SRC_FILES_PATH" ]; then
+		rm -r $SRC_FILES_PATH
 	fi
 
 }
@@ -120,6 +127,9 @@ makeFolderStructure()
 
 	mkdir -p $GFLAGS_FOLDER_CHROMIUM_DESTINATION && cp -r ../webrtc-deps/gflags/ $GFLAGS_FOLDER_CHROMIUM_DESTINATION
 	cp -r ../webrtc-deps/gmock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
+
+	mkdir -p $SRC_FILES_DESTINATION && cp -r ../webrtc-deps/chromium/ $SRC_FILES_DESTINATION
+
 }
 
 removeFolderStructure()
@@ -246,7 +256,7 @@ makeLinks()
 	echo Current path: ${PWD}
 
 	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
-	preparelink "chromium" "src" "../../webrtc-deps/chromium/"
+	#preparelink "chromium" "src" "../../webrtc-deps/chromium/"
 	preparelink "." "testing" "chromium/src/testing"
 	preparelink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
 	preparelink "tools" "gyp" "../chromium/src/tools/gyp"
