@@ -259,8 +259,6 @@ makeLinks()
 {
 	echo Creating links
 
-	echo Current path: ${PWD}
-
 	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
 	#preparelink "chromium" "src" "../../webrtc-deps/chromium/"
 	preparelink "." "testing" "chromium/src/testing"
@@ -294,8 +292,8 @@ setBogusGypFiles()
 	make_directory "third_party/expat"
 	cp ../../bin/bogus_expat.gyp third_party/expat/expat.gyp
 
-	make_directory "testing/iossim/third_party/class-dump"
-	cp ../../bin/bogus_class-dump.gyp testing/iossim/third_party/class-dump/class-dump.gyp
+	make_directory "third_party/class-dump"
+  cp ../../bin/bogus_class-dump.gyp third_party/class-dump/class-dump.gyp
 }
 
 updateClang()
