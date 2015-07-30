@@ -27,7 +27,7 @@ GTEST_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gtest/
 GFLAGS_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/third_party/gflags/src/
 GMOCK_FOLDER_CHROMIUM_DESTINATION=../webrtc-deps/chromium/testing/gmock/
 
-SRC_FILES_PATH=./chromium/src/
+SRC_FILES_PATH=./chromium/src
 SRC_FILES_DESTINATION=../webrtc/chromium/src/
 
 NINJA_PATH=../../bin/ninja/
@@ -69,10 +69,16 @@ cleanPreviousResults()
 		rm -r $OUTPUT_MAC
 	fi
 
-	if [ -d "$SRC_FILES_PATH" ]; then
-		rm -r $SRC_FILES_PATH
+	#Check if it is a softlink
+	if [[ -L "$SRC_FILES_PATH" && -d "$SRC_FILES_PATH" ]]; then
+		echo Removing src softlink
+		rm $SRC_FILES_PATH
 	fi
 
+	if [ -d "$SRC_FILES_PATH" ]; then
+		echo Deleting src folder
+		rm -r $SRC_FILES_PATH
+	fi
 }
 
 setNinja()
