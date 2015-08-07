@@ -42,8 +42,119 @@ PROJECT_IOS_FILE=all_ios.xcodeproj
 OUTPUT_IOS=out_ios
 OUTPUT_MAC=out_mac
 
+
+setNinja()
+{
+	echo Start
+
+	if  hash ninja 2>/dev/null; then
+		echo "Ninja is present in the PATH"
+	else
+		if [ -f "$NINJA_PATH/ninja" ]; then
+			echo "Ninja already installed"
+			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
+			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+		else
+			echo  $PWD
+			echo "Downloading ninja"
+			mkdir -p $NINJA_PATH                        		&& \
+			pushd $NINJA_PATH                          		&& \
+			curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
+			unzip $NINJA_ZIP_FILE                       && \
+			rm $NINJA_ZIP_FILE
+			popd
+			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
+			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
+		fi
+	fi
+}
+
+copyFolder()
+{
+	SOURCE=$1
+	TARGET=$2
+
+	if [[ -n $SOURCE && -n $TARGET ]]; then
+		if [ -d $SOURCE ]; then
+			echo "Copying $SOURCE to $TARGET"
+			mkdir -p $TARGET && cp -r $SOURCE $TARGET
+		else
+			echo "ERROR (copyFolder): Folder $SOURCE doesn't exist."
+		fi
+	else
+		echo "ERROR (copyFolder): Missing source and destination folders"
+	fi
+}
+makeFolderStructure()
+{
+	echo Creating folder structure
+
+	copyFolder ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/boringssl/ $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/jsoncpp/ $JSONCPP_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/libjpeg_turbo/ $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/libsrtp/ $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/libvpx/ $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/libyuv/ $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
+  copyFolder ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/opus/ $OPUS_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/usrsctp/ $USRSCTP_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/patched-yasm/ $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/yasm/ $YASM_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/gyp/ $GYP_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/gtest/ $GTEST_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/gflags/ $GFLAGS_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/gmock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
+	copyFolder ../webrtc-deps/chromium/ $SRC_FILES_DESTINATION
+
+	echo Finished creating folder structure
+}
+
+removeFolder()
+{
+	SOURCE=$1
+
+	if [ -n $SOURCE ]; then
+		if [ -d $SOURCE ]; then
+			echo "Removing folder $SOURCE"
+			rm -r $SOURCE
+		fi
+	else
+		echo "ERROR (removeFolder): Folder path is not provided."
+	fi
+
+}
+removeFolderStructure()
+{
+	echo Removing temporary folders
+
+	removeFolder $BUILD_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $COLORAMA_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $JSONCPP_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
+
+	removeFolder $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $OPUS_FOLDER_CHROMIUM_DESTINATION
+
+	removeFolder $USRSCTP_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $YASM_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $GYP_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $GTEST_FOLDER_CHROMIUM_DESTINATION
+
+	removeFolder $GFLAGS_FOLDER_CHROMIUM_DESTINATION
+	removeFolder $GMOCK_FOLDER_CHROMIUM_DESTINATION
+}
 cleanPreviousResults()
 {
+	removeFolderStructure
+
 	echo Cleaning old data from $PWD
 
 	if [ -d "$PROJECT_FILE" ]; then
@@ -62,10 +173,12 @@ cleanPreviousResults()
 	fi
 
 	if [ -d "$OUTPUT_IOS" ]; then
+		echo Deleting $OUTPUT_IOS
 		rm -r $OUTPUT_IOS
 	fi
 
 	if [ -d "$OUTPUT_MAC" ]; then
+		echo Deleting $OUTPUT_MAC
 		rm -r $OUTPUT_MAC
 	fi
 
@@ -80,90 +193,6 @@ cleanPreviousResults()
 		rm -r $SRC_FILES_PATH
 	fi
 }
-
-setNinja()
-{
-	echo Start
-
-	if  hash ninja 2>/dev/null; then
-		echo "Ninja is present in the PATH"
-	else
-	#if type ninja > /dev/null gdate 2>/dev/null || type $NINJA_PATH/ninja > /dev/null; then
-		if [ -f "$NINJA_PATH/ninja" ]; then
-			echo "Ninja already installed"
-			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
-			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
-		else
-			echo  $PWD
-			echo "Downloading ninja"
-			#rm -r $NINJA_PATH
-			mkdir -p $NINJA_PATH                        		&& \
-			pushd $NINJA_PATH                          		&& \
-			curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
-			unzip $NINJA_ZIP_FILE                       && \
-			rm $NINJA_ZIP_FILE
-			popd
-			NINJA_PATH_TO_REPLACE_WITH="..\/..\/bin\/ninja"
-			echo ninja path: $NINJA_PATH_TO_REPLACE_WITH
-		fi
-	fi
-}
-
-makeFolderStructure()
-{
-	echo Creating temporary folders
-
-	cp -r ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/boringssl/ $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/jsoncpp/ $JSONCPP_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/libjpeg_turbo/ $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
-
-	cp -r ../webrtc-deps/libsrtp/ $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/libvpx/ $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/libyuv/ $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/opus/ $OPUS_FOLDER_CHROMIUM_DESTINATION
-
-	cp -r ../webrtc-deps/usrsctp/ $USRSCTP_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/patched-yasm/ $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/yasm/ $YASM_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/gyp/ $GYP_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/gtest/ $GTEST_FOLDER_CHROMIUM_DESTINATION
-
-	mkdir -p $GFLAGS_FOLDER_CHROMIUM_DESTINATION && cp -r ../webrtc-deps/gflags/ $GFLAGS_FOLDER_CHROMIUM_DESTINATION
-	cp -r ../webrtc-deps/gmock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
-
-	mkdir -p $SRC_FILES_DESTINATION && cp -r ../webrtc-deps/chromium/ $SRC_FILES_DESTINATION
-
-}
-
-removeFolderStructure()
-{
-   	echo Removing temporary folders
-
-	rm -r $BUILD_FOLDER_CHROMIUM_DESTINATION
-	rm -r $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
-	rm -r $COLORAMA_FOLDER_CHROMIUM_DESTINATION
-	rm -r $JSONCPP_FOLDER_CHROMIUM_DESTINATION
-	rm -r $LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION
-
-	rm -r $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
-	rm -r $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
-	rm -r $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
-	rm -r $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
-	rm -r $OPUS_FOLDER_CHROMIUM_DESTINATION
-
-	rm -r $USRSCTP_FOLDER_CHROMIUM_DESTINATION
-	rm -r $PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION
-	rm -r $YASM_FOLDER_CHROMIUM_DESTINATION
-	rm -r $GYP_FOLDER_CHROMIUM_DESTINATION
-	rm -r $GTEST_FOLDER_CHROMIUM_DESTINATION
-
-	rm -r $GFLAGS_FOLDER_CHROMIUM_DESTINATION
-	rm -r $GMOCK_FOLDER_CHROMIUM_DESTINATION
-}
-
 precheck()
 {
 	if [ -d "../bin" ]; then
@@ -179,12 +208,15 @@ preparelink()
 		echo ERROR: Path to link does not exist \"$1\" !
 		exit -1
 	fi
+
 	pushd $1 > /dev/null
+
 	if [ ! -d "$3" ]; then
 		echo ERROR: Link destination is not found \"$3\" inside \"$1\" !
 		popd > /dev/null
 		exit -1
 	fi
+
 	if [ ! -h "$2" ]; then
 		echo In path \"$1\" creating webrtc symbolic link \"$2\" pointing to \"$3\"...
 		ln -s $3 $2
@@ -195,6 +227,7 @@ preparelink()
 			exit $failure
 		fi
 	fi
+
 	popd > /dev/null
 }
 
