@@ -42,44 +42,6 @@ PROJECT_IOS_FILE=all_ios.xcodeproj
 OUTPUT_IOS=out_ios
 OUTPUT_MAC=out_mac
 
-cleanPreviousResults()
-{
-	echo Cleaning old data from $PWD
-
-	if [ -d "$PROJECT_FILE" ]; then
-		echo Deleting $PROJECT_FILE
-		rm -r $PROJECT_FILE
-	fi
-
-	if [ -d "$PROJECT_IOS_FILE" ]; then
-		echo Deleting $PROJECT_IOS_FILE
-		rm -r $PROJECT_IOS_FILE
-	fi
-
-	if [ -d "$PROJECT_MAC_FILE" ]; then
-		echo Deleting $PROJECT_MAC_FILE
-		rm -r $PROJECT_MAC_FILE
-	fi
-
-	if [ -d "$OUTPUT_IOS" ]; then
-		rm -r $OUTPUT_IOS
-	fi
-
-	if [ -d "$OUTPUT_MAC" ]; then
-		rm -r $OUTPUT_MAC
-	fi
-
-	#Check if it is a softlink
-	if [[ -L "$SRC_FILES_PATH" && -d "$SRC_FILES_PATH" ]]; then
-		echo Removing src softlink
-		rm $SRC_FILES_PATH
-	fi
-
-	if [ -d "$SRC_FILES_PATH" ]; then
-		echo Deleting src folder
-		rm -r $SRC_FILES_PATH
-	fi
-}
 
 setNinja()
 {
@@ -162,7 +124,6 @@ removeFolder()
 	else
 		echo "ERROR (removeFolder): Folder path is not provided."
 	fi
-
 }
 removeFolderStructure()
 {
@@ -191,7 +152,7 @@ removeFolderStructure()
 }
 cleanPreviousResults()
 {
-	#removeFolderStructure
+	removeFolderStructure
 
 	echo Cleaning old data from $PWD
 
@@ -231,6 +192,7 @@ cleanPreviousResults()
 		rm -r $SRC_FILES_PATH
 	fi
 }
+
 precheck()
 {
 	if [ -d "../bin" ]; then
