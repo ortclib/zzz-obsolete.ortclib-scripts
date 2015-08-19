@@ -5,12 +5,6 @@ echo.
 
 set failure=0
 
-set TARGET=%~1
-iF /I "%TARGET%"=="phone" set TARGET=phone
-iF /I NOT "%TARGET%"=="phone" set TARGET=desktop
-
-echo WebRTC target is %TARGET%...
-
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
@@ -129,8 +123,7 @@ copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 set GYP_GENERATORS=msvs-winrt
 
-if /I "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0 -Dwinrt_platform=win_phone
-if /I NOT "%TARGET%"=="phone" python webrtc\build\gyp_webrtc -Dbuild_with_libjingle=0
+python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
 
 if %errorlevel% neq 0 call:failure %errorlevel% "Could not generate projects for WebRTC"
 if "%failure%" neq "0" goto:done_with_error
