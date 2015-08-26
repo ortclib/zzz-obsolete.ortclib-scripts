@@ -135,7 +135,7 @@ goto:done
 if NOT EXIST \Python27\nul call:failure -1 "Could not locate python path"
 if "%failure%" neq "0" goto:eof
 
-set PATH=%PATH%;\Python27
+setx PATH=%PATH%;\Python27
 
 goto:eof
 
