@@ -8,7 +8,10 @@ set failure=0
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
 
-call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
+if "%failure%" neq "0" goto:eof
+
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC win32
 if "%failure%" neq "0" goto:eof
 
 call:doprepare libs\curl prepare.bat curl

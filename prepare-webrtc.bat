@@ -1,10 +1,13 @@
 @echo off
+echo==============================================================================
 echo.
 echo Preparing symbolic links for WebRTC...
 echo.
+echo.
 
-set failure=0
-
+set PLATFORM=%~1
+echo Platform is "%PLATFORM%"
+echo
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:done_with_error
 
@@ -109,6 +112,8 @@ call:dolink . third_party\jsoncpp chromium\src\third_party\jsoncpp
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . third_party\gflags\src ..\webrtc-deps\gflags
 if "%failure%" neq "0" goto:done_with_error
+call:dolink . third_party\winsdk_samples\src ..\webrtc-deps\winsdk_samples_v71
+if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\gyp ..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gtest ..\webrtc-deps\gtest
@@ -116,17 +121,32 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gmock ..\webrtc-deps\gmock
 if "%failure%" neq "0" goto:done_with_error
 
-
 call:make_directory third_party\expat
 copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
-set GYP_GENERATORS=msvs-winrt
 
-python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
+if /I "%PLATFORM%"=="win32" (
+	echo.
+	echo Generating Win32 projects
+	echo.
+	set GYP_DEFINES=component=shared_library
+	set GYP_GENERATORS=ninja,msvs-ninja
+	python webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2013
+)
+
+if /I "%PLATFORM%"=="winrt" (
+	echo.
+	echo Generating winRT and winRT_Phone projects
+	echo.
+	set GYP_GENERATORS=msvs-winrt
+	python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
+)
 
 if %errorlevel% neq 0 call:failure %errorlevel% "Could not generate projects for WebRTC"
 if "%failure%" neq "0" goto:done_with_error
+
+
 
 goto:done
 
