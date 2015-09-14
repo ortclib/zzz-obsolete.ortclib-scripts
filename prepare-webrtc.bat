@@ -13,13 +13,22 @@ if "%failure%" neq "0" goto:done_with_error
 
 where python > NUL 2>&1
 if ERRORLEVEL 1 call:install_python
-REM if ERRORLEVEL 1 call:download_python
 if "%failure%" NEQ "0" goto:eof
-
-REM call:install_python
 
 where python > NUL 2>&1
 if ERRORLEVEL 1 call:setup_python
+if "%failure%" neq "0" goto:done_with_error
+
+rem where perl > NUL 2>&1
+rem if ERRORLEVEL 1 call:install_perl
+rem if "%failure%" NEQ "0" goto:eof
+
+rem where perl > NUL 2>&1
+rem if ERRORLEVEL 1 call:setup_perl
+rem if "%failure%" neq "0" goto:done_with_error
+
+where ninja > NUL 2>&1
+if ERRORLEVEL 1 call:install_ninja
 if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . build ..\webrtc-deps\build
@@ -160,13 +169,9 @@ set PATH=%PATH%;C:\Python27
 
 goto:eof
 
-:download_python
-
-call:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
-if "%FAILURE%" NEQ "0" goto:eof
-goto:eof
-
 :install_python
+
+echo Installing Python
 
 call:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
 if "%FAILURE%" NEQ "0" (
@@ -179,6 +184,63 @@ if "%FAILURE%" NEQ "0" (
 	del python-2.7.6.msi
 )
 goto:eof
+
+:setup_perl
+
+if NOT EXIST \Strawberry\c\bin\nul call:failure -1 "Could not locate perl path"
+if "%failure%" neq "0" goto:eof
+
+if NOT EXIST \Strawberry\perl\site\bin\nul call:failure -1 "Could not locate perl path"
+if "%failure%" neq "0" goto:eof
+
+if NOT EXIST \Strawberry\perl\bin\nul call:failure -1 "Could not locate perl path"
+if "%failure%" neq "0" goto:eof
+
+setx PATH "%PATH%;C:\Strawberry\c\bin"
+set PATH=%PATH%;C:\Strawberry\c\bin
+
+setx PATH "%PATH%;C:\Strawberry\perl\site\bin"
+set PATH=%PATH%;C:\Strawberry\perl\site\bin
+
+setx PATH "%PATH%;C:\Strawberry\perl\bin"
+set PATH=%PATH%;C:\Strawberry\perl\bin
+goto:eof
+
+:install_perl
+
+echo Installing Perl
+
+call:download http://strawberryperl.com/download/5.22.0.1/strawberry-perl-5.22.0.1-32bit.msi  strawberry-perl-5.22.0.1-32bit.msi
+if "%FAILURE%" NEQ "0" (
+	echo "Failed downloading perl."
+	goto:eof
+) else (
+	echo Started instalation
+	start "Perl install" /wait msiexec /i strawberry-perl-5.22.0.1-32bit.msi /quiet
+	echo Instalation finished
+	
+	if %errorlevel% neq 0 call:failure %errorlevel% "Could not install python."
+	echo "Deleting downloaded file."
+	del strawberry-perl-5.22.0.1-32bit.msi
+)
+goto:eof
+
+:install_ninja
+
+echo Installing ninja
+
+if NOT EXIST c:\ninja\nul mkdir c:\ninja
+
+powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','C:\ninja\ninja-win.zip')
+
+if EXIST c:\ninja\ninja-win.zip call:unzipfile "C:\ninja\" "C:\ninja\ninja-win.zip"
+)
+
+setx PATH "%PATH%;C:\ninja"
+set PATH=%PATH%;C:\ninja
+
+goto:eof
+
 
 :dolink
 if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
@@ -200,6 +262,22 @@ if "%failure%" neq "0" goto:eof
 
 goto:eof
 
+:unzipfile 
+set vbs="%temp%\_.vbs"
+if exist %vbs% del /f /q %vbs%
+>%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
+>>%vbs% echo If NOT fso.FolderExists(%1) Then
+>>%vbs% echo fso.CreateFolder(%1)
+>>%vbs% echo End If
+>>%vbs% echo set objShell = CreateObject("Shell.Application")
+>>%vbs% echo set FilesInZip=objShell.NameSpace(%2).items
+>>%vbs% echo objShell.NameSpace(%1).CopyHere(FilesInZip)
+>>%vbs% echo Set fso = Nothing
+>>%vbs% echo Set objShell = Nothing
+cscript //nologo %vbs%
+if exist %vbs% del /f /q %vbs%
+goto:eof
+	
 :download
 if EXIST %~2 goto:eof
 
