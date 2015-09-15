@@ -19,13 +19,13 @@ where python > NUL 2>&1
 if ERRORLEVEL 1 call:setup_python
 if "%failure%" neq "0" goto:done_with_error
 
-rem where perl > NUL 2>&1
-rem if ERRORLEVEL 1 call:install_perl
-rem if "%failure%" NEQ "0" goto:eof
+where perl > NUL 2>&1
+if ERRORLEVEL 1 call:install_perl
+if "%failure%" NEQ "0" goto:eof
 
-rem where perl > NUL 2>&1
-rem if ERRORLEVEL 1 call:setup_perl
-rem if "%failure%" neq "0" goto:done_with_error
+where perl > NUL 2>&1
+if ERRORLEVEL 1 call:setup_perl
+if "%failure%" neq "0" goto:done_with_error
 
 where ninja > NUL 2>&1
 if ERRORLEVEL 1 call:install_ninja
@@ -164,8 +164,10 @@ goto:done
 if NOT EXIST \Python27\nul call:failure -1 "Could not locate python path"
 if "%failure%" neq "0" goto:eof
 
-setx PATH "%PATH%;C:\Python27"
-set PATH=%PATH%;C:\Python27
+call:set_path "C:\Python27"
+
+rem setx PATH "%PATH%;C:\Python27" /m
+rem set PATH=%PATH%;C:\Python27
 
 goto:eof
 
@@ -196,14 +198,17 @@ if "%failure%" neq "0" goto:eof
 if NOT EXIST \Strawberry\perl\bin\nul call:failure -1 "Could not locate perl path"
 if "%failure%" neq "0" goto:eof
 
-setx PATH "%PATH%;C:\Strawberry\c\bin"
-set PATH=%PATH%;C:\Strawberry\c\bin
+call:set_path "C:\Strawberry\c\bin"
+rem setx PATH "%PATH%;C:\Strawberry\c\bin"
+rem set PATH=%PATH%;C:\Strawberry\c\bin
 
-setx PATH "%PATH%;C:\Strawberry\perl\site\bin"
-set PATH=%PATH%;C:\Strawberry\perl\site\bin
+call:set_path "C:\Strawberry\perl\site\bin"
+rem setx PATH "%PATH%;C:\Strawberry\perl\site\bin"
+rem set PATH=%PATH%;C:\Strawberry\perl\site\bin
 
-setx PATH "%PATH%;C:\Strawberry\perl\bin"
-set PATH=%PATH%;C:\Strawberry\perl\bin
+call:set_path "C:\Strawberry\perl\bin"
+rem setx PATH "%PATH%;C:\Strawberry\perl\bin"
+rem set PATH=%PATH%;C:\Strawberry\perl\bin
 goto:eof
 
 :install_perl
@@ -229,16 +234,20 @@ goto:eof
 
 echo Installing ninja
 
-if NOT EXIST c:\ninja\nul mkdir c:\ninja
+call:make_directory c:\ninja
+rem if NOT EXIST c:\ninja\nul mkdir c:\ninja
 
 powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','C:\ninja\ninja-win.zip')
 
+echo downloaded
 if EXIST c:\ninja\ninja-win.zip call:unzipfile "C:\ninja\" "C:\ninja\ninja-win.zip"
+echo exctracking
+if EXIST c:\ninja\nul (
+	
+	call:set_path "C:\ninja"
+	rem setx PATH "%PATH%;C:\ninja" /m
+	rem set PATH=%PATH%;C:\ninja
 )
-
-setx PATH "%PATH%;C:\ninja"
-set PATH=%PATH%;C:\ninja
-
 goto:eof
 
 
@@ -276,6 +285,7 @@ if exist %vbs% del /f /q %vbs%
 >>%vbs% echo Set objShell = Nothing
 cscript //nologo %vbs%
 if exist %vbs% del /f /q %vbs%
+del /f /q %2
 goto:eof
 	
 :download
@@ -287,6 +297,13 @@ if "%FAILURE%" NEQ "0" goto:eof
 echo.
 echo Downloaded %~1
 echo.
+goto:eof
+
+:set_path
+
+ setx PATH "%PATH%;%~1" /m
+ set PATH=%PATH%;%~1
+ echo "%~1 added to path"
 goto:eof
 
 :make_directory
