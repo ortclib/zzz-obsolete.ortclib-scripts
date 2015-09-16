@@ -19,13 +19,13 @@ where python > NUL 2>&1
 if ERRORLEVEL 1 call:setup_python
 if "%failure%" neq "0" goto:done_with_error
 
-where perl > NUL 2>&1
-if ERRORLEVEL 1 call:install_perl
-if "%failure%" NEQ "0" goto:eof
+rem where perl > NUL 2>&1
+rem if ERRORLEVEL 1 call:install_perl
+rem if "%failure%" NEQ "0" goto:eof
 
-where perl > NUL 2>&1
-if ERRORLEVEL 1 call:setup_perl
-if "%failure%" neq "0" goto:done_with_error
+rem where perl > NUL 2>&1
+rem if ERRORLEVEL 1 call:setup_perl
+rem if "%failure%" neq "0" goto:done_with_error
 
 where ninja > NUL 2>&1
 if ERRORLEVEL 1 call:install_ninja
@@ -241,13 +241,9 @@ powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://g
 
 echo downloaded
 if EXIST c:\ninja\ninja-win.zip call:unzipfile "C:\ninja\" "C:\ninja\ninja-win.zip"
-echo exctracking
-if EXIST c:\ninja\nul (
-	
-	call:set_path "C:\ninja"
-	rem setx PATH "%PATH%;C:\ninja" /m
-	rem set PATH=%PATH%;C:\ninja
-)
+
+if EXIST c:\ninja\nul call:set_path "C:\ninja"
+
 goto:eof
 
 
@@ -301,7 +297,7 @@ goto:eof
 
 :set_path
 
- setx PATH "%PATH%;%~1" /m
+ setx PATH "%PATH%;%~1"
  set PATH=%PATH%;%~1
  echo "%~1 added to path"
 goto:eof

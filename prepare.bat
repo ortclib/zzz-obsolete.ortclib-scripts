@@ -17,6 +17,23 @@ if "%failure%" neq "0" goto:eof
 call:doprepare libs\curl prepare.bat curl
 if "%failure%" neq "0" goto:eof
 
+where perl > NUL 2>&1
+if %errorlevel% equ 1 (
+	echo.
+	echo ================================================================================
+	echo.
+	echo Warning! Warning! Warning! Warning! Warning! Warning! Warning!
+	echo.
+	echo Perl is missing.
+	echo You need to have installed Perl to build projects properly.
+	echo Use the 32-bit perl from Strawberry http://strawberryperl.com/ to avoid possible linking errors and incorrect assember files generation. 
+	echo Download URL: http://strawberryperl.com/download/5.22.0.1/strawberry-perl-5.22.0.1-32bit.msi
+	echo Make sure that the perl path from Strawberry appears at the beginning of all other perl paths in the PATH 
+	echo.
+	echo ================================================================================
+	echo.
+)
+
 goto:done
 
 
