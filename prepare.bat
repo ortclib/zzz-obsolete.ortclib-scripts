@@ -21,16 +21,13 @@ where ninja > NUL 2>&1
 if ERRORLEVEL 1 (
 	echo Ninja is not in the path
 	if NOT EXIST .\bin\ninja.exe (
-		echo downloading ninja
+		echo Downloading ninja ...
 		call:install_ninja 
 	)
-	rem If ninja is downloaded update projects	
-	echo Updating projects
+
+	echo Updating projects ...
 	if EXIST .\bin\ninja.exe start /B /wait .\bin\upn.exe .\bin\ .\libs\webrtc\ .\libs\webrtc\chromium\src\
 )
-
-rem where ninja > NUL 2>&1
-rem if ERRORLEVEL 1 start /B /wait .\bin\upn.exe .\bin\ .\libs\webrtc\ .\libs\webrtc\chromium\src\ 
 
 where perl > NUL 2>&1
 if %errorlevel% equ 1 (
@@ -53,17 +50,13 @@ goto:done
 
 :install_ninja
 
-echo Installing ninja
+echo Installing ninja ...
 
 powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','.\bin\ninja-win.zip')
 
-echo downloaded
 echo %cd%
 echo %~dp0ninja-win.zip
 if EXIST .\bin\ninja-win.zip call:unzipfile "%~dp0" "%~dp0ninja-win.zip"
-rem ".\bin\ninja-win.zip"
-
-rem if EXIST c:\ninja\nul call:set_path "C:\ninja"
 
 goto:eof
 
