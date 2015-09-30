@@ -27,10 +27,6 @@ rem where perl > NUL 2>&1
 rem if ERRORLEVEL 1 call:setup_perl
 rem if "%failure%" neq "0" goto:done_with_error
 
-rem where ninja > NUL 2>&1
-rem if ERRORLEVEL 1 call:install_ninja
-rem if "%failure%" neq "0" goto:done_with_error
-
 call:dolink . build ..\webrtc-deps\build
 if "%failure%" neq "0" goto:done_with_error
 
@@ -230,23 +226,6 @@ if "%FAILURE%" NEQ "0" (
 )
 goto:eof
 
-:install_ninja
-
-echo Installing ninja
-
-call:make_directory c:\ninja
-rem if NOT EXIST c:\ninja\nul mkdir c:\ninja
-
-powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','C:\ninja\ninja-win.zip')
-
-echo downloaded
-echo %cd%
-if EXIST c:\ninja\ninja-win.zip call:unzipfile "C:\ninja\" "C:\ninja\ninja-win.zip"
-
-rem if EXIST c:\ninja\nul call:set_path "C:\ninja"
-
-goto:eof
-
 
 :dolink
 if NOT EXIST %~1\nul call:failure -1 "%~1 does not exist!"
@@ -281,8 +260,11 @@ goto:eof
 
 :set_path
 
- setx PATH "%PATH%;%~1"
- set PATH=%PATH%;%~1
+for /F "tokens=2* delims= " %%f IN ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path ^| findstr /i path') do set OLD_SYSTEM_PATH=%%g
+setx.exe PATH ";%OLD_SYSTEM_PATH%;%~1"
+set PATH=%OLD_SYSTEM_PATH%;%~1
+ rem setx PATH "%PATH%;%~1"
+ rem set PATH=%PATH%;%~1
  echo "%~1 added to path"
 goto:eof
 
