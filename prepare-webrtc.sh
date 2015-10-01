@@ -244,7 +244,7 @@ make_ios_project()
 	echo "Generating ios project ..."
 
 	export GYP_CROSSCOMPILE=1
-	export GYP_DEFINES="OS=ios target_arch=arm"
+	export GYP_DEFINES="OS=ios target_arch=arm clang_xcode=1"
 	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=all_ios|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv|libjpeg|usrsctp|common_video|rtc_base_approved|system_wrappers|video_capture_module_internal_impl|video_capture_module|video_render_module_internal_impl|video_render_module|webrtc_common xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_ios"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
@@ -270,7 +270,7 @@ make_mac_project()
 	echo "Generating mac project ..."
 
 	export GYP_CROSSCOMPILE=1
-	export GYP_DEFINES="OS=mac target_arch=x64"
+	export GYP_DEFINES="OS=mac target_arch=x64 clang_xcode=1"
 	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=All_Mac|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv|libjpeg|usrsctp|common_video|rtc_base_approved|system_wrappers|video_capture_module_internal_impl|video_capture_module|video_render_module_internal_impl|video_render_module|webrtc_common xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_mac"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
