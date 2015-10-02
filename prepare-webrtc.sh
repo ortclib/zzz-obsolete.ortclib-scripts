@@ -245,7 +245,7 @@ make_ios_project()
 
 	export GYP_CROSSCOMPILE=1
 	export GYP_DEFINES="OS=ios target_arch=arm clang_xcode=1"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=all_ios|webrtc|webrtc_all|boringssl|libsrtp|libvpx|webrtc_opus|jsoncpp|libyuv|libjpeg|usrsctp|common_video|rtc_base_approved|system_wrappers|video_capture_module_internal_impl|video_capture_module|video_render_module_internal_impl|video_render_module|webrtc_common xcode_ninja_executable_target_pattern=AppRTCDemo|libjingle_peerconnection_objc_test|libjingle_peerconnection_unittest output_dir=out_ios"
+	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=^audio_coding_module$|^audio_conference_mixer$|^audio_decoder_interface$|^audio_device$|^audio_encoder_interface$|^audio_processing$|^bitrate_controller$|^boringssl$|^cng$|^common_audio$|^common_audio_neon$|^common_video$|^field_trial_default$|^g711$|^g722$|^ilbc$|^isac$|^isac_fix$|^isac_neon$|^libjpeg$|^libsrtp$|^libvpx$|^libyuv$|^libyuv_neon$|^media_file$|^metrics_default$|^neteq$|^openmax_dl$|^opus$|^paced_sender$|^pcm16b$|^red$|^remote_bitrate_estimator$|^rtc_base_approved$|^rtp_rtcp$|^system_wrappers$|^usrsctplib$|^video_capture_module$|^video_capture_module_internal_impl$|^video_coding_utility$|^video_processing$|^video_render_module$|^video_render_module_internal_impl$|^voice_engine$|^webrtc$|^webrtc_common$|^webrtc_h264$|^webrtc_i420$|^webrtc_opus$|^webrtc_utility$|^webrtc_video_coding$|^webrtc_vp8$|^webrtc_vp9$ xcode_ninja_executable_target_pattern=^$ output_dir=out_ios"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
 	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
