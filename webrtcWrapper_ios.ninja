@@ -1,0 +1,235 @@
+cc = cc
+cxx = c++
+ld = $cc
+ldxx = $cxx
+ar = ar
+ar_host = ar
+nm_host = nm
+readelf_host = readelf
+cc_host = cc
+cxx_host = c++
+ld_host = $cc_host
+ldxx_host = $cxx_host
+
+pool link_pool
+  depth = 4
+
+rule cc
+  command = $cc -MMD -MF $out.d $defines $includes $cflags $cflags_c $cflags_pch_c -c $in -o $out
+  description = CC $out
+  depfile = $out.d
+  deps = gcc
+rule cc_s
+  command = $cc $defines $includes $cflags $cflags_c $cflags_pch_c -c $in -o $out
+  description = CC $out
+rule cxx
+  command = $cxx -MMD -MF $out.d $defines $includes $cflags $cflags_cc $cflags_pch_cc -c $in -o $out
+  description = CXX $out
+  depfile = $out.d
+  deps = gcc
+rule objc
+  command = $cc -MMD -MF $out.d $defines $includes $cflags $cflags_objc $cflags_pch_objc -c $in -o $out
+  description = OBJC $out
+  depfile = $out.d
+  deps = gcc
+rule objcxx
+  command = $cxx -MMD -MF $out.d $defines $includes $cflags $cflags_objcc $cflags_pch_objcc -c $in -o $out
+  description = OBJCXX $out
+  depfile = $out.d
+  deps = gcc
+rule alink
+  command = rm -f $out && ./gyp-mac-tool filter-libtool libtool $libtool_flags -static -o $out $in$postbuilds
+  description = LIBTOOL-STATIC $out, POSTBUILDS
+rule lipo
+  command = rm -f $out && lipo -create $in -output $out$postbuilds
+  description = LIPO $out, POSTBUILDS
+rule solipo
+  command = rm -f $lib $lib.TOC && lipo -create $in -output $lib$postbuilds &&{ otool -l $lib | grep LC_ID_DYLIB -A $
+      5; nm -gP $lib | cut -f1-2 -d' ' | grep -v U$$; true; } > $lib.TOC
+  description = SOLIPO $out, POSTBUILDS
+rule solink
+  command = if [ ! -e $lib -o ! -e $lib.TOC ] || otool -l $lib | grep -q LC_REEXPORT_DYLIB ; then $ld -shared $
+      $ldflags -o $lib @$link_file_list$postbuilds && { otool -l $lib | grep LC_ID_DYLIB -A 5; nm -gP $lib | cut $
+      -f1-2 -d' ' | grep -v U$$; true; } > $lib.TOC; else $ld -shared $ldflags -o $lib @$link_file_list$postbuilds && $
+      { otool -l $lib | grep LC_ID_DYLIB -A 5; nm -gP $lib | cut -f1-2 -d' ' | grep -v U$$; true; } > $lib.tmp && if $
+      ! cmp -s $lib.tmp $lib.TOC; then mv $lib.tmp $lib.TOC ; fi; fi
+  description = SOLINK $lib, POSTBUILDS
+  pool = link_pool
+  restat = 1
+  rspfile = $link_file_list
+  rspfile_content = $in $solibs $libs
+rule solink_notoc
+  command = $ld -shared $ldflags -o $lib @$link_file_list$postbuilds
+  description = SOLINK $lib, POSTBUILDS
+  pool = link_pool
+  restat = 1
+  rspfile = $link_file_list
+  rspfile_content = $in $solibs $libs
+rule solink_module
+  command = if [ ! -e $lib -o ! -e $lib.TOC ] || otool -l $lib | grep -q LC_REEXPORT_DYLIB ; then $ld -bundle $
+      $ldflags -o $lib @$link_file_list$postbuilds && { otool -l $lib | grep LC_ID_DYLIB -A 5; nm -gP $lib | cut $
+      -f1-2 -d' ' | grep -v U$$; true; } > $lib.TOC; else $ld -bundle $ldflags -o $lib @$link_file_list$postbuilds && $
+      { otool -l $lib | grep LC_ID_DYLIB -A 5; nm -gP $lib | cut -f1-2 -d' ' | grep -v U$$; true; } > $lib.tmp && if $
+      ! cmp -s $lib.tmp $lib.TOC; then mv $lib.tmp $lib.TOC ; fi; fi
+  description = SOLINK(module) $lib, POSTBUILDS
+  pool = link_pool
+  restat = 1
+  rspfile = $link_file_list
+  rspfile_content = $in $solibs $libs
+rule solink_module_notoc
+  command = $ld -bundle $ldflags -o $lib @$link_file_list$postbuilds
+  description = SOLINK(module) $lib, POSTBUILDS
+  pool = link_pool
+  restat = 1
+  rspfile = $link_file_list
+  rspfile_content = $in $solibs $libs
+rule link
+  command = $ld $ldflags -o $out $in $solibs $libs$postbuilds
+  description = LINK $out, POSTBUILDS
+  pool = link_pool
+rule preprocess_infoplist
+  command = $cc -E -P -Wno-trigraphs -x c $defines $in -o $out && plutil -convert xml1 $out $out
+  description = PREPROCESS INFOPLIST $out
+rule copy_infoplist
+  command = $env ./gyp-mac-tool copy-info-plist $in $out $binary $keys
+  description = COPY INFOPLIST $in
+rule merge_infoplist
+  command = $env ./gyp-mac-tool merge-info-plist $out $in
+  description = MERGE INFOPLISTS $in
+rule compile_xcassets
+  command = $env ./gyp-mac-tool compile-xcassets $keys $in
+  description = COMPILE XCASSETS $in
+rule mac_tool
+  command = $env ./gyp-mac-tool $mactool_cmd $in $out $binary
+  description = MACTOOL $mactool_cmd $in
+rule package_framework
+  command = ./gyp-mac-tool package-framework $out $version$postbuilds && touch $out
+  description = PACKAGE FRAMEWORK $out, POSTBUILDS
+rule stamp
+  command = ${postbuilds}touch $out
+  description = STAMP $out
+rule copy
+  command = ln -f $in $out 2>/dev/null || (rm -rf $out && cp -af $in $out)
+  description = COPY $in $out
+
+subninja obj/webrtc/common_audio/common_audio_neon.ninja
+subninja obj/webrtc/modules/isac_fix.ninja
+subninja obj/webrtc/modules/isac_neon.ninja
+subninja obj/webrtc/modules/audio_coding_module.ninja
+subninja obj/webrtc/modules/audio_conference_mixer.ninja
+subninja obj/webrtc/modules/audio_decoder_interface.ninja
+subninja obj/webrtc/modules/audio_device.ninja
+subninja obj/webrtc/modules/audio_encoder_interface.ninja
+subninja obj/webrtc/modules/audio_processing.ninja
+subninja obj/webrtc/modules/bitrate_controller.ninja
+subninja obj/chromium/src/third_party/boringssl/boringssl.ninja
+subninja obj/webrtc/modules/cng.ninja
+subninja obj/webrtc/common_audio/common_audio.ninja
+subninja obj/webrtc/common_video/common_video.ninja
+subninja obj/webrtc/system_wrappers/field_trial_default.ninja
+subninja obj/webrtc/modules/g711.ninja
+subninja obj/webrtc/modules/g722.ninja
+subninja obj/webrtc/modules/ilbc.ninja
+subninja obj/webrtc/modules/isac.ninja
+subninja obj/webrtc/modules/media_file.ninja
+subninja obj/webrtc/system_wrappers/metrics_default.ninja
+subninja obj/webrtc/modules/neteq.ninja
+subninja obj/chromium/src/third_party/opus/opus.ninja
+subninja obj/webrtc/modules/paced_sender.ninja
+subninja obj/webrtc/modules/pcm16b.ninja
+subninja obj/webrtc/modules/red.ninja
+subninja obj/webrtc/modules/remote_bitrate_estimator.ninja
+subninja obj/webrtc/base/rtc_base_approved.ninja
+subninja obj/webrtc/modules/rtp_rtcp.ninja
+subninja obj/chromium/src/third_party/libsrtp/libsrtp.ninja
+subninja obj/webrtc/system_wrappers/system_wrappers.ninja
+subninja obj/chromium/src/third_party/usrsctp/usrsctplib.ninja
+subninja obj/webrtc/modules/video_render_module.ninja
+subninja obj/webrtc/modules/video_render_module_internal_impl.ninja
+subninja obj/webrtc/modules/video_capture_module.ninja
+subninja obj/webrtc/modules/video_capture_module_internal_impl.ninja
+subninja obj/webrtc/modules/video_coding/utility/video_coding_utility.ninja
+subninja obj/webrtc/modules/video_processing.ninja
+subninja obj/webrtc/voice_engine/voice_engine.ninja
+subninja obj/chromium/src/third_party/libvpx/libvpx.ninja
+subninja obj/webrtc/webrtc_common.ninja
+subninja obj/webrtc/modules/webrtc_h264.ninja
+subninja obj/webrtc/modules/webrtc_opus.ninja
+subninja obj/webrtc/modules/webrtc_i420.ninja
+subninja obj/webrtc/modules/webrtc_utility.ninja
+subninja obj/webrtc/modules/webrtc_video_coding.ninja
+subninja obj/webrtc/modules/video_coding/codecs/vp8/webrtc_vp8.ninja
+subninja obj/webrtc/modules/video_coding/codecs/vp9/webrtc_vp9.ninja
+subninja obj/webrtc/webrtc.ninja
+subninja obj/chromium/src/third_party/libyuv/libyuv_neon.ninja
+subninja obj/chromium/src/third_party/libyuv/libyuv.ninja
+#subninja obj/webrtc/modules/audio_processing_neon.ninja
+
+build common_audio_neon: phony libcommon_audio_neon.a
+build isac_fix: phony libisac_fix.a
+build isac_neon: phony libisac_neon.a
+build audio_coding_module: phony libaudio_coding_module.a
+build audio_conference_mixer: phony libaudio_conference_mixer.a
+build audio_decoder_interface: phony libaudio_decoder_interface.a
+build audio_device: phony libaudio_device.a
+build audio_encoder_interface: phony libaudio_encoder_interface.a
+build audio_processing: phony libaudio_processing.a
+build bitrate_controller: phony libbitrate_controller.a
+build boringssl: phony libboringssl.a
+build cng: phony libcng.a
+build common_audio: phony libcommon_audio.a
+build common_video: phony libcommon_video.a
+build field_trial_default: phony libfield_trial_default.a
+build g711: phony libg711.a
+build g722: phony libg722.a
+build ilbc: phony libilbc.a
+build isac: phony libisac.a
+build media_file: phony libmedia_file.a
+build metrics_default: phony libmetrics_default.a
+build neteq: phony libneteq.a
+build opus: phony libopus.a
+build paced_sender: phony libpaced_sender.a
+build pcm16b: phony libpcm16b.a
+build red: phony libred.a
+build remote_bitrate_estimator: phony libremote_bitrate_estimator.a
+build rtc_base_approved: phony librtc_base_approved.a
+build rtp_rtcp: phony librtp_rtcp.a
+build libsrtp: phony libsrtp.a
+build system_wrappers: phony libsystem_wrappers.a
+build usrsctplib: phony libusrsctplib.a
+build video_render_module_internal_impl: phony libvideo_render_module_internal_impl.a
+build video_render_module: phony libvideo_render_module.a
+build video_capture_module: phony libvideo_capture_module.a
+build video_capture_module_internal_impl: phony libvideo_capture_module_internal_impl.a
+build video_coding_utility: phony libvideo_coding_utility.a
+build video_processing: phony libvideo_processing.a
+build voice_engine: phony libvoice_engine.a
+build libvpx: phony libvpx.a
+build webrtc_common: phony libwebrtc_common.a
+build webrtc_h264: phony libwebrtc_h264.a
+build webrtc_opus: phony libwebrtc_opus.a
+build webrtc_i420: phony libwebrtc_i420.a
+build webrtc_utility: phony libwebrtc_utility.a
+build webrtc_video_coding: phony libwebrtc_video_coding.a
+build webrtc_vp8: phony libwebrtc_vp8.a
+build webrtc_vp9: phony libwebrtc_vp9.a
+build webrtc: phony libwebrtc.a
+build libyuv_neon: phony libyuv_neon.a
+build libyuv: phony libyuv.a
+#build audio_processing_neon: phony libaudio_processing_neon.a
+#build libjpeg: phony libjpeg_turbo.a
+
+
+build webrtcWrapper: phony $
+   libcommon_audio_neon.a libisac_fix.a libisac_neon.a libaudio_coding_module.a $
+   libaudio_conference_mixer.a libaudio_decoder_interface.a libaudio_device.a $
+   libaudio_encoder_interface.a libaudio_processing.a libbitrate_controller.a $
+   libboringssl.a libcng.a libcommon_audio.a libcommon_video.a libfield_trial_default.a $
+   libg711.a libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a $
+   libneteq.a libopus.a libpaced_sender.a libpcm16b.a libred.a libremote_bitrate_estimator.a $
+   librtc_base_approved.a librtp_rtcp.a libsrtp.a libsystem_wrappers.a libusrsctplib.a $
+   libvideo_render_module_internal_impl.a libvideo_render_module.a libvideo_capture_module.a $
+   libvideo_capture_module_internal_impl.a libvideo_coding_utility.a libvideo_processing.a $
+   libvoice_engine.a libvpx.a libwebrtc_common.a libwebrtc_h264.a libwebrtc_opus.a $
+   libwebrtc_i420.a libwebrtc_utility.a libwebrtc_video_coding.a libwebrtc_vp8.a libwebrtc_vp9.a $
+   libwebrtc.a libyuv_neon.a libyuv.a

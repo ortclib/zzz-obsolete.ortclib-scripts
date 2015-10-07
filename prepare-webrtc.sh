@@ -269,7 +269,7 @@ make_mac_project()
 {
 	echo "Generating mac project ..."
 
-	export GYP_DEFINES="OS=mac target_arch=x64 clang_xcode=1 debug_extra_cflags=-stdlib=libc++ release_extra_cflags=-stdlib=libc++ mac_deployment_target=10.8"
+	export GYP_DEFINES="OS=mac target_arch=x64 clang_xcode=1 debug_extra_cflags=-stdlib=libc++ release_extra_cflags=-stdlib=libc++ mac_deployment_target=10.7"
 	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=^audio_coding_module$|^audio_conference_mixer$|^audio_decoder_interface$|^audio_device$|^audio_encoder_interface$|^audio_processing$|^audio_processing_sse2$|^audioproc_debug_proto$|^bitrate_controller$|^boringssl$|^cng$|^common_audio$|^common_audio_sse2$|^common_video$|^field_trial_default$|^g711$|^g722$|^ilbc$|^isac$|^libjpeg$|^libsrtp$|^libvpx$|^libvpx_intrinsics_mmx$|^libvpx_intrinsics_avx2$|^libvpx_intrinsics_sse2$|^libvpx_intrinsics_ssse3$|^libvpx_intrinsics_sse4_1$|^libyuv$|^media_file$|^metrics_default$|^neteq$|^openmax_dl$|^opus$|^paced_sender$|^pcm16b$|^protobuf_lite$|^red$|^remote_bitrate_estimator$|^rtc_base_approved$|^rtp_rtcp$|^system_wrappers$|^usrsctplib$|^video_capture_module$|^video_capture_module_internal_impl$|^video_coding_utility$|^video_processing$|^video_processing_sse2$|^video_render_module$|^video_render_module_internal_impl$|^voice_engine$|^webrtc$|^webrtc_common$|^webrtc_h264$|^webrtc_i420$|^webrtc_opus$|^webrtc_utility$|^webrtc_video_coding$|^webrtc_vp8$|^webrtc_vp9$ xcode_ninja_executable_target_pattern=^$ output_dir=out_mac"
 	export GYP_GENERATORS="ninja,xcode-ninja"
 
@@ -287,6 +287,8 @@ make_mac_project()
 		fi
 		echo "Renaming mac project"
 		mv all.ninja.xcodeproj all_osx.xcodeproj
+		
+		cp ../../bin/webrtcWrapper.ninja ./out_mac/Debug/webrtcWrapper.ninja
 	fi
 }
 
