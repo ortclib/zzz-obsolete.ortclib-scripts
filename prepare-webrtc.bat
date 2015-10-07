@@ -144,6 +144,7 @@ if /I "%PLATFORM%"=="winrt" (
 	echo.
 	echo Generating winRT and winRT_Phone projects
 	echo.
+	set GYP_DEFINES=
 	set GYP_GENERATORS=msvs-winrt
 	python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
 )
