@@ -259,6 +259,11 @@ make_ios_project()
 		fi
 		echo "Renaming ios project"
 		mv all.ninja.xcodeproj all_ios.xcodeproj
+		
+		cp ../../bin/webrtcWrapper_ios.ninja ./out_ios/Debug/webrtcWrapper_ios.ninja
+		cp ../../bin/webrtcWrapper_ios.ninja ./out_ios/Debug-iphoneos/webrtcWrapper_ios.ninja
+		cp ../../bin/webrtcWrapper_ios.ninja ./out_ios/Release/webrtcWrapper_ios.ninja
+		cp ../../bin/webrtcWrapper_ios.ninja ./out_ios/Release-iphoneos/webrtcWrapper_ios.ninja
 	fi
 
 
@@ -289,6 +294,7 @@ make_mac_project()
 		mv all.ninja.xcodeproj all_osx.xcodeproj
 		
 		cp ../../bin/webrtcWrapper.ninja ./out_mac/Debug/webrtcWrapper.ninja
+		cp ../../bin/webrtcWrapper.ninja ./out_mac/Release/webrtcWrapper.ninja
 	fi
 }
 
