@@ -43,12 +43,37 @@ OUTPUT_IOS=out_ios
 OUTPUT_MAC=out_mac
 
 
+setNinjaPathForWrappers()
+{
+	if  hash ninja 2>/dev/null; then
+		echo "Ninja is present in the PATH"
+		NINJA_PATH_TO_REPLACE_WITH="$(which ninja)"
+		NINJA_PATH_TO_REPLACE_WITH=${NINJA_PATH_TO_REPLACE_WITH%/ninja}
+	else
+		NINJA_PATH_TO_REPLACE_WITH="..\/..\/..\/..\/..\/bin\/ninja"
+	fi
+	
+	echo Ninja path is $NINJA_PATH_TO_REPLACE_WITH
+	
+	WEBRTC_WRAPPER_IOS_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_ios/webrtcWrapper_ios.xcodeproj/project.pbxproj
+	WEBRTC_WRAPPER_MAC_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_mac/webrtcWrapper_mac.xcodeproj/project.pbxproj
+
+	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "$WEBRTC_WRAPPER_IOS_PATH"; then
+		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_IOS_PATH"
+	fi
+	
+	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "$WEBRTC_WRAPPER_MAC_PATH"; then
+		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_MAC_PATH"
+	fi
+}
 setNinja()
 {
 	echo Start
 
 	if  hash ninja 2>/dev/null; then
 		echo "Ninja is present in the PATH"
+		EXISTING_NINJA_PATH="$(which ninja)"
+		
 	else
 		if [ -f "$NINJA_PATH/ninja" ]; then
 			echo "Ninja already installed"
@@ -367,6 +392,8 @@ updateClang
 make_ios_project
 
 make_mac_project
+
+setNinjaPathForWrappers
 
 #removeFolderStructure
 
