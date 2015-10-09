@@ -55,15 +55,28 @@ setNinjaPathForWrappers()
 	
 	echo Ninja path is $NINJA_PATH_TO_REPLACE_WITH
 	
-	WEBRTC_WRAPPER_IOS_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_ios/webrtcWrapper_ios.xcodeproj/project.pbxproj
-	WEBRTC_WRAPPER_MAC_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_mac/webrtcWrapper_mac.xcodeproj/project.pbxproj
+	#WEBRTC_WRAPPER_IOS_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_ios/webrtcWrapper_ios.xcodeproj/project.pbxproj
+	#WEBRTC_WRAPPER_MAC_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_mac/webrtcWrapper_mac.xcodeproj/project.pbxproj
 
-	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "$WEBRTC_WRAPPER_IOS_PATH"; then
-		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_IOS_PATH"
+	WEBRTC_WRAPPER_IOS_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_ios/webrtcWrapper_ios.xcodeproj/
+	WEBRTC_WRAPPER_MAC_PATH=../../ios/projects/xcode/webrtcWrappers/webrtcWrapper_mac/webrtcWrapper_mac.xcodeproj/
+	
+	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "${WEBRTC_WRAPPER_IOS_PATH}project.pbxproj"; then
+		pushd $WEBRTC_WRAPPER_IOS_PATH
+		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" project.pbxproj
+		git update-index --assume-unchanged project.pbxproj
+		popd
+		#sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_IOS_PATH"
+		#git update-index --assume-unchanged "$WEBRTC_WRAPPER_IOS_PATH"
 	fi
 	
-	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "$WEBRTC_WRAPPER_MAC_PATH"; then
-		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_MAC_PATH"
+	if ! grep -q $NINJA_PATH_TO_REPLACE_WITH "${WEBRTC_WRAPPER_MAC_PATH}project.pbxproj"; then
+		pushd $WEBRTC_WRAPPER_MAC_PATH
+		sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" project.pbxproj
+		git update-index --assume-unchanged project.pbxproj
+		popd
+		#sed -i -e "s~PATH=~PATH=$NINJA_PATH_TO_REPLACE_WITH:~g" "$WEBRTC_WRAPPER_MAC_PATH"
+		#git update-index --assume-unchanged "$WEBRTC_WRAPPER_MAC_PATH"
 	fi
 }
 setNinja()
