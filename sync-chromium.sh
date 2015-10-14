@@ -89,6 +89,7 @@ echo
 echo Preparing to synchronize from \"$SOURCE\" to \"$DEST\"
 echo
 
+copy_path "build"
 copy_path "testing"
 copy_path "third_party/boringssl"
 copy_path "third_party/colorama"
@@ -99,6 +100,7 @@ copy_path "third_party/protobuf"
 copy_path "third_party/usrsctp"
 copy_path "third_party/yasm"
 copy_path "tools/clang"
+copy_path "tools/protoc_wrapper"
 
 echo
 echo Chromium synchronized.

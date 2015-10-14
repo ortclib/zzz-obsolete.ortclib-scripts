@@ -24,6 +24,9 @@ set DEST=libs\webrtc-deps\chromium
 if NOT EXIST %DEST%\nul call:failure -2 "Could not find chromium pruned destination directory"
 if "%failure%" neq "0" goto:done_with_error
 
+call:copy_path build
+if "%failure%" neq "0" goto:done_with_error
+
 call:copy_path testing
 if "%failure%" neq "0" goto:done_with_error
 
@@ -46,6 +49,12 @@ call:copy_path third_party\usrsctp
 if "%failure%" neq "0" goto:done_with_error
 
 call:copy_path third_party\yasm
+if "%failure%" neq "0" goto:done_with_error
+
+call:copy_path tools\clang
+if "%failure%" neq "0" goto:done_with_error
+
+call:copy_path tools\protoc_wrapper
 if "%failure%" neq "0" goto:done_with_error
 
 goto:done
