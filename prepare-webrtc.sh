@@ -127,7 +127,7 @@ makeFolderStructure()
 {
 	echo Creating folder structure
 
-	copyFolder ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
+	#copyFolder ../webrtc-deps/build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/boringssl/ $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/jsoncpp/ $JSONCPP_FOLDER_CHROMIUM_DESTINATION
@@ -167,7 +167,7 @@ removeFolderStructure()
 {
 	echo Removing temporary folders
 
-	removeFolder $BUILD_FOLDER_CHROMIUM_DESTINATION
+	#removeFolder $BUILD_FOLDER_CHROMIUM_DESTINATION
 	removeFolder $BORINGSSL_FOLDER_CHROMIUM_DESTINATION
 	removeFolder $COLORAMA_FOLDER_CHROMIUM_DESTINATION
 	removeFolder $JSONCPP_FOLDER_CHROMIUM_DESTINATION
