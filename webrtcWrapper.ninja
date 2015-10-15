@@ -139,6 +139,9 @@ subninja obj/webrtc/modules/ilbc.ninja
 subninja obj/webrtc/modules/isac.ninja
 subninja obj/webrtc/modules/media_file.ninja
 subninja obj/webrtc/system_wrappers/metrics_default.ninja
+subninja obj/webrtc/rtc_event_log_proto.ninja
+subninja obj/webrtc/rtc_event_log.ninja
+subninja obj/webrtc/modules/isac_common.ninja
 subninja obj/webrtc/modules/neteq.ninja
 subninja obj/chromium/src/third_party/openmax_dl/dl/openmax_dl.ninja
 subninja obj/chromium/src/third_party/opus/opus.ninja
@@ -209,6 +212,9 @@ build ilbc: phony libilbc.a
 build isac: phony libisac.a
 build media_file: phony libmedia_file.a
 build metrics_default: phony libmetrics_default.a
+build rtc_event_log_proto: phony librtc_event_log_proto.a
+build rtc_event_log: phony librtc_event_log.a
+build isac_common: phony libisac_common.a
 build neteq: phony libneteq.a
 build openmax_dl: phony libopenmax_dl.a
 build opus: phony libopus.a
@@ -252,9 +258,9 @@ build webrtcWrapper: phony $
    libaudio_conference_mixer.a libaudio_decoder_interface.a libaudio_device.a $
    libaudio_encoder_interface.a libaudio_processing_sse2.a libbitrate_controller.a $
    libcng.a libcommon_audio.a libcommon_audio_sse2.a libfield_trial_default.a libg711.a $
-   libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a libneteq.a $
-   libopenmax_dl.a libopus.a libpaced_sender.a libpcm16b.a libred.a $
-   libremote_bitrate_estimator.a libvideo_coding_utility.a libvideo_processing_sse2.a $
+   libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a librtc_event_log_proto.a libneteq.a $
+   libopenmax_dl.a libopus.a libpaced_sender.a libpcm16b.a librtc_event_log.a libred.a $
+   libremote_bitrate_estimator.a libvideo_coding_utility.a libisac_common.a libvideo_processing_sse2.a $
    libvideo_processing.a libvoice_engine.a libvpx.a libvpx_intrinsics_ssse3.a $
    libvpx_intrinsics_mmx.a libvpx_intrinsics_avx2.a libvpx_intrinsics_sse2.a $
    libvpx_intrinsics_sse4_1.a libwebrtc_h264.a libwebrtc_vp8.a libwebrtc_vp9.a $
