@@ -133,6 +133,8 @@ subninja obj/webrtc/modules/ilbc.ninja
 subninja obj/webrtc/modules/isac.ninja
 subninja obj/webrtc/modules/media_file.ninja
 subninja obj/webrtc/system_wrappers/metrics_default.ninja
+subninja obj/webrtc/rtc_event_log.ninja
+subninja obj/webrtc/modules/isac_common.ninja
 subninja obj/webrtc/modules/neteq.ninja
 subninja obj/chromium/src/third_party/opus/opus.ninja
 subninja obj/webrtc/modules/paced_sender.ninja
@@ -186,6 +188,8 @@ build ilbc: phony libilbc.a
 build isac: phony libisac.a
 build media_file: phony libmedia_file.a
 build metrics_default: phony libmetrics_default.a
+build rtc_event_log: phony librtc_event_log.a
+build isac_common: phony libisac_common.a
 build neteq: phony libneteq.a
 build opus: phony libopus.a
 build paced_sender: phony libpaced_sender.a
@@ -226,8 +230,8 @@ build webrtcWrapper: phony $
    libaudio_encoder_interface.a libaudio_processing.a libbitrate_controller.a $
    libboringssl.a libcng.a libcommon_audio.a libcommon_video.a libfield_trial_default.a $
    libg711.a libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a $
-   libneteq.a libopus.a libpaced_sender.a libpcm16b.a libred.a libremote_bitrate_estimator.a $
-   librtc_base_approved.a librtp_rtcp.a libsrtp.a libsystem_wrappers.a libusrsctplib.a $
+   libneteq.a libopus.a libpaced_sender.a libpcm16b.a librtc_event_log.a libred.a libremote_bitrate_estimator.a $
+   librtc_base_approved.a librtp_rtcp.a libsrtp.a libsystem_wrappers.a libisac_common.a libusrsctplib.a $
    libvideo_render_module_internal_impl.a libvideo_render_module.a libvideo_capture_module.a $
    libvideo_capture_module_internal_impl.a libvideo_coding_utility.a libvideo_processing.a $
    libvoice_engine.a libvpx.a libwebrtc_common.a libwebrtc_h264.a libwebrtc_opus.a $
