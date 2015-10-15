@@ -27,7 +27,7 @@ rem where perl > NUL 2>&1
 rem if ERRORLEVEL 1 call:setup_perl
 rem if "%failure%" neq "0" goto:done_with_error
 
-call:dolink . build ..\webrtc-deps\build
+call:dolink . build ..\webrtc-deps\chromium\build
 if "%failure%" neq "0" goto:done_with_error
 
 call:make_directory chromium\src
