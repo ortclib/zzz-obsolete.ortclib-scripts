@@ -121,6 +121,8 @@ call:dolink . third_party\winsdk_samples\src ..\webrtc-deps\winsdk_samples_v71
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\gyp ..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
+call:dolink . tools\clang ..\webrtc-deps\chromium\tools\clang
+if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gtest ..\webrtc-deps\gtest
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gmock ..\webrtc-deps\gmock
