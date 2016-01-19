@@ -45,6 +45,9 @@ if "%failure%" neq "0" goto:done_with_error
 call:copy_path third_party\protobuf
 if "%failure%" neq "0" goto:done_with_error
 
+call:copy_path third_party\libvpx_new
+if "%failure%" neq "0" goto:done_with_error
+
 call:copy_path third_party\usrsctp
 if "%failure%" neq "0" goto:done_with_error
 

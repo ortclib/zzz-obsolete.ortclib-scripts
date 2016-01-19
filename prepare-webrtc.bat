@@ -61,6 +61,12 @@ if "%failure%" neq "0" goto:done_with_error
 call:dolink . chromium\src\third_party\usrsctp ..\webrtc-deps\chromium\third_party\usrsctp
 if "%failure%" neq "0" goto:done_with_error
 
+call:dolink . chromium\src\third_party\libvpx_new ..\webrtc-deps\chromium\third_party\libvpx_new
+if "%failure%" neq "0" goto:done_with_error
+
+call:dolink . chromium\src\third_party\libvpx_new\source\libvpx ..\webrtc-deps\libvpx
+if "%failure%" neq "0" goto:done_with_error
+
 call:dolink . chromium\src\testing ..\webrtc-deps\chromium\testing
 if "%failure%" neq "0" goto:done_with_error
 
@@ -105,7 +111,7 @@ if "%failure%" neq "0" goto:done_with_error
 
 call:dolink . third_party\libsrtp ..\webrtc-deps\libsrtp
 if "%failure%" neq "0" goto:done_with_error
-call:dolink . third_party\libvpx ..\webrtc-deps\libvpx
+call:dolink . third_party\libvpx_new .\chromium\src\third_party\libvpx_new
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . third_party\libyuv ..\webrtc-deps\libyuv
 if "%failure%" neq "0" goto:done_with_error
@@ -123,7 +129,7 @@ call:dolink . tools\gyp ..\webrtc-deps\gyp
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . tools\clang ..\webrtc-deps\chromium\tools\clang
 if "%failure%" neq "0" goto:done_with_error
-call:dolink . testing\gtest ..\webrtc-deps\gtest
+call:dolink . testing\gtest ..\webrtc-deps\googletest
 if "%failure%" neq "0" goto:done_with_error
 call:dolink . testing\gmock ..\webrtc-deps\gmock
 if "%failure%" neq "0" goto:done_with_error
