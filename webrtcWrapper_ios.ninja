@@ -153,7 +153,7 @@ subninja obj/webrtc/modules/video_capture_module_internal_impl.ninja
 subninja obj/webrtc/modules/video_coding/utility/video_coding_utility.ninja
 subninja obj/webrtc/modules/video_processing.ninja
 subninja obj/webrtc/voice_engine/voice_engine.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_new.ninja
 subninja obj/webrtc/webrtc_common.ninja
 subninja obj/webrtc/modules/webrtc_h264.ninja
 subninja obj/webrtc/modules/webrtc_opus.ninja
@@ -208,7 +208,7 @@ build video_capture_module_internal_impl: phony libvideo_capture_module_internal
 build video_coding_utility: phony libvideo_coding_utility.a
 build video_processing: phony libvideo_processing.a
 build voice_engine: phony libvoice_engine.a
-build libvpx: phony libvpx.a
+build libvpx_new: phony libvpx_new.a
 build webrtc_common: phony libwebrtc_common.a
 build webrtc_h264: phony libwebrtc_h264.a
 build webrtc_opus: phony libwebrtc_opus.a
@@ -234,6 +234,6 @@ build webrtcWrapper: phony $
    librtc_base_approved.a librtp_rtcp.a libsrtp.a libsystem_wrappers.a libisac_common.a libusrsctplib.a $
    libvideo_render_module_internal_impl.a libvideo_render_module.a libvideo_capture_module.a $
    libvideo_capture_module_internal_impl.a libvideo_coding_utility.a libvideo_processing.a $
-   libvoice_engine.a libvpx.a libwebrtc_common.a libwebrtc_h264.a libwebrtc_opus.a $
+   libvoice_engine.a libvpx_new.a libwebrtc_common.a libwebrtc_h264.a libwebrtc_opus.a $
    libwebrtc_i420.a libwebrtc_utility.a libwebrtc_video_coding.a libwebrtc_vp8.a libwebrtc_vp9.a $
    libwebrtc.a libyuv_neon.a libyuv.a

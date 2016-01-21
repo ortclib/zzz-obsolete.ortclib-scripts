@@ -153,12 +153,12 @@ subninja obj/webrtc/modules/video_coding/utility/video_coding_utility.ninja
 subninja obj/webrtc/modules/video_processing_sse2.ninja
 subninja obj/webrtc/modules/video_processing.ninja
 subninja obj/webrtc/voice_engine/voice_engine.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx_intrinsics_avx2.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx_intrinsics_sse2.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx_intrinsics_mmx.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx_intrinsics_ssse3.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx_intrinsics_sse4_1.ninja
-subninja obj/chromium/src/third_party/libvpx/libvpx.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_avx2.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_sse2.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_mmx.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_ssse3.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_sse4_1.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_new.ninja
 subninja obj/webrtc/webrtc_common.ninja
 subninja obj/webrtc/modules/webrtc_h264.ninja
 subninja obj/webrtc/modules/webrtc_opus.ninja
@@ -226,7 +226,7 @@ build video_coding_utility: phony libvideo_coding_utility.a
 build video_processing_sse2: phony libvideo_processing_sse2.a
 build video_processing: phony libvideo_processing.a
 build voice_engine: phony libvoice_engine.a
-build libvpx: phony libvpx.a
+build libvpx_new: phony libvpx_new.a
 build libvpx_intrinsics_ssse3: phony libvpx_intrinsics_ssse3.a
 build libvpx_intrinsics_mmx: phony libvpx_intrinsics_mmx.a
 build libvpx_intrinsics_avx2: phony libvpx_intrinsics_avx2.a
@@ -261,7 +261,7 @@ build webrtcWrapper: phony $
    libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a librtc_event_log_proto.a libneteq.a $
    libopenmax_dl.a libopus.a libpaced_sender.a libpcm16b.a librtc_event_log.a libred.a $
    libremote_bitrate_estimator.a libvideo_coding_utility.a libisac_common.a libvideo_processing_sse2.a $
-   libvideo_processing.a libvoice_engine.a libvpx.a libvpx_intrinsics_ssse3.a $
+   libvideo_processing.a libvoice_engine.a libvpx_new.a libvpx_intrinsics_ssse3.a $
    libvpx_intrinsics_mmx.a libvpx_intrinsics_avx2.a libvpx_intrinsics_sse2.a $
    libvpx_intrinsics_sse4_1.a libwebrtc_h264.a libwebrtc_vp8.a libwebrtc_vp9.a $
    libwebrtc_opus.a libwebrtc_common.a libwebrtc_i420.a libwebrtc_utility.a $
