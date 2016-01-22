@@ -12,8 +12,8 @@ if "%failure%" neq "0" goto:eof
 call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
 if "%failure%" neq "0" goto:eof
 
-call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC win32
-if "%failure%" neq "0" goto:eof
+rem call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC win32
+rem if "%failure%" neq "0" goto:eof
 
 call:doprepare libs\curl prepare.bat curl
 if "%failure%" neq "0" goto:eof
