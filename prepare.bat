@@ -4,6 +4,7 @@ echo Preparing ortc-lib-sdk...
 echo.
 
 set failure=0
+set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
@@ -52,7 +53,7 @@ goto:done
 
 echo Installing ninja ...
 
-powershell.exe -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','.\bin\ninja-win.zip')
+%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','.\bin\ninja-win.zip')
 
 echo %cd%
 echo %~dp0ninja-win.zip

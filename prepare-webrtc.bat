@@ -5,6 +5,8 @@ echo Preparing symbolic links for WebRTC...
 echo.
 echo.
 
+set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
+
 set PLATFORM=%~1
 echo Platform is "%PLATFORM%"
 echo
@@ -259,7 +261,7 @@ goto:eof
 :download
 if EXIST %~2 goto:eof
 
-powershell.exe "Start-BitsTransfer %~1 -Destination %~2"
+%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
 if ERRORLEVEL 1 call:failure %errorlevel% "Could not download %~2"
 if "%FAILURE%" NEQ "0" goto:eof
 echo.
