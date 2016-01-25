@@ -168,7 +168,7 @@ goto:done
 
 :setup_python
 
-if NOT EXIST \Python27\nul call:failure -1 "Could not locate python path"
+if NOT EXIST C:\Python27\nul call:failure -1 "Could not locate python path"
 if "%failure%" neq "0" goto:eof
 
 call:set_path "C:\Python27"
@@ -268,8 +268,86 @@ echo.
 echo Downloaded %~1
 echo.
 goto:eof
-
 :set_path
+if "%~1"=="" exit /b 2
+if not defined path exit /b 2
+echo called method with paramter %~1
+::
+:: Determine if function was called while delayed expansion was enabled
+setlocal
+set "NotDelayed=!"
+::
+:: Prepare to safely parse PATH into individual paths
+setlocal DisableDelayedExpansion
+set "var=%path:"=""%"
+set "var=%var:^=^^%"
+set "var=%var:&=^&%"
+set "var=%var:|=^|%"
+set "var=%var:<=^<%"
+set "var=%var:>=^>%"
+set "var=%var:;=^;^;%"
+set var=%var:""="%
+set "var=%var:"=""Q%"
+set "var=%var:;;="S"S%"
+set "var=%var:^;^;=;%"
+set "var=%var:""="%"
+setlocal EnableDelayedExpansion
+set "var=!var:"Q=!"
+set "var=!var:"S"S=";"!"
+::
+:: Remove quotes from pathVar and abort if it becomes empty
+rem set "new=!%~1:"^=!"
+set new=%~1
+
+if not defined new exit /b 2
+::
+:: Determine if pathVar is fully qualified
+echo("!new!"|findstr /i /r /c:^"^^\"[a-zA-Z]:[\\/][^\\/]" ^
+                           /c:^"^^\"[\\][\\]" >nul ^
+  && set "abs=1" || set "abs=0"
+::
+:: For each path in PATH, check if path is fully qualified and then
+:: do proper comparison with pathVar. Exit if a match is found.
+:: Delayed expansion must be disabled when expanding FOR variables
+:: just in case the value contains !
+for %%A in ("!new!\") do for %%B in ("!var!") do (
+  if "!!"=="" setlocal disableDelayedExpansion
+  for %%C in ("%%~B\") do (
+    echo(%%B|findstr /i /r /c:^"^^\"[a-zA-Z]:[\\/][^\\/]" ^
+                           /c:^"^^\"[\\][\\]" >nul ^
+      && (if %abs%==1 if /i "%%~sA"=="%%~sC" exit /b 0) ^
+      || (if %abs%==0 if /i %%A==%%C exit /b 0)
+  )
+)
+::
+:: Build the modified PATH, enclosing the added path in quotes
+:: only if it contains ;
+setlocal enableDelayedExpansion
+if "!new:;=!" neq "!new!" set new="!new!"
+if /i "%~2"=="/B" (set "rtn=!new!;!path!") else set "rtn=!path!;!new!"
+::
+:: rtn now contains the modified PATH. We need to safely pass the
+:: value accross the ENDLOCAL barrier
+::
+:: Make rtn safe for assignment using normal expansion by replacing
+:: % and " with not yet defined FOR variables
+set "rtn=!rtn:%%=%%A!"
+set "rtn=!rtn:"=%%B!"
+::
+:: Escape ^ and ! if function was called while delayed expansion was enabled.
+:: The trailing ! in the second assignment is critical and must not be removed.
+if not defined NotDelayed set "rtn=!rtn:^=^^^^!"
+if not defined NotDelayed set "rtn=%rtn:!=^^^!%" !
+::
+:: Pass the rtn value accross the ENDLOCAL barrier using FOR variables to
+:: restore the % and " characters. Again the trailing ! is critical.
+for /f "usebackq tokens=1,2" %%A in ('%%^ ^"') do (
+  endlocal & endlocal & endlocal & endlocal & endlocal
+  set "path=%rtn%" !
+)
+Powershell.exe -NoProfile -ExecutionPolicy Bypass -command "[Environment]::SetEnvironmentVariable('PATH', $env:PATH, [EnvironmentVariableTarget]::User)"
+goto:eof
+:set_path4
 
 for /F "tokens=2* delims= " %%f IN ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path ^| findstr /i path') do set OLD_SYSTEM_PATH=%%g
 setx.exe PATH ";%OLD_SYSTEM_PATH%;%~1"
