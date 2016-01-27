@@ -9,6 +9,26 @@ set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
 
+where perl > NUL 2>&1
+if %errorlevel% equ 1 (
+	echo.
+	echo ================================================================================
+	echo.
+	echo Warning! Warning! Warning! Warning! Warning! Warning! Warning!
+	echo.
+	echo Perl is missing.
+	echo You need to have installed Perl to build projects properly.
+	echo Use the 32-bit perl from Strawberry http://strawberryperl.com/ to avoid possible linking errors and incorrect assember files generation. 
+	echo Download URL: http://strawberryperl.com/download/5.22.1.2/strawberry-perl-5.22.1.2-32bit.msi
+	echo Make sure that the perl path from Strawberry appears at the beginning of all other perl paths in the PATH 
+	echo.
+	echo ================================================================================
+	echo.
+	
+	call:failure -1 "Perl has to be installed before running prepare script!"
+	if "%failure%" neq "0" goto:eof
+)
+
 call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
 if "%failure%" neq "0" goto:eof
 
@@ -28,23 +48,6 @@ if ERRORLEVEL 1 (
 
 	echo Updating projects ...
 	if EXIST .\bin\ninja.exe start /B /wait .\bin\upn.exe .\bin\ .\libs\webrtc\ .\libs\webrtc\chromium\src\
-)
-
-where perl > NUL 2>&1
-if %errorlevel% equ 1 (
-	echo.
-	echo ================================================================================
-	echo.
-	echo Warning! Warning! Warning! Warning! Warning! Warning! Warning!
-	echo.
-	echo Perl is missing.
-	echo You need to have installed Perl to build projects properly.
-	echo Use the 32-bit perl from Strawberry http://strawberryperl.com/ to avoid possible linking errors and incorrect assember files generation. 
-	echo Download URL: http://strawberryperl.com/download/5.22.0.1/strawberry-perl-5.22.0.1-32bit.msi
-	echo Make sure that the perl path from Strawberry appears at the beginning of all other perl paths in the PATH 
-	echo.
-	echo ================================================================================
-	echo.
 )
 
 goto:done
@@ -90,13 +93,13 @@ if ERRORLEVEL 1 call:failure %errorlevel% "%~3 preparation failed."
 popd > NUL
 if "%failure%" neq "0" goto:eof
 
-
 goto:eof
-
 
 :failure
 echo.
+
 echo ERROR: %~2
+
 echo.
 echo FAILURE: Could not prepare ortc-lib-sdk.
 
