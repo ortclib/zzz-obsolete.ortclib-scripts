@@ -26,7 +26,11 @@ if %errorlevel% equ 1 (
 	echo.
 	
 	call:failure -1 "Perl has to be installed before running prepare script!"
+	echo.
+	echo NOTE: Please restart your command shell after installing perl and re-run this script...
 	if "%failure%" neq "0" goto:eof
+	
+	
 )
 
 call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
