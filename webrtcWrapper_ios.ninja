@@ -133,6 +133,7 @@ subninja obj/webrtc/modules/ilbc.ninja
 subninja obj/webrtc/modules/isac.ninja
 subninja obj/webrtc/modules/media_file.ninja
 subninja obj/webrtc/system_wrappers/metrics_default.ninja
+subninja obj/webrtc/modules/rent_a_codec.ninja
 subninja obj/webrtc/rtc_event_log.ninja
 subninja obj/webrtc/modules/isac_common.ninja
 subninja obj/webrtc/modules/neteq.ninja
@@ -157,13 +158,13 @@ subninja obj/chromium/src/third_party/libvpx_new/libvpx_new.ninja
 subninja obj/webrtc/webrtc_common.ninja
 subninja obj/webrtc/modules/webrtc_h264.ninja
 subninja obj/webrtc/modules/webrtc_opus.ninja
+subninja obj/webrtc/modules/webrtc_h264_video_toolbox.ninja
 subninja obj/webrtc/modules/webrtc_i420.ninja
 subninja obj/webrtc/modules/webrtc_utility.ninja
 subninja obj/webrtc/modules/webrtc_video_coding.ninja
 subninja obj/webrtc/modules/video_coding/codecs/vp8/webrtc_vp8.ninja
 subninja obj/webrtc/modules/video_coding/codecs/vp9/webrtc_vp9.ninja
 subninja obj/webrtc/webrtc.ninja
-subninja obj/chromium/src/third_party/libyuv/libyuv_neon.ninja
 subninja obj/chromium/src/third_party/libyuv/libyuv.ninja
 #subninja obj/webrtc/modules/audio_processing_neon.ninja
 
@@ -200,6 +201,7 @@ build rtc_base_approved: phony librtc_base_approved.a
 build rtp_rtcp: phony librtp_rtcp.a
 build libsrtp: phony libsrtp.a
 build system_wrappers: phony libsystem_wrappers.a
+build rent_a_codec: phony librent_a_codec.a
 build usrsctplib: phony libusrsctplib.a
 build video_render_module_internal_impl: phony libvideo_render_module_internal_impl.a
 build video_render_module: phony libvideo_render_module.a
@@ -212,13 +214,13 @@ build libvpx_new: phony libvpx_new.a
 build webrtc_common: phony libwebrtc_common.a
 build webrtc_h264: phony libwebrtc_h264.a
 build webrtc_opus: phony libwebrtc_opus.a
+build webrtc_h264_video_toolbox: phony libwebrtc_h264_video_toolbox.a
 build webrtc_i420: phony libwebrtc_i420.a
 build webrtc_utility: phony libwebrtc_utility.a
 build webrtc_video_coding: phony libwebrtc_video_coding.a
 build webrtc_vp8: phony libwebrtc_vp8.a
 build webrtc_vp9: phony libwebrtc_vp9.a
 build webrtc: phony libwebrtc.a
-build libyuv_neon: phony libyuv_neon.a
 build libyuv: phony libyuv.a
 #build audio_processing_neon: phony libaudio_processing_neon.a
 #build libjpeg: phony libjpeg_turbo.a
@@ -236,4 +238,4 @@ build webrtcWrapper: phony $
    libvideo_capture_module_internal_impl.a libvideo_coding_utility.a libvideo_processing.a $
    libvoice_engine.a libvpx_new.a libwebrtc_common.a libwebrtc_h264.a libwebrtc_opus.a $
    libwebrtc_i420.a libwebrtc_utility.a libwebrtc_video_coding.a libwebrtc_vp8.a libwebrtc_vp9.a $
-   libwebrtc.a libyuv_neon.a libyuv.a
+   libwebrtc.a libyuv.a librent_a_codec.a libwebrtc_h264_video_toolbox.a

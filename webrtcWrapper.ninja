@@ -139,6 +139,7 @@ subninja obj/webrtc/modules/ilbc.ninja
 subninja obj/webrtc/modules/isac.ninja
 subninja obj/webrtc/modules/media_file.ninja
 subninja obj/webrtc/system_wrappers/metrics_default.ninja
+subninja obj/webrtc/modules/rent_a_codec.ninja
 subninja obj/webrtc/rtc_event_log_proto.ninja
 subninja obj/webrtc/rtc_event_log.ninja
 subninja obj/webrtc/modules/isac_common.ninja
@@ -246,6 +247,7 @@ build video_render_module: phony libvideo_render_module.a
 build video_capture_module: phony libvideo_capture_module.a
 build video_capture_module_internal_impl: phony libvideo_capture_module_internal_impl.a
 build system_wrappers: phony libsystem_wrappers.a
+build rent_a_codec: phony librent_a_codec.a
 build rtc_base_approved: phony librtc_base_approved.a
 build libyuv: phony libyuv.a
 build libsrtp: phony libsrtp.a
@@ -270,4 +272,4 @@ build webrtcWrapper: phony $
    obj.host/chromium/src/third_party/yasm/generate_files.actions_rules_copies.stamp $
    libjpeg_turbo.a libvideo_render_module_internal_impl.a libvideo_render_module.a $
    libvideo_capture_module.a libvideo_capture_module_internal_impl.a libsystem_wrappers.a $
-   librtc_base_approved.a libyuv.a libsrtp.a libusrsctplib.a libboringssl.a
+   librtc_base_approved.a libyuv.a libsrtp.a libusrsctplib.a libboringssl.a librent_a_codec.a
