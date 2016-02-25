@@ -33,6 +33,9 @@ if %errorlevel% equ 1 (
 	
 )
 
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
+if "%failure%" neq "0" goto:eof
+
 call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt10
 if "%failure%" neq "0" goto:eof
 
