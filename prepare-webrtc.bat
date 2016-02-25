@@ -159,6 +159,14 @@ if /I "%PLATFORM%"=="winrt" (
 	python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
 )
 
+if /I "%PLATFORM%"=="winrt10" (
+	echo.
+	echo Generating winRT 10 x64 projects
+	echo.
+	set GYP_DEFINES=
+	set GYP_GENERATORS=msvs-winrt
+	python webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
+)
 if %errorlevel% neq 0 call:failure %errorlevel% "Could not generate projects for WebRTC"
 if "%failure%" neq "0" goto:done_with_error
 
