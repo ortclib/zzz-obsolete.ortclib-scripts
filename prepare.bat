@@ -33,12 +33,14 @@ if %errorlevel% equ 1 (
 	
 )
 
-call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt_win10_x86_arm
 if "%failure%" neq "0" goto:eof
 
-call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt10
+call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC winrt_win10_x64
 if "%failure%" neq "0" goto:eof
 
+copy winrt\templates\libs\webrtc\webrtcForOrtc.vs2015.sln libs\webrtc\webrtcForOrtc.vs2015.sln
+call:replace "libs\webrtc\webrtcForOrtc.vs2015.sln" "..\..\..\..\libs\webrtc\" ""
 rem call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC win32
 rem if "%failure%" neq "0" goto:eof
 
@@ -102,6 +104,22 @@ if "%failure%" neq "0" goto:eof
 
 goto:eof
 
+:replace
+set "search=%~2"
+set "replace=%~3"
+
+set "textFile=%~1"
+
+for /f "delims=" %%i in ('type "%textFile%" ^& break ^> "%textFile%" ') do (
+	set "line=%%i"
+	setlocal enabledelayedexpansion
+	set "line=!line:%search%=%replace%!"
+	>>"%textFile%" echo(!line!
+	::echo !line!
+        endlocal
+		
+    )
+goto:eof	
 :failure
 echo.
 

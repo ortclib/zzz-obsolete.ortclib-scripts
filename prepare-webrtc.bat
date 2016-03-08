@@ -150,16 +150,16 @@ if /I "%PLATFORM%"=="win32" (
 	python webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2013
 )
 
-if /I "%PLATFORM%"=="winrt" (
+if /I "%PLATFORM%"=="winrt_win10_x86_arm" (
 	echo.
-	echo Generating winRT and winRT_Phone projects
+	echo Generating winRT projects for x86 and arm platforms
 	echo.
 	set GYP_DEFINES=
 	set GYP_GENERATORS=msvs-winrt
-	python webrtc\build\gyp_webrtc -Mwin -Mwin_phone
+	python webrtc\build\gyp_webrtc -Mwin10 -Mwin10_arm
 )
 
-if /I "%PLATFORM%"=="winrt10" (
+if /I "%PLATFORM%"=="winrt_win10_x64" (
 	echo.
 	echo Generating winRT 10 x64 projects
 	echo.
