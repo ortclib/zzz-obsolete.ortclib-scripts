@@ -4,17 +4,11 @@ set SOLUTIONPATH=%1
 set CONFIGURATION=%2
 set PLATFORM=%3
 
-call:doBuild
+rem call:doBuild
+rem if "%failure%" neq "0" goto:eof
+
+call:combineLibs
 if "%failure%" neq "0" goto:eof
-::set MSBUILDDIR=""
-
-::call:determineMSBUILDDIR
-
-::echo %MSBUILDDIR%
-
-::call %MSBUILDDIR%\MSBuild.exe %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM%
-::MSBuild ..\libs\webrtc\webrtcForOrtc.vs2015.sln /property:Configuration=Debug /property:Platform=x64
-::if %errorlevel% neq 0 call:failure %errorlevel% "Building WebRTC projects has failed"
 
 goto:done
 
@@ -45,28 +39,44 @@ MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platfor
 if %errorlevel% neq 0 call:failure %errorlevel% "Building WebRTC projects has failed"	
 goto:eof
 
-:determineMSBUILDDIR
-setlocal EnableDelayedExpansion
+:combineLibs
+call:setPaths %SOLUTIONPATH%
 
-set PROGFILES=%ProgramFiles%
-if not "%ProgramFiles(x86)%" == "" set PROGFILES=%ProgramFiles(x86)%
-
-REM Check if Visual Studio 2015 is installed
-set MSBUILDDIR="%PROGFILES%\MSBuild\14.0\Bin"
-if exist %MSBUILDDIR% (
-    set COMPILER_VER="2014"
-	goto:eof
+if NOT EXIST %destinationPath%libs\ (
+	mkdir %destinationPath%libs
+	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %destinationPath%libs"
 )
+copy %libsSourcePath%*.lib %destinationPath%libs
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
 
-REM Check if Visual Studio 2013 is installed
-set MSBUILDDIR="%PROGFILES%\MSBuild\12.0\Bin"
-if exist %MSBUILDDIR% (
-    set COMPILER_VER="2013"
-	goto:eof
-)
-call:failure 1 "MSBuild is not installed."
+copy %libsSourcePath%lib\*.lib %destinationPath%libs
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
+
+lib.exe /OUT:%destinationPath%webrtc.lib %destinationPath%libs\*.lib
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
 
 goto:eof
+
+:setPaths
+set basePath=%~dp1
+
+if /I "%PLATFORM%"=="x64" (
+	set libsSourcePath=%basePath%build\%CONFIGURATION%\
+)
+
+if "%PLATFORM%"=="x86" (
+	set libsSourcePath=%basePath%build_win10\%CONFIGURATION%\
+)
+
+if "%PLATFORM%"=="ARM" (
+	set libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%\
+)
+echo Source path is %libsSourcePath%
+
+set destinationPath=%basePath%WEBRTC_BUILD\%CONFIGURATION%\%PLATFORM%\
+
+echo Destination path is %destinationPath%
+goto :eof
 
 :failure
 set FAILURE=%~1
