@@ -4,8 +4,8 @@ set SOLUTIONPATH=%1
 set CONFIGURATION=%2
 set PLATFORM=%3
 
-rem call:doBuild
-rem if "%failure%" neq "0" goto:eof
+call:doBuild
+if "%failure%" neq "0" goto:eof
 
 call:combineLibs
 if "%failure%" neq "0" goto:eof
