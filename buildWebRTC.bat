@@ -4,6 +4,8 @@ set SOLUTIONPATH=%1
 set CONFIGURATION=%2
 set PLATFORM=%3
 
+set failure=0
+
 call:doBuild
 if "%failure%" neq "0" goto:eof
 
@@ -42,17 +44,23 @@ goto:eof
 :combineLibs
 call:setPaths %SOLUTIONPATH%
 
-if NOT EXIST %destinationPath%libs\ (
-	mkdir %destinationPath%libs
+::if NOT EXIST %destinationPath%libs\ (
+::	mkdir %destinationPath%libs
+::	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %destinationPath%libs"
+::)
+if NOT EXIST %destinationPath% (
+	mkdir %destinationPath%
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %destinationPath%libs"
 )
-copy %libsSourcePath%*.lib %destinationPath%libs
-if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
 
-copy %libsSourcePath%lib\*.lib %destinationPath%libs
-if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
+::copy %libsSourcePath%*.lib %destinationPath%libs
+::if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
 
-lib.exe /OUT:%destinationPath%webrtc.lib %destinationPath%libs\*.lib
+::copy %libsSourcePath%lib\*.lib %destinationPath%libs
+::if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
+
+lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%*.lib %libsSourcePath%lib\*.lib
+::lib.exe /OUT:%destinationPath%webrtc.lib %destinationPath%libs\*.lib
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
 
 goto:eof
@@ -79,7 +87,7 @@ echo Destination path is %destinationPath%
 goto :eof
 
 :failure
-set FAILURE=%~1
+set failure=%~1
 echo.
 echo ERROR: %~2
 echo.
