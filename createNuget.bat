@@ -12,7 +12,7 @@ set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
 set nugetBasePath=winrt\nuget
 set nugetPath=%nugetBasePath%\package
 set nugetSpec=%nugetPath%\org.ortc.nuspec
-
+set nugetOutputPath=%nugetBasePath%\Output
 
 if NOT EXIST %nuget% (
 	echo Nuget donwload started
@@ -121,8 +121,10 @@ if "%failure%" neq "0" goto:eof
 goto:eof
 
 :makeNuget
+call:createFolder %nugetOutputPath%
+if "%failure%" neq "0" goto:eof
 
-%nuget% pack %nugetSpec% -OutputDirectory %nugetBasePath%\Output
+%nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the org.ortc nuget package"
 
 goto:eof
