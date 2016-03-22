@@ -24,12 +24,12 @@ REM Check if Visual Studio 2015 is installed
 set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 if exist %MSVCDIR% (
     goto:build
-)
-
-REM Check if Visual Studio 2013 is installed
-set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 12.0"
-if exist %MSVCDIR% (
-    goto:build
+) else (
+	REM Check if Visual Studio 2013 is installed
+	set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 12.0"
+	if exist %MSVCDIR% (
+		goto:build
+	)
 )
 goto:eof
 
@@ -44,25 +44,15 @@ goto:eof
 :combineLibs
 call:setPaths %SOLUTIONPATH%
 
-::if NOT EXIST %destinationPath%libs\ (
-::	mkdir %destinationPath%libs
-::	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %destinationPath%libs"
-::)
 if NOT EXIST %destinationPath% (
 	mkdir %destinationPath%
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %destinationPath%libs"
 )
 
-::copy %libsSourcePath%*.lib %destinationPath%libs
-::if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
-
-::copy %libsSourcePath%lib\*.lib %destinationPath%libs
-::if ERRORLEVEL 1 call:failure %errorlevel% "Failed copying libs to %destinationPath%libs"
-
-lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%*.lib %libsSourcePath%lib\*.lib
-::lib.exe /OUT:%destinationPath%webrtc.lib %destinationPath%libs\*.lib
-if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
-
+if "%failure%"=="0" (
+	lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%*.lib %libsSourcePath%lib\*.lib
+	if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
+)
 goto:eof
 
 :setPaths
