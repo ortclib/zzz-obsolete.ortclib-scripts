@@ -1,7 +1,7 @@
 @echo off
 
 echo Started creating ortc nuget package...
-
+set nugetName=%1
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set PROGFILES=%ProgramFiles%
@@ -11,8 +11,9 @@ set nuget=bin\nuget.exe
 set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
 set nugetBasePath=winrt\nuget
 set nugetPath=%nugetBasePath%\package
-set nugetSpec=%nugetPath%\org.ortc.nuspec
+set nugetSpec=%nugetPath%\%nugetName%\%nugetName%.nuspec
 set nugetOutputPath=%nugetBasePath%\Output
+
 
 if NOT EXIST %nuget% (
 	echo Nuget donwload started
@@ -54,50 +55,55 @@ goto:eof
 :buildProjects
 call %MSVCDIR%\VC\vcvarsall.bat %1
 if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup %1 compiler"
-	
-MSBuild %SOLUTIONPATH% /t:api\org_ortc\org_ortc /property:Configuration=Release /property:Platform=%1
-if %errorlevel% neq 0 call:failure %errorlevel% "Building org.ortc projects has failed"	
+
+if /I "%nugetName%" == "org.ortc" (
+	MSBuild %SOLUTIONPATH% /t:api\org_ortc\org_ortc /property:Configuration=Release /property:Platform=%1
+) else (
+	MSBuild %SOLUTIONPATH% /t:api\org_ortc_adapter\org_ortc_adapter /property:Configuration=Release /property:Platform=%1
+)
+if %errorlevel% neq 0 call:failure %errorlevel% "Building %nugetName% projects has failed"	
 
 goto:eof
 
 :preparePackage
 
-set nugetTargetPath=%nugetBasePath%\org.ortc.targets
-set nugetSpecPath=%nugetBasePath%\org.ortc.nuspec
+set nugetTargetPath=%nugetBasePath%\%nugetName%.targets
+set nugetSpecPath=%nugetBasePath%\%nugetName%.nuspec
 
-set nugetBuildPath=%nugetPath%\build
+set nugetBuildPath=%nugetPath%\%nugetName%\build
 set nugetBuildNativePath=%nugetBuildPath%\native
 set nugetBuildNetCorePath=%nugetBuildPath%\netcore45
 set nugetBuildNetCorex86Path=%nugetBuildNetCorePath%\x86
 set nugetBuildNetCorex64Path=%nugetBuildNetCorePath%\x64
 set nugetBuildNetCoreARMPath=%nugetBuildNetCorePath%\arm
 
-set nugetLibPath=%nugetPath%\lib
+set nugetLibPath=%nugetPath%\%nugetName%\lib
 set nugetLibNetCorePath=%nugetLibPath%\netcore45
 set nugetLibUAPPath=%nugetLibPath%\uap10.0
 
-set nugetRuntimesPath=%nugetPath%\runtimes
+set nugetRuntimesPath=%nugetPath%\%nugetName%\runtimes
 set nugetRuntimesx86Path=%nugetRuntimesPath%\win10-x86\native
 set nugetRuntimesx64Path=%nugetRuntimesPath%\win10-x64\native
 set nugetRuntimesARMPath=%nugetRuntimesPath%\win10-arm\native
 
-set sourcex86Path=winrt\Build\x86\Release\org.ortc
-set sourcex86DllPath=%sourcex86Path%\org.ortc.dll
-set sourcex86WinmdPath=%sourcex86Path%\org.ortc.winmd
-set sourcex86PdbPath=%sourcex86Path%\org.ortc.pdb
+set sourcex86Path=winrt\Build\x86\Release\%nugetName%
+set sourcex86DllPath=%sourcex86Path%\%nugetName%.dll
+set sourcex86WinmdPath=%sourcex86Path%\%nugetName%.winmd
+set sourcex86PdbPath=%sourcex86Path%\%nugetName%.pdb
 
-set sourcex64Path=winrt\Build\x64\Release\org.ortc
-set sourcex64DllPath=%sourcex64Path%\org.ortc.dll
-set sourcex64WinmdPath=%sourcex64Path%\org.ortc.winmd
-set sourcex64PdbPath=%sourcex64Path%\org.ortc.pdb
+set sourcex64Path=winrt\Build\x64\Release\%nugetName%
+set sourcex64DllPath=%sourcex64Path%\%nugetName%.dll
+set sourcex64WinmdPath=%sourcex64Path%\%nugetName%.winmd
+set sourcex64PdbPath=%sourcex64Path%\%nugetName%.pdb
 
-set sourcexARMPath=winrt\Build\ARM\Release\org.ortc
-set sourcexARMDllPath=%sourcexARMPath%\org.ortc.dll
-set sourcexARMWinmdPath=%sourcexARMPath%\org.ortc.winmd
-set sourcexARMPdbPath=%sourcexARMPath%\org.ortc.pdb
+set sourcexARMPath=winrt\Build\ARM\Release\%nugetName%
+set sourcexARMDllPath=%sourcexARMPath%\%nugetName%.dll
+set sourcexARMWinmdPath=%sourcexARMPath%\%nugetName%.winmd
+set sourcexARMPdbPath=%sourcexARMPath%\%nugetName%.pdb
 
+rmdir /s /q %nugetPath%\%nugetName%\
 
-call:createFolder %nugetPath%
+call:createFolder %nugetPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
 call::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
@@ -109,23 +115,28 @@ if "%failure%" neq "0" goto:eof
 call::copyFiles %sourcex86DllPath% %nugetRuntimesx86Path%
 if "%failure%" neq "0" goto:eof
 
-call::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
-if "%failure%" neq "0" goto:eof
+if /I "%nugetName%" == "org.ortc" (
+	call::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
+	if "%failure%" neq "0" goto:eof
+)
 
 call::copyFiles %nugetTargetPath% %nugetBuildNativePath%
 if "%failure%" neq "0" goto:eof
 
-call:copyFiles %nugetSpecPath% %nugetPath%
+call:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
 goto:eof
 
 :makeNuget
-call:createFolder %nugetOutputPath%
+
+rmdir /s /q %nugetOutputPath%\%nugetName%\
+
+call:createFolder %nugetOutputPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
-%nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%
-if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the org.ortc nuget package"
+%nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%\%nugetName%
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
 
 goto:eof
 :copyFiles
