@@ -2,6 +2,7 @@
 
 echo Started creating ortc nuget package...
 set nugetName=%1
+set nugetVersion=%2
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set PROGFILES=%ProgramFiles%
@@ -126,6 +127,9 @@ if "%failure%" neq "0" goto:eof
 call:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
+echo %nugetPath%\%nugetName%\%nugetName%.nuspec
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %nugetPath%\%nugetName%\%nugetName%.nuspec "<version></version>" "<version>%nugetVersion%</version>" %nugetPath%\%nugetName%\%nugetName%.nuspec
+echo Replaced text
 goto:eof
 
 :makeNuget
