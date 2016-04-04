@@ -94,7 +94,7 @@ if exist %MSVCDIR% (
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
 	
 	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
-	if %errorlevel% neq 0 call:failure %errorlevel% "Building WebRTC projects has failed"
+	if ERRORLEVEL 1 call:failure %errorlevel% "Building WebRTC projects has failed"
 ) else (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
 )
