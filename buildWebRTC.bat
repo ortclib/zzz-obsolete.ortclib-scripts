@@ -113,6 +113,8 @@ if "%failure%"=="0" (
 	%MSVCDIR%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%*.lib %libsSourcePath%lib\*.lib
 	if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
 )
+
+echo All WebRTC libs for %PLATFORM% %CONFIGURATION% are combined in one lib.
 goto:eof
 
 :setPaths
@@ -147,5 +149,5 @@ goto:eof
 
 :done
 echo.
-echo WebRTC lib is successfully built.
+echo WebRTC lib for %PLATFORM% %CONFIGURATION% is successfully built.
 echo.

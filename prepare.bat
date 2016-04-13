@@ -3,20 +3,21 @@ echo.
 echo Preparing ortc-lib-sdk...
 echo.
 
+set buildWebrtc_platform=%1
+set buildWebrtc_configuration=%2
+
 set buildWebrtc=1
+set buildWebrtc_x86=0
+set buildWebrtc_x64=0
+set buildWebrtc_arm=0
+set buildWebrtc_Debug=0
+set buildWebrtc_Release=0
 
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 
 if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
 if "%failure%" neq "0" goto:eof
-
-if "%1"=="no-webrtc" (
-	echo Webrtc won't be built.
-	set buildWebrtc=0
-) else (
-	echo Webrtc will be built.
-)
 
 where perl > NUL 2>&1
 if %errorlevel% equ 1 (
@@ -50,8 +51,7 @@ if "%failure%" neq "0" goto:eof
 
 copy winrt\templates\libs\webrtc\webrtcForOrtc.vs2015.sln libs\webrtc\webrtcForOrtc.vs2015.sln
 call:replace "libs\webrtc\webrtcForOrtc.vs2015.sln" "..\..\..\..\libs\webrtc\" ""
-rem call:doprepare libs\webrtc ..\..\bin\prepare-webrtc.bat WebRTC win32
-rem if "%failure%" neq "0" goto:eof
+
 
 call:doprepare libs\curl prepare.bat curl
 if "%failure%" neq "0" goto:eof
@@ -68,7 +68,11 @@ if ERRORLEVEL 1 (
 	if EXIST .\bin\ninja.exe start /B /wait .\bin\upn.exe .\bin\ .\libs\webrtc\ .\libs\webrtc\chromium\src\
 )
 
-if "%buildWebrtc%" neq "0" call:buildWebrtc
+if not "%buildWebrtc_platform%"=="" (
+	call:checkWebrtcBuildRequest
+	call:buildWebrtc
+)
+::if "%buildWebrtc%" neq "0" call:buildWebrtc
 goto:done
 
 :install_ninja
@@ -131,31 +135,104 @@ for /f "delims=" %%i in ('type "%textFile%" ^& break ^> "%textFile%" ') do (
     )
 goto:eof	
 
-:buildWebrtc
-echo Webrtc build is started
+:checkWebrtcBuildRequest
+call:checkWebrtcPlatformBuildRequest
+call:checkWebrtcConfigurationBuildRequest
+goto:eof
 
+:checkWebrtcPlatformBuildRequest
+
+if /i "%buildWebrtc_platform%"=="all" (
+	echo Webrtc will be built for all platforms and configurations.
+	set buildWebrtc_x86=1
+	set buildWebrtc_x64=1
+	set buildWebrtc_arm=1
+	goto:eof
+)
+	
+if /i "%buildWebrtc_platform%"=="x86" (
+	echo Webrtc will be built for x86 platform.
+	set buildWebrtc_x86=1
+	set buildWebrtc_x64=0
+	set buildWebrtc_arm=0
+	goto:eof
+)
+
+if /i "%buildWebrtc_platform%"=="x64" (
+	echo Webrtc will be built for x64 platform.
+	set buildWebrtc_x86=0
+	set buildWebrtc_x64=1
+	set buildWebrtc_arm=0
+	goto:eof
+)
+
+if /i "%buildWebrtc_platform%"=="arm" (
+	echo Webrtc will be built for arm platform.
+	set buildWebrtc_x86=0
+	set buildWebrtc_x64=0
+	set buildWebrtc_arm=1
+	goto:eof
+)
+
+echo Webrtc won't be built.
+goto:eof
+
+
+:checkWebrtcConfigurationBuildRequest
+if /I "%buildWebrtc_configuration%"=="release" (
+	set buildWebrtc_Release=1
+	echo Webrtc will be built for release configuration.
+) else (
+	if /I "%buildWebrtc_configuration%"=="debug" (
+		set buildWebrtc_Debug=1
+		echo Webrtc will be built for debug configuration.
+	) else (
+		set buildWebrtc_Release=1
+		set buildWebrtc_Debug=1
+		echo Webrtc will be built for all configurations.
+	)
+)
+
+goto:eof
+:buildWebrtc
 if NOT EXIST bin\buildWebRTC.bat call:failure -1 "Did not find webrtc build script buildWebRTC.bat"
 if "%failure%" neq "0" goto:eof
 
+if "%buildWebrtc_x86%" equ "1" (
+	if "%buildWebrtc_Debug%" equ "1" (
+		call:buildSpecificWebrtc "Debug" "x86"
+	) 
+	
+	if "%buildWebrtc_Release%" equ "1" (
+		call:buildSpecificWebrtc "Release" "x86"
+	) 
+)
+echo lo
+if "%buildWebrtc_x64%" equ "1" (
+	if "%buildWebrtc_Debug%" equ "1" (
+		call:buildSpecificWebrtc "Debug" "x64"
+	) 
+	
+	if "%buildWebrtc_Release%" equ "1" (
+		call:buildSpecificWebrtc "Release" "x64"
+	)
+)
 
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Debug x64
-if ERRORLEVEL 1 call:failure %errorlevel% "Debug x64: Webrtc build has failed."
+if "%buildWebrtc_arm%" equ "1" (
+	if "%buildWebrtc_Debug%" equ "1" (
+		call:buildSpecificWebrtc "Debug" "ARM"
+	) 
+	if "%buildWebrtc_Release%" equ "1" (
+		call:buildSpecificWebrtc "Release" "ARM"
+	)
+)
 
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Release x64
-if ERRORLEVEL 1 call:failure %errorlevel% "Release x64: Webrtc build has failed."
+goto:eof
 
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Debug x86
-if ERRORLEVEL 1 call:failure %errorlevel% Debug x86: "Webrtc build has failed."
-
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Release x86
-if ERRORLEVEL 1 call:failure %errorlevel% "Release x86: Webrtc build has failed."
-
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Debug ARM
-if ERRORLEVEL 1 call:failure %errorlevel% "Debug ARM: Webrtc build has failed."
-
-call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" Release ARM
-if ERRORLEVEL 1 call:failure %errorlevel% "Release ARM: Webrtc build has failed."
-
+:buildSpecificWebrtc
+echo Webrtc build is started for %1 %2
+call bin\buildWebRTC.bat "libs\webrtc\webrtcForOrtc.vs2015.sln" %~1 %~2
+if ERRORLEVEL 1 call:failure %errorlevel% "%1 %2: Webrtc build has failed."
 goto:eof
 
 :failure
