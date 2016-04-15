@@ -12,10 +12,14 @@ set cleanWebrtc_arm=0
 set cleanWebrtc_Debug=0
 set cleanWebrtc_Release=0
 
-set webrtcPath_x64="..\libs\webrtc\build\"
-set webrtcPath_x86="..\libs\webrtc\build_win10\"
-set webrtcPath_ARM="..\libs\webrtc\build_win10_arm\"
-set webrtcPath="..\libs\webrtc\WEBRTC_BUILD\"
+set webrtcPath_x64=libs\webrtc\build\
+set webrtcPath_x86=libs\webrtc\build_win10\
+set webrtcPath_ARM=libs\webrtc\build_win10_arm\
+set webrtcPath=libs\webrtc\WEBRTC_BUILD\
+set isEmpty=1
+
+if EXIST ..\bin\nul call:failure -1 "Do not run scripts from bin directory!"
+if "%failure%" neq "0" goto:eof
 
 call:checkWebrtcCleanupRequest
 call:deleteWebrtc
@@ -119,20 +123,31 @@ if "%cleanWebrtc_arm%" equ "1" (
 	)
 )
 
-call:deleteFolder %webrtcPath%Debug
-call:deleteFolder %webrtcPath%Release
+call:deleteFolder %webrtcPath%Debug\
+call:deleteFolder %webrtcPath%Release\
 call:deleteFolder %webrtcPath%
 call:deleteFolder %webrtcPath_x86%
 call:deleteFolder %webrtcPath_ARM%
 goto:eof
 :deleteFolder
-if exist %1 (
-	set tmp=
-	for /f "delims=" %%a in ('dir /b %1') do set tmp=%%a
 
-	if {%tmp%}=={} (
-		echo Deleting %1
-		rmdir /s /q %1
-	)
+call:isFolderEmpty %1
+
+if "%isEmpty%" equ "1" (
+	echo Deleting %1
+	rmdir /s /q %1
 )
+goto:eof
+:isFolderEmpty
+set isEmpty=0
+if exist %1 (
+	for /F %%i in ('dir /b "%1*.*"') do (
+		echo %1 is not empty
+		::set isEmpty=0
+		goto:eof
+	)
+	set isEmpty=1
+	echo %1 is empty
+)
+
 goto:eof

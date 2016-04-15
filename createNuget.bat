@@ -13,7 +13,7 @@ set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
 set nugetBasePath=winrt\nuget
 set nugetPath=%nugetBasePath%\package
 set nugetSpec=%nugetPath%\%nugetName%\%nugetName%.nuspec
-set nugetOutputPath=%nugetBasePath%\Output
+set nugetOutputPath=%nugetBasePath%\..\NugetOutput
 
 
 if NOT EXIST %nuget% (
@@ -134,13 +134,18 @@ goto:eof
 
 :makeNuget
 
-rmdir /s /q %nugetOutputPath%\%nugetName%\
-
+if exist %nugetOutputPath%\%nugetName%\ (
+	rmdir /s /q %nugetOutputPath%\%nugetName%\
+)
 call:createFolder %nugetOutputPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
 %nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%\%nugetName%
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+
+if exist %nugetPath% (
+	rmdir /s /q %nugetPath%
+)
 
 goto:eof
 :copyFiles
