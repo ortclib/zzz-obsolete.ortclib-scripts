@@ -20,24 +20,20 @@ set adapterProjectPath=winrt\projects\api\org.ortc.adapter\org.ortc.adapter
 set adapterTempProjectPath=winrt\projects\temp\org.ortc.adapter\org.ortc.adapter
 
 
-::call:createFolder %adapterTempProjectPath%
-::call:createFolder %nugetOutputPath%
-
-
-::xcopy /s /e /y %adapterProjectPath%\*.* %adapterTempProjectPath%\
-
-
 call:copyFiles %adapterProjectPath%\*.* %adapterTempProjectPath%\
 if "%failure%" neq "0" goto:endedWithError
-::echo %nugetTemplateProjectsPath%
-::echo %adapterTempProjectPath%
-::echo copy 2
-::copy /v/y %nugetTemplateProjectsPath%\*.* %adapterTempProjectPath%\
+
 call:copyFiles %nugetTemplateProjectsPath%\*.* %adapterTempProjectPath%\
 if "%failure%" neq "0" goto:endedWithError
 
-echo %nugetSpec%
+
 call:copyFiles %nugetSpec% %adapterTempProjectPath%\
+if "%failure%" neq "0" goto:endedWithError
+
+call:setNugetVersion
+if "%failure%" neq "0" goto:endedWithError
+
+call:restoreNugetDependencies
 if "%failure%" neq "0" goto:endedWithError
 
 call:createNuget
@@ -49,14 +45,22 @@ if not "%publishKey%"=="" (
 	call:publishNuget
 	if "%failure%" neq "0" goto:endedWithError
 )
-::%nuget% pack %adapterTempProjectPath%\%projectName%.csproj -Build -Version %nugetVersion% -OutputDirectory %nugetOutputPath% -Properties Configuration=Release -Properties Platform=AnyCPU
 
-::rmdir /s /q winrt\projects\temp
+
+rmdir /s /q winrt\projects\temp
 
 goto:done
+:setNugetVersion
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %adapterTempProjectPath%\%projectName%.nuspec "<version></version>" "<version>%nugetVersion%</version>" %adapterTempProjectPath%\%projectName%.nuspec
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+goto:eof
+
+:restoreNugetDependencies
+%nuget% restore %adapterTempProjectPath%\project.json
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+goto:eof
 
 :createNuget
-
 %nuget% pack %adapterTempProjectPath%\%projectName%.csproj -Build -Version %nugetVersion% -OutputDirectory %nugetOutputPath% -Properties Configuration=Release -Properties Platform=AnyCPU
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
 goto:eof
@@ -87,6 +91,11 @@ if EXIST %1 (
 )
 goto:eof
 
+:cleanTempFolder
+echo Cleaning...
+rmdir /s /q winrt\projects\temp
+goto:eof
+
 :failure
 echo.
 echo ERROR: %~2
@@ -96,9 +105,9 @@ set failure=%~1
 goto:eof
 
 :endedWithError
-echo Cleaning...
-::rmdir /s /q winrt\projects\temp
+call::cleanTempFolder
 goto:eof
+
 :done
 echo.
 echo Success: ORTC nuget package is created.
