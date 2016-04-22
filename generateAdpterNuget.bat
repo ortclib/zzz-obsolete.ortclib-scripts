@@ -26,7 +26,13 @@ set v=1.0.0
 set k=
 
 ::PreRelease flag
-set p=0
+set b=0
+
+::Destination nuget storage
+set s=
+
+::Publish flag
+set p=
 
 if exist %nugetPackageVersion% (
 	set /p v=< %nugetPackageVersion%
@@ -64,7 +70,7 @@ goto initial
 
 :proceed
 
-if not %p%==0 (
+if not %b%==0 (
 	set v=%v%-Beta
 )
 echo New version is %v%
@@ -75,7 +81,6 @@ if "%failure%" neq "0" goto:endedWithError
 
 call:copyFiles %nugetTemplateProjectsPath%\*.* %adapterTempProjectPath%\
 if "%failure%" neq "0" goto:endedWithError
-
 
 call:copyFiles %nugetSpec% %adapterTempProjectPath%\
 if "%failure%" neq "0" goto:endedWithError
@@ -92,11 +97,12 @@ if "%failure%" neq "0" goto:endedWithError
 rmdir /s /q winrt\projects\temp
 
 if not "%publishKey%"=="" (
-	call:publishNuget
+	call:setNugetApiKey
 	if "%failure%" neq "0" goto:endedWithError
 )
 
-
+call:publishNuget
+if "%failure%" neq "0" goto:endedWithError
 rmdir /s /q winrt\projects\temp
 
 goto:done
@@ -115,12 +121,21 @@ goto:eof
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
 goto:eof
 
-:publishNuget
-
+:setNugetApiKey
 %nuget% setapikey %publishKey%
-
-%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+goto:eof
+
+:publishNuget
+if not "%p%"=="" (
+	if not %s%=="" (
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -s %s%
+	) else (
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg
+	)
+	if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+)
+
 goto:eof
 
 :createFolder
