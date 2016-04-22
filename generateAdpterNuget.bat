@@ -1,9 +1,9 @@
 @echo off
-
+setlocal EnableDelayedExpansion
 set projectName=org.ortc.adapter
 set nugetName=ORTC.Adapter
-set nugetVersion=%1
-set publishKey=%2
+set nugetVersion=
+set publishKey=
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set PROGFILES=%ProgramFiles%
@@ -15,11 +15,61 @@ set nugetBasePath=winrt\nuget
 set nugetSpec=%nugetBasePath%\%projectName%.nuspec
 set nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectName%
 set nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectName%
-
+set nugetPackageVersion=%nugetBasePath%\%projectName%.version
 set adapterProjectPath=winrt\projects\api\org.ortc.adapter\org.ortc.adapter
 set adapterTempProjectPath=winrt\projects\temp\org.ortc.adapter\org.ortc.adapter
 
+::Version
+set v=1.0.0
 
+::Api key for publishing
+set k=
+
+::PreRelease flag
+set p=0
+
+if exist %nugetPackageVersion% (
+	set /p v=< %nugetPackageVersion%
+)
+
+echo Current Version is %v%
+for /f "tokens=1-3 delims=." %%a in ("%v%") do (
+  set /a build=%%c+1
+  set v=%%a.%%b.!build!
+)
+
+:initial
+if "%1"=="" (
+	if not "%nome%"=="" (
+		set "%nome%=1"
+		set nome=""
+	) else (
+		goto:proceed
+	)
+)
+::echo              %1
+set aux=%1
+if "%aux:~0,1%"=="-" (
+	if not "%nome%"=="" (
+		set "%nome%=1"
+	)
+   set nome=%aux:~1,250%
+) else (
+   set "%nome%=%1"
+   set nome=
+)
+
+shift
+goto initial
+
+:proceed
+
+if not %p%==0 (
+	set v=%v%-Beta
+)
+echo New version is %v%
+set nugetVersion=%v%
+set publishKey=%k%
 call:copyFiles %adapterProjectPath%\*.* %adapterTempProjectPath%\
 if "%failure%" neq "0" goto:endedWithError
 
@@ -109,6 +159,7 @@ call::cleanTempFolder
 goto:eof
 
 :done
+echo %v%>%nugetPackageVersion%
 echo.
 echo Success: ORTC nuget package is created.
 echo.
