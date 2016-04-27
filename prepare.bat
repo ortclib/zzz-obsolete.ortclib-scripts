@@ -143,7 +143,7 @@ goto:eof
 :checkWebrtcPlatformBuildRequest
 
 if /i "%buildWebrtc_platform%"=="all" (
-	echo Webrtc will be built for all platforms and configurations.
+	echo Webrtc will be built for all platforms.
 	set buildWebrtc_x86=1
 	set buildWebrtc_x64=1
 	set buildWebrtc_arm=1

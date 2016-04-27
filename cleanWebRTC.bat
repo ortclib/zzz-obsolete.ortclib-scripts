@@ -1,7 +1,7 @@
 @echo off
 
 setlocal enabledelayedexpansion
-
+set failure=0
 set cleanWebrtc_platform=%1
 set cleanWebrtc_configuration=%2
 
@@ -94,8 +94,9 @@ if "%cleanWebrtc_x86%" equ "1" (
 	) 
 	
 	if "%cleanWebrtc_Release%" equ "1" (
-		if EXIST rmdir /s /q "%webrtcPath_x86%Release"
-		if EXIST rmdir /s /q "%webrtcPath%Release\X86"
+	echo birise se "%webrtcPath_x86%Release"
+		if EXIST "%webrtcPath_x86%Release" rmdir /s /q "%webrtcPath_x86%Release"
+		if EXIST "%webrtcPath%Release\X86" rmdir /s /q "%webrtcPath%Release\X86"
 	) 
 )
 
@@ -151,3 +152,18 @@ if exist %1 (
 )
 
 goto:eof
+
+:failure
+echo.
+
+echo ERROR: %~2
+
+echo.
+echo FAILURE: Could not prepare ortc-lib-sdk.
+
+set failure=%~1
+
+goto:eof
+
+:done
+echo Finished webrtc cleanup
