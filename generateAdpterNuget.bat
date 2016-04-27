@@ -118,7 +118,6 @@ if not "%publishKey%"=="" (
 	call:setNugetApiKey
 	if "%failure%" neq "0" goto:endedWithError
 )
-echo popo
 call:publishNuget
 if "%failure%" neq "0" goto:eof
 ::rmdir /s /q winrt\projects\temp
