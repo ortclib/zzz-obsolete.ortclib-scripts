@@ -20,6 +20,7 @@ set adapterProjectPath=winrt\projects\api\org.ortc.adapter\org.ortc.adapter
 set adapterTempProjectPath=winrt\projects\temp\org.ortc.adapter\org.ortc.adapter
 set peerCCSourcePath=samples\PeerCC
 set peerCCTestPath=winrt\test\PeerCC
+set peerCCProjectTemaplePath=winrt\templates\samples\PeerCC
 ::Version
 set v=1.0.0
 
@@ -121,7 +122,7 @@ if not "%publishKey%"=="" (
 call:publishNuget
 if "%failure%" neq "0" goto:eof
 ::rmdir /s /q winrt\projects\temp
-echo "%failure%"
+
 if not "%t%"=="" (
 	call:preparePeerCC
 	if "%failure%" neq "0" goto:eof
@@ -176,7 +177,14 @@ goto:eof
 
 rmdir /s /q %peerCCTestPath%
 ::call:createFolder %peerCCTestPath%
-call:copyFiles %peerCCSourcePath% %peerCCTestPath%
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.Win10 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient.Win10.Shared %peerCCTestPath%\PeerConnectionClient.Win10.Shared
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient.Shared %peerCCTestPath%\PeerConnectionClient.Shared
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln %peerCCTestPath%\
+
+echo peerCCProjectTemaplePath = %peerCCProjectTemaplePath%
+call:copyFiles %peerCCProjectTemaplePath%\project.json %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json "ORTC.Adapter.Version" "%nugetVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
 
 goto:eof
 
