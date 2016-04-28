@@ -135,7 +135,6 @@ makeFolderStructure()
 	copyFolder ../webrtc-deps/libsrtp/ $LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/libvpx/ $LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/libyuv/ $LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION
-  copyFolder ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/openmax/ $OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/opus/ $OPUS_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../webrtc-deps/usrsctp/ $USRSCTP_FOLDER_CHROMIUM_DESTINATION
