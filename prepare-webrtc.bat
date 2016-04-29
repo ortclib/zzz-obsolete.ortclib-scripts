@@ -139,6 +139,8 @@ if "%failure%" neq "0" goto:done_with_error
 call:make_directory third_party\expat
 copy ..\..\bin\bogus_expat.gyp third_party\expat\expat.gyp
 
+call:make_directory chromium\src\third_party\libjingle\source\talk\media\testdata\
+
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
 if /I "%PLATFORM%"=="win32" (
