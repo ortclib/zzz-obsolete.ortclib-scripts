@@ -1,8 +1,12 @@
 @echo off
 
+setlocal EnableDelayedExpansion
 echo Started creating ortc nuget package...
-set nugetName=%1
-set nugetVersion=%2
+
+set projectName=org.ortc
+set nugetName=ORTC
+set nugetVersion=
+set publishKey=
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set PROGFILES=%ProgramFiles%
@@ -11,10 +15,75 @@ set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 set nuget=bin\nuget.exe
 set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
 set nugetBasePath=winrt\nuget
-set nugetPath=%nugetBasePath%\package
-set nugetSpec=%nugetPath%\%nugetName%\%nugetName%.nuspec
-set nugetOutputPath=%nugetBasePath%\..\NugetOutput
 
+set nugetSpec=%nugetBasePath%\%projectName%.nuspec
+set nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectName%
+set nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectName%
+set nugetPackageVersion=%nugetBasePath%\%projectName%.version
+
+
+set nugetVersion=%2
+
+set nugetPath=%nugetBasePath%\package
+
+
+::Version
+set v=1.0.0
+
+::Api key for publishing
+set k=
+
+::PreRelease flag
+set b=0
+
+::Destination nuget storage
+set s=
+
+::Publish flag
+set p=
+
+if exist %nugetPackageVersion% (
+	set /p v=< %nugetPackageVersion%
+)
+
+echo Current Version is %v%
+for /f "tokens=1-3 delims=." %%a in ("%v%") do (
+  set /a build=%%c+1
+  set v=%%a.%%b.!build!
+)
+
+:initial
+if "%1"=="" (
+	if not "%nome%"=="" (
+		set "%nome%=1"
+		set nome=""
+	) else (
+		goto:proceed
+	)
+)
+::echo              %1
+set aux=%1
+if "%aux:~0,1%"=="-" (
+	if not "%nome%"=="" (
+		set "%nome%=1"
+	)
+   set nome=%aux:~1,250%
+) else (
+   set "%nome%=%1"
+   set nome=
+)
+
+shift
+goto initial
+
+:proceed
+
+if not %b%==0 (
+	set v=%v%-Beta
+)
+echo New version is %v%
+set nugetVersion=%v%
+set publishKey=%k%
 
 if NOT EXIST %nuget% (
 	echo Nuget donwload started
@@ -31,14 +100,14 @@ if NOT EXIST %MSVCDIR% (
 	goto:eof
 )
 
-::call:buildProjects x86
-::if "%failure%" neq "0" goto:eof
+call:buildProjects x86
+if "%failure%" neq "0" goto:eof
 	
-::call:buildProjects x64
-::if "%failure%" neq "0" goto:eof
+call:buildProjects x64
+if "%failure%" neq "0" goto:eof
 	
-::call:buildProjects ARM
-::if "%failure%" neq "0" goto:eof
+call:buildProjects ARM
+if "%failure%" neq "0" goto:eof
 
 call:preparePackage
 if "%failure%" neq "0" goto:eof
@@ -54,16 +123,18 @@ if ERRORLEVEL 1 call:failure %errorlevel% "Could not download nuget.exe"
 goto:eof
 
 :buildProjects
-call %MSVCDIR%\VC\vcvarsall.bat %1
-if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup %1 compiler"
+call buildORTC.bat Release x86
+if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
 
-if /I "%nugetName%" == "org.ortc" (
-	MSBuild %SOLUTIONPATH% /t:api\org_ortc\org_ortc /property:Configuration=Release /property:Platform=%1
-) else (
-	MSBuild %SOLUTIONPATH% /t:api\org_ortc_adapter\org_ortc_adapter /property:Configuration=Release /property:Platform=%1
-)
-if %errorlevel% neq 0 call:failure %errorlevel% "Building %nugetName% projects has failed"	
+if "%failure%" neq "0" goto:eof
 
+call buildORTC.bat Release x64
+if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
+
+if "%failure%" neq "0" goto:eof
+
+call buildORTC.bat Release ARM
+if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
 goto:eof
 
 :preparePackage
