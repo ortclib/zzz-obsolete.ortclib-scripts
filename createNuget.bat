@@ -3,7 +3,7 @@
 setlocal EnableDelayedExpansion
 echo Started creating ortc nuget package...
 
-set projectName=org.ortc
+set projectNameForNuget=org.ortc
 set nugetName=ORTC
 set nugetVersion=
 set publishKey=
@@ -14,12 +14,13 @@ if not "%ProgramFiles(x86)%" == "" set PROGFILES=%ProgramFiles(x86)%
 set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 set nuget=bin\nuget.exe
 set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
+set PROJECTPATH=winrt\projects\ortc-template.csproj
 set nugetBasePath=winrt\nuget
 
-set nugetSpec=%nugetBasePath%\%projectName%.nuspec
-set nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectName%
-set nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectName%
-set nugetPackageVersion=%nugetBasePath%\%projectName%.version
+set nugetSpec=%nugetBasePath%\package\%nugetName%\%projectNameForNuget%.nuspec
+set nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectNameForNuget%
+set nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectNameForNuget%
+set nugetPackageVersion=%nugetBasePath%\%projectNameForNuget%.version
 
 
 set nugetVersion=%2
@@ -78,12 +79,10 @@ goto initial
 
 :proceed
 
-if not %b%==0 (
-	set v=%v%-Beta
+if not "%h%"=="" (
+	call:showHelp
+	goto end
 )
-echo New version is %v%
-set nugetVersion=%v%
-set publishKey=%k%
 
 if NOT EXIST %nuget% (
 	echo Nuget donwload started
@@ -91,22 +90,23 @@ if NOT EXIST %nuget% (
 	if "%failure%" neq "0" goto:eof
 )
 
-if NOT EXIST %MSVCDIR% (
-    set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 12.0"
+if not %b%==0 (
+	set v=%v%-Beta
 )
 
-if NOT EXIST %MSVCDIR% (
-    call:failure 1 "Microsoft Visual Studio 12.0 or 14.0 is not installed."	
-	goto:eof
-)
+echo New version is %v%
+set nugetVersion=%v%
+set publishKey=%k%
 
-call:buildProjects x86
+call:copyFiles %nugetTemplateProjectsPath%\*.* winrt\projects\
+if "%failure%" neq "0" goto:endedWithError
+
+::call:buildProjects x86
+::if "%failure%" neq "0" goto:eof
+call:determineVisualStudioPath
 if "%failure%" neq "0" goto:eof
-	
-call:buildProjects x64
-if "%failure%" neq "0" goto:eof
-	
-call:buildProjects ARM
+
+call:build
 if "%failure%" neq "0" goto:eof
 
 call:preparePackage
@@ -114,7 +114,9 @@ if "%failure%" neq "0" goto:eof
 
 call:makeNuget
 
-goto:eof
+del winrt\projects\ortc-template.csproj
+del winrt\projects\ortc-lib-sdk-template.vs2015.sln
+goto:done
 
 :downloadNuget
 %powershell_path% "Start-BitsTransfer https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -Destination bin\nuget.exe"
@@ -122,25 +124,17 @@ goto:eof
 if ERRORLEVEL 1 call:failure %errorlevel% "Could not download nuget.exe"
 goto:eof
 
+
 :buildProjects
-call buildORTC.bat Release x86
-if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
+call bin\buildORTC.bat Release x86
+if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build for X86 Release has failed."
 
-if "%failure%" neq "0" goto:eof
-
-call buildORTC.bat Release x64
-if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
-
-if "%failure%" neq "0" goto:eof
-
-call buildORTC.bat Release ARM
-if ERRORLEVEL 1 call:failure %errorlevel% "ORTC build failed."
 goto:eof
 
 :preparePackage
 
-set nugetTargetPath=%nugetBasePath%\%nugetName%.targets
-set nugetSpecPath=%nugetBasePath%\%nugetName%.nuspec
+set nugetTargetPath=%nugetBasePath%\%projectNameForNuget%.targets
+set nugetSpecPath=%nugetBasePath%\%projectNameForNuget%.nuspec
 
 set nugetBuildPath=%nugetPath%\%nugetName%\build
 set nugetBuildNativePath=%nugetBuildPath%\native
@@ -158,20 +152,20 @@ set nugetRuntimesx86Path=%nugetRuntimesPath%\win10-x86\native
 set nugetRuntimesx64Path=%nugetRuntimesPath%\win10-x64\native
 set nugetRuntimesARMPath=%nugetRuntimesPath%\win10-arm\native
 
-set sourcex86Path=winrt\Build\x86\Release\%nugetName%
-set sourcex86DllPath=%sourcex86Path%\%nugetName%.dll
-set sourcex86WinmdPath=%sourcex86Path%\%nugetName%.winmd
-set sourcex86PdbPath=%sourcex86Path%\%nugetName%.pdb
+set sourcex86Path=winrt\Build\x86\Release\%projectNameForNuget%
+set sourcex86DllPath=%sourcex86Path%\%projectNameForNuget%.dll
+set sourcex86WinmdPath=%sourcex86Path%\%projectNameForNuget%.winmd
+set sourcex86PdbPath=%sourcex86Path%\%projectNameForNuget%.pdb
 
-set sourcex64Path=winrt\Build\x64\Release\%nugetName%
-set sourcex64DllPath=%sourcex64Path%\%nugetName%.dll
-set sourcex64WinmdPath=%sourcex64Path%\%nugetName%.winmd
-set sourcex64PdbPath=%sourcex64Path%\%nugetName%.pdb
+set sourcex64Path=winrt\Build\x64\Release\%projectNameForNuget%
+set sourcex64DllPath=%sourcex64Path%\%projectNameForNuget%.dll
+set sourcex64WinmdPath=%sourcex64Path%\%projectNameForNuget%.winmd
+set sourcex64PdbPath=%sourcex64Path%\%projectNameForNuget%.pdb
 
-set sourcexARMPath=winrt\Build\ARM\Release\%nugetName%
-set sourcexARMDllPath=%sourcexARMPath%\%nugetName%.dll
-set sourcexARMWinmdPath=%sourcexARMPath%\%nugetName%.winmd
-set sourcexARMPdbPath=%sourcexARMPath%\%nugetName%.pdb
+set sourcexARMPath=winrt\Build\ARM\Release\%projectNameForNuget%
+set sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
+set sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
+set sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
 
 rmdir /s /q %nugetPath%\%nugetName%\
 
@@ -187,7 +181,7 @@ if "%failure%" neq "0" goto:eof
 call::copyFiles %sourcex86DllPath% %nugetRuntimesx86Path%
 if "%failure%" neq "0" goto:eof
 
-if /I "%nugetName%" == "org.ortc" (
+if /I "%projectNameForNuget%" == "org.ortc" (
 	call::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
 	if "%failure%" neq "0" goto:eof
 )
@@ -198,9 +192,47 @@ if "%failure%" neq "0" goto:eof
 call:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
 if "%failure%" neq "0" goto:eof
 
-echo %nugetPath%\%nugetName%\%nugetName%.nuspec
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %nugetPath%\%nugetName%\%nugetName%.nuspec "<version></version>" "<version>%nugetVersion%</version>" %nugetPath%\%nugetName%\%nugetName%.nuspec
-echo Replaced text
+::echo %nugetPath%\%nugetName%\%nugetName%.nuspec
+::%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %nugetPath%\%nugetName%\%nugetName%.nuspec "<version></version>" "<version>%nugetVersion%</version>" %nugetPath%\%nugetName%\%nugetName%.nuspec
+::echo Replaced text
+
+call:setNugetVersion
+if "%failure%" neq "0" goto:eof
+goto:eof
+
+:determineVisualStudioPath
+set PROGFILES=%ProgramFiles%
+if not "%ProgramFiles(x86)%" == "" set PROGFILES=%ProgramFiles(x86)%
+
+REM Check if Visual Studio 2015 is installed
+set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
+
+if not exist %MSVCDIR% (
+	REM Check if Visual Studio 2013 is installed
+	set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 12.0"
+)
+
+echo Visual Studio path is %MSVCDIR%
+goto:eof
+
+:build
+
+if exist %MSVCDIR% (
+	call %MSVCDIR%\VC\vcvarsall.bat amd64
+	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
+	
+	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
+	MSBuild %PROJECTPATH% /t:Build /m
+	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects for %PLATFORM% %CONFIGURATION% has failed"
+) else (
+	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
+)
+goto:eof
+:setNugetVersion
+echo version %nugetVersion%
+echo %nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %nugetPath%\%nugetName%\%projectNameForNuget%.nuspec "<version></version>" "<version>%nugetVersion%</version>" %nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
 goto:eof
 
 :makeNuget
@@ -236,6 +268,41 @@ if NOT EXIST %1 (
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not make a directory %1"
 )
 goto:eof
+
+:showHelp
+echo Available commands:
+echo.
+echo -b 	Flag for creating prerelase nuget package.
+echo.
+echo -k	Api key that is used for publishing nuget package on nuget.org. This is used in combination with 
+echo		publish flag -p. This will store your API key so that you never need to do this step again on this machine.
+echo.
+echo -h 	Show script usage
+echo.
+echo -p	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
+echo		desired to publish it locally or on some another server, it sholud be used option -s to specify 
+echo		destination server
+echo.
+echo -s	Used for specifying nuget server where package will be published
+echo.
+echo -t	Flag that initiates setting up test environment for newly published nuget package
+echo.
+echo -v	Nuget package version number
+echo.
+echo Generated nuget package will be stored in winrt\NugetOutput\org.ortc.Adapter
+echo Examples:
+echo.
+echo Creating nuget package with version number 1.0.1
+echo bin\createNuget.bat
+echo.
+echo Creating prerelase nuget package with version number 1.0.1-Beta
+echo bin\createNuget.bat -b
+echo.
+echo Creating prerelase nuget package and publish it to locally nuget storage
+echo bin\createNuget.bat -b -p -s [path to local nuget storage]
+echo.
+
+goto:eof
 :failure
 echo.
 
@@ -249,6 +316,10 @@ set failure=%~1
 goto:eof
 
 :done
+echo %v%
+echo %nugetPackageVersion%
+echo %v%>%nugetPackageVersion%
 echo.
 echo Success: ORTC nuget package is created.
 echo.
+:end

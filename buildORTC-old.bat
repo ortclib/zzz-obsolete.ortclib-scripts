@@ -4,7 +4,6 @@ setlocal EnableDelayedExpansion
 set CONFIGURATION=%1
 set PLATFORM=%2
 set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
-set PROJECTPATH=winrt\projects\ortc-template.csproj
 set MSVCDIR=""
 set failure=0
 set x86BuildCompilerOption=amd64_x86
@@ -72,8 +71,8 @@ if exist %MSVCDIR% (
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
 	
 	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
-	MSBuild %PROJECTPATH% /t:Build /m
-	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects for %PLATFORM% %CONFIGURATION% has failed"
+	MSBuild %SOLUTIONPATH% /t:api\org_ortc\org_ortc /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
+	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects has failed"
 ) else (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
 )
@@ -85,7 +84,7 @@ set failure=%~1
 echo.
 echo ERROR: %~2
 echo.
-echo. Failed to build ORTC lib for %PLATFORM% %CONFIGURATION%...
+echo. Failed to build ORTC lib ...
 echo.
 goto:eof
 
