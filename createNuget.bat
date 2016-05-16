@@ -116,6 +116,14 @@ call:makeNuget
 
 del winrt\projects\ortc-template.csproj
 del winrt\projects\ortc-lib-sdk-template.vs2015.sln
+
+if not "%publishKey%"=="" (
+	call:setNugetApiKey
+	if "%failure%" neq "0" goto:endedWithError
+)
+call:publishNuget
+if "%failure%" neq "0" goto:eof
+
 goto:done
 
 :downloadNuget
@@ -249,6 +257,23 @@ if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget
 if exist %nugetPath% (
 	rmdir /s /q %nugetPath%
 )
+
+goto:eof
+
+:setNugetApiKey
+%nuget% setapikey %publishKey%
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed creating the %nugetName% nuget package"
+goto:eof
+
+:publishNuget
+if not "%p%"=="" (
+	if not "%s%"=="" (
+		%nuget% push %nugetOutputPath%\%nugetName%\%nugetName%.%nugetVersion%.nupkg -s %s%
+	) else (
+		%nuget% push %nugetOutputPath%\%nugetName%\%nugetName%.%nugetVersion%.nupkg
+	)
+)
+if ERRORLEVEL 1 call:failure %errorlevel% "Failed publishing the %nugetName% nuget package"
 
 goto:eof
 :copyFiles
