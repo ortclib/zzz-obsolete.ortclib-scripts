@@ -22,6 +22,9 @@ set nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectNameForNuget%
 set nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectNameForNuget%
 set nugetPackageVersion=%nugetBasePath%\%projectNameForNuget%.version
 
+set peerCCSourcePath=samples\PeerCC
+set peerCCTestPath=winrt\test\PeerCC
+set peerCCProjectTemaplePath=winrt\templates\samples\PeerCC
 
 set nugetVersion=%2
 
@@ -42,6 +45,9 @@ set s=
 
 ::Publish flag
 set p=
+
+::Prepare test environment
+set t=
 
 if exist %nugetPackageVersion% (
 	set /p v=< %nugetPackageVersion%
@@ -106,8 +112,8 @@ if "%failure%" neq "0" goto:endedWithError
 call:determineVisualStudioPath
 if "%failure%" neq "0" goto:eof
 
-call:build
-if "%failure%" neq "0" goto:eof
+::call:build
+::if "%failure%" neq "0" goto:eof
 
 call:preparePackage
 if "%failure%" neq "0" goto:eof
@@ -124,6 +130,10 @@ if not "%publishKey%"=="" (
 call:publishNuget
 if "%failure%" neq "0" goto:eof
 
+if not "%t%"=="" (
+	call:preparePeerCC
+	if "%failure%" neq "0" goto:eof
+)
 goto:done
 
 :downloadNuget
@@ -274,6 +284,21 @@ if not "%p%"=="" (
 	)
 )
 if ERRORLEVEL 1 call:failure %errorlevel% "Failed publishing the %nugetName% nuget package"
+
+goto:eof
+
+:preparePeerCC
+
+rmdir /s /q %peerCCTestPath%
+::call:createFolder %peerCCTestPath%
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.Win10 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient.Win10.Shared %peerCCTestPath%\PeerConnectionClient.Win10.Shared
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient.Shared %peerCCTestPath%\PeerConnectionClient.Shared
+call:copyFiles %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln %peerCCTestPath%\
+
+echo peerCCProjectTemaplePath = %peerCCProjectTemaplePath%
+call:copyFiles %peerCCProjectTemaplePath%\project.json %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json "ORTC.Version" "%nugetVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
 
 goto:eof
 :copyFiles
