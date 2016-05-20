@@ -320,6 +320,26 @@ if exist %MSVCDIR% (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
 )
 
+set ABS_PATH=%CD%
+
+if exist "%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" (
+	call:zipfile "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\PeerConnectionClient_%nugetVersion%.zip"
+)
+goto:eof
+
+:zipfile 
+set vbs="%temp%\_.vbs"
+if exist %vbs% del /f /q %vbs%
+echo %1
+echo %2
+>%vbs%  echo InputFolder = WScript.Arguments(0)
+>>%vbs% echo ZipFile = WScript.Arguments(1)
+>>%vbs% echo CreateObject("Scripting.FileSystemObject").CreateTextFile(ZipFile, True).Write "PK" ^& Chr(5) ^& Chr(6) ^& String(18, vbNullChar)
+>>%vbs% echo set objShell = CreateObject("Shell.Application")
+>>%vbs% echo Set source = objShell.NameSpace(InputFolder).Items
+>>%vbs% echo objShell.NameSpace(ZipFile).CopyHere(source)
+>>%vbs% echo wScript.Sleep 2000
+cscript //nologo %vbs% %1 %2
 goto:eof
 
 :copyFiles
