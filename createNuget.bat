@@ -112,8 +112,8 @@ if "%failure%" neq "0" goto:endedWithError
 call:determineVisualStudioPath
 if "%failure%" neq "0" goto:eof
 
-::call:build
-::if "%failure%" neq "0" goto:eof
+call:build
+if "%failure%" neq "0" goto:eof
 
 call:preparePackage
 if "%failure%" neq "0" goto:eof
