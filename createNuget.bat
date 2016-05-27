@@ -5,6 +5,7 @@ echo Started creating ortc nuget package...
 
 set projectNameForNuget=org.ortc
 set nugetName=ORTC
+set productName=ORTC PeerCC TA1
 set nugetVersion=
 set publishKey=
 set failure=0
@@ -25,7 +26,7 @@ set nugetPackageVersion=%nugetBasePath%\%projectNameForNuget%.version
 set peerCCSourcePath=samples\PeerCC
 set peerCCTestPath=winrt\test\PeerCC
 set peerCCProjectTemaplePath=winrt\templates\samples\PeerCC
-
+set peerCCAppBundlePath=winrt\Output\AppBundle\
 set nugetVersion=%2
 
 set nugetPath=%nugetBasePath%\package
@@ -302,7 +303,16 @@ Xcopy  /S /I /Y %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.vs2015.sl
 
 echo peerCCProjectTemaplePath = %peerCCProjectTemaplePath%
 call:copyFiles %peerCCProjectTemaplePath%\project.json %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+
+call:copyFiles %peerCCProjectTemaplePath%\AssemblyInfo.cs %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties
+call:copyFiles %peerCCProjectTemaplePath%\Package.appxmanifest %peerCCTestPath%\PeerConnectionClient.Win10.Shared
+
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json "ORTC.Version" "%nugetVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
+
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties\AssemblyInfo.cs "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties\AssemblyInfo.cs
+
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
+
 
 goto:eof
 
@@ -312,9 +322,10 @@ goto:eof
 if exist %MSVCDIR% (
 	call %MSVCDIR%\VC\vcvarsall.bat
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
+
 	
 	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
-	MSBuild %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln  /p:Configuration=Release;Platform="Any CPU";AppxBundle=Always;AppxBundlePlatforms="x86|x64|ARM"
+	MSBuild %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln  /p:OutputPath=%peerCCAppBundlePath%;Configuration=Release;Platform="Any CPU";AppxBundle=Always;AppxBundlePlatforms="x86|x64|ARM" /m
 	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects for %PLATFORM% %CONFIGURATION% has failed"
 ) else (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
