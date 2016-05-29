@@ -7,6 +7,7 @@ set projectNameForNuget=org.ortc
 set nugetName=ORTC
 set productName=ORTC PeerCC TA1
 set nugetVersion=
+set appVersion=
 set publishKey=
 set failure=0
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
@@ -26,7 +27,9 @@ set nugetPackageVersion=%nugetBasePath%\%projectNameForNuget%.version
 set peerCCSourcePath=samples\PeerCC
 set peerCCTestPath=winrt\test\PeerCC
 set peerCCProjectTemaplePath=winrt\templates\samples\PeerCC
-set peerCCAppBundlePath=winrt\Output\AppBundle\
+set peerCCAppBundlePath=winrt\Build\Packages
+::relative to project file
+set peerCCAppOutputBundlePath=..\..\..\Build\AppBundle
 set nugetVersion=%2
 
 set nugetPath=%nugetBasePath%\package
@@ -97,6 +100,7 @@ if NOT EXIST %nuget% (
 	if "%failure%" neq "0" goto:eof
 )
 
+set appVersion=%v%.0
 if not %b%==0 (
 	set v=%v%-Beta
 )
@@ -113,8 +117,8 @@ if "%failure%" neq "0" goto:endedWithError
 call:determineVisualStudioPath
 if "%failure%" neq "0" goto:eof
 
-call:build
-if "%failure%" neq "0" goto:eof
+::call:build
+::if "%failure%" neq "0" goto:eof
 
 call:preparePackage
 if "%failure%" neq "0" goto:eof
@@ -313,7 +317,7 @@ call:copyFiles %peerCCProjectTemaplePath%\Package.appxmanifest %peerCCTestPath%\
 
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
 
-
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Version" "%appVersion%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
 goto:eof
 
 :makePeerCCPackage
@@ -325,7 +329,7 @@ if exist %MSVCDIR% (
 
 	
 	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
-	MSBuild %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln  /p:OutputPath=%peerCCAppBundlePath%;Configuration=Release;Platform="Any CPU";AppxBundle=Always;AppxBundlePlatforms="x86|x64|ARM" /m
+	MSBuild %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln  /p:OutputPath=%peerCCAppOutputBundlePath%\PeerConnectionClient_%nugetVersion%;Configuration=Release;Platform="Any CPU";AppxBundle=Always;AppxBundlePlatforms="x86|x64|ARM" /m
 	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects for %PLATFORM% %CONFIGURATION% has failed"
 ) else (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
@@ -333,8 +337,12 @@ if exist %MSVCDIR% (
 
 set ABS_PATH=%CD%
 
-if exist "%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" (
-	call:zipfile "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\PeerConnectionClient_%nugetVersion%.zip"
+if exist "%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_%appVersion%_Test\" (
+	call:createFolder "%ABS_PATH%\%peerCCAppBundlePath%\PeerConnectionClient_%nugetVersion%"
+	echo Folder to zip: "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_%appVersion%_Test\"
+	echo Destination file: "%ABS_PATH%\%peerCCAppBundlePath%\PeerConnectionClient_%nugetVersion%\PeerConnectionClient_%nugetVersion%.zip"
+	call:zipfile "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_%appVersion%_Test\" "%ABS_PATH%\%peerCCAppBundlePath%\PeerConnectionClient_%nugetVersion%\PeerConnectionClient_%nugetVersion%.zip"
+	
 )
 goto:eof
 
