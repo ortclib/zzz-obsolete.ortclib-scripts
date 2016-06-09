@@ -17,6 +17,7 @@ set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 set nuget=bin\nuget.exe
 set SOLUTIONPATH=winrt\projects\ortc-lib-sdk-win.vs2015.sln
 set PROJECTPATH=winrt\projects\ortc-template.csproj
+set WEBRTCUTILITY_PROJEC_JSON_TPATH=winrt\projects\utility\webrtc-utility\project.json
 set nugetBasePath=winrt\nuget
 
 set nugetSpec=%nugetBasePath%\package\%nugetName%\%projectNameForNuget%.nuspec
@@ -246,6 +247,9 @@ goto:eof
 if exist %MSVCDIR% (
 	call %MSVCDIR%\VC\vcvarsall.bat amd64
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
+	
+	::restore webrtc utility nuhet packages
+	%nuget% restore %WEBRTCUTILITY_PROJEC_JSON_TPATH%
 	
 	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
 	MSBuild %PROJECTPATH% /t:Build /m
