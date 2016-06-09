@@ -1,3 +1,5 @@
 *.xccheckout
 xcuserdata
 /ninja
+ninja.exe
+nuget.exe

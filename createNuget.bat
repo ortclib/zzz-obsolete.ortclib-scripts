@@ -313,15 +313,20 @@ echo peerCCProjectTemaplePath = %peerCCProjectTemaplePath%
 call:copyFiles %peerCCProjectTemaplePath%\project.json %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
 
 call:copyFiles %peerCCProjectTemaplePath%\AssemblyInfo.cs %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties
-call:copyFiles %peerCCProjectTemaplePath%\Package.appxmanifest %peerCCTestPath%\PeerConnectionClient.Win10.Shared
+call:copyFiles %peerCCProjectTemaplePath%\Package.appxmanifest %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
+::call:copyFiles %peerCCProjectTemaplePath%\Package.appxmanifest %peerCCTestPath%\PeerConnectionClient.Win10.Shared
 
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json "ORTC.Version" "%nugetVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
 
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties\AssemblyInfo.cs "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Properties\AssemblyInfo.cs
 
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Package.appxmanifest "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Package.appxmanifest
 
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Version" "%appVersion%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Package.appxmanifest "PeerCC.Version" "%appVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\Package.appxmanifest
+
+::%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Name" "%productName%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
+
+::%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest "PeerCC.Version" "%appVersion%" %peerCCTestPath%\PeerConnectionClient.Win10.Shared\Package.appxmanifest
 goto:eof
 
 :makePeerCCPackage
