@@ -379,7 +379,11 @@ setBogusGypFiles()
 updateClang()
 {
 	echo Runing clang update
+
+	pushd "./chromium/src"
 	result=$(python tools/clang/scripts/update.py 2>&1)
+	make_directory "third_party/llvm"
+	popd
 	echo $result
 
 	preparelink "third_party" "llvm" "../chromium/src/third_party/llvm"
