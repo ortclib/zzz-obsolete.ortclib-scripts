@@ -129,6 +129,7 @@ subninja obj/webrtc/modules/audio_device.ninja
 subninja obj/webrtc/modules/audio_encoder_interface.ninja
 subninja obj/webrtc/modules/audio_processing_sse2.ninja
 subninja obj/webrtc/modules/bitrate_controller.ninja
+subninja obj/webrtc/modules/congestion_controller.ninja
 subninja obj/webrtc/modules/cng.ninja
 subninja obj/webrtc/common_audio/common_audio_sse2.ninja
 subninja obj/webrtc/common_audio/common_audio.ninja
@@ -155,6 +156,7 @@ subninja obj/webrtc/modules/video_processing_sse2.ninja
 subninja obj/webrtc/modules/video_processing.ninja
 subninja obj/webrtc/voice_engine/voice_engine.ninja
 subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_avx2.ninja
+subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_avx.ninja
 subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_sse2.ninja
 subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_mmx.ninja
 subninja obj/chromium/src/third_party/libvpx_new/libvpx_intrinsics_ssse3.ninja
@@ -187,6 +189,7 @@ subninja obj/webrtc/base/rtc_base_approved.ninja
 subninja obj/chromium/src/third_party/libyuv/libyuv.ninja
 subninja obj/chromium/src/third_party/libsrtp/libsrtp.ninja
 subninja obj/chromium/src/third_party/usrsctp/usrsctplib.ninja
+subninja obj/chromium/src/third_party/boringssl/boringssl_asm.ninja
 subninja obj/chromium/src/third_party/boringssl/boringssl.ninja
 
 build protobuf_full_do_not_use: phony libprotobuf_full_do_not_use.a
@@ -203,6 +206,7 @@ build audio_device: phony libaudio_device.a
 build audio_encoder_interface: phony libaudio_encoder_interface.a
 build audio_processing_sse2: phony libaudio_processing_sse2.a
 build bitrate_controller: phony libbitrate_controller.a
+build congestion_controller: phony libcongestion_controller.a
 build cng: phony libcng.a
 build common_audio: phony libcommon_audio.a
 build common_audio_sse2: phony libcommon_audio_sse2.a
@@ -227,6 +231,7 @@ build video_coding_utility: phony libvideo_coding_utility.a
 build video_processing_sse2: phony libvideo_processing_sse2.a
 build video_processing: phony libvideo_processing.a
 build voice_engine: phony libvoice_engine.a
+build libvpx_intrinsics_avx: phony libvpx_intrinsics_avx.a
 build libvpx_new: phony libvpx_new.a
 build libvpx_intrinsics_ssse3: phony libvpx_intrinsics_ssse3.a
 build libvpx_intrinsics_mmx: phony libvpx_intrinsics_mmx.a
@@ -252,18 +257,19 @@ build rtc_base_approved: phony librtc_base_approved.a
 build libyuv: phony libyuv.a
 build libsrtp: phony libsrtp.a
 build usrsctplib: phony libusrsctplib.a
+build boringssl_asm: phony libboringssl_asm.a
 build boringssl: phony libboringssl.a
 
 build webrtcWrapper: phony $
    libprotobuf_full_do_not_use.a libprotobuf_lite.a libaudio_processing.a  $
    protoc libcommon_video.a libcommon_video.a librtp_rtcp.a libaudio_coding_module.a $
    libaudio_conference_mixer.a libaudio_decoder_interface.a libaudio_device.a $
-   libaudio_encoder_interface.a libaudio_processing_sse2.a libbitrate_controller.a $
+   libaudio_encoder_interface.a libaudio_processing_sse2.a libcongestion_controller.a libbitrate_controller.a $
    libcng.a libcommon_audio.a libcommon_audio_sse2.a libfield_trial_default.a libg711.a $
    libg722.a libilbc.a libisac.a libmedia_file.a libmetrics_default.a librtc_event_log_proto.a libneteq.a $
    libopenmax_dl.a libopus.a libpaced_sender.a libpcm16b.a librtc_event_log.a libred.a $
    libremote_bitrate_estimator.a libvideo_coding_utility.a libisac_common.a libvideo_processing_sse2.a $
-   libvideo_processing.a libvoice_engine.a libvpx_new.a libvpx_intrinsics_ssse3.a $
+   libvideo_processing.a libvoice_engine.a libvpx_intrinsics_avx.a libvpx_new.a libvpx_intrinsics_ssse3.a $
    libvpx_intrinsics_mmx.a libvpx_intrinsics_avx2.a libvpx_intrinsics_sse2.a $
    libvpx_intrinsics_sse4_1.a libwebrtc_h264.a libwebrtc_vp8.a libwebrtc_vp9.a $
    libwebrtc_opus.a libwebrtc_common.a libwebrtc_i420.a libwebrtc_utility.a $
@@ -272,4 +278,4 @@ build webrtcWrapper: phony $
    obj.host/chromium/src/third_party/yasm/generate_files.actions_rules_copies.stamp $
    libjpeg_turbo.a libvideo_render_module_internal_impl.a libvideo_render_module.a $
    libvideo_capture_module.a libvideo_capture_module_internal_impl.a libsystem_wrappers.a $
-   librtc_base_approved.a libyuv.a libsrtp.a libusrsctplib.a libboringssl.a librent_a_codec.a
+   librtc_base_approved.a libyuv.a libsrtp.a libusrsctplib.a libboringssl_asm.a libboringssl.a librent_a_codec.a
