@@ -1,23 +1,39 @@
+:: Name:     newPrepare.bat
+:: Purpose:  Prepare development environment for ORTC and WebRTC
+:: Author:   Sergej Jovanovic
+:: Email:	 sergej@gnedo.com
+:: Revision: September 2016 - initial version
+
 @ECHO off
-ECHO.
-ECHO Running prepare script ...
-ECHO.
 
-SETLOCAL enabledelayedexpansion
+SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-SET supportedInputArguments=;platform;help;
-SET targetEnvironemnt=%1
+::targeted platforms
 SET prepare_ORTC_Environemnt=0
 SET prepare_WebRTC_Environemnt=0
-SET validInput=0
-SET failure=0
+
+::log variables
+SET globalLogLevel=2											
+
+SET error=0														
+SET info=1														
+SET warning=2													
+SET debug=3														
+SET trace=4														
 
 ::input arguments
+SET supportedInputArguments=;platform;help;						
 SET platform=all
 SET help=0
 
 ::predefined messages
-SET errorMessageInvalidArgument="Invalid input parameters. If you want to prepare environment for both webrtc and ortc run this script without arguments, otherwise put just the name of desired framework."
+SET errorMessageInvalidArgument="Invalid input parameter. For the list of available parameters and usage examples, please run script with -help option."
+SET errorMessageInvalidPlatform="Invalid platform name. For the list of available platforms and usage examples, please run script with -help option."
+
+ECHO.
+CALL:print %info% "Running prepare script ..."
+ECHO.
+
 :parseInputArguments
 IF "%1"=="" (
 	IF NOT "%nome%"=="" (
@@ -53,13 +69,17 @@ GOTO parseInputArguments
 
 ::Determine targeted platforms
 CALL:identifyTargetedPlatforms
-echo hihihi
+
+::Finish script execution
+CALL:done
 
 GOTO:EOF
 
 REM Based on input arguments determine targeted platforms
 :identifyTargetedPlatforms
+SET validInput=0
 SET messageText=
+
 IF /I "%platform%"=="all" (
 	SET prepare_ORTC_Environemnt=1
 	SET prepare_WebRTC_Environemnt=1
@@ -82,35 +102,55 @@ IF /I "%platform%"=="all" (
 
 :: If input is not valid terminate script execution
 IF !validInput!==1 (
-	ECHO !messageText!
+	CALL:print %info% "!messageText!"
 ) ELSE (
-	CALL:error 1 "Invalid input parameters. If you want to prepare environment for both webrtc and ortc run this script without arguments, otherwise put just the name of desired framework."
+	CALL:error 1 %errorMessageInvalidPlatform%
 )
 GOTO:EOF
+
 :checkIfArgumentIsValid
-if "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
+IF "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
 	::it is valid
-	set %2=1
-) else (
+	SET %2=1
+) ELSE (
 	::it is not valid
-	set %2=0
+	SET %2=0
 )
 GOTO:EOF
+
+:print
+SET logType=%1
+SET logMessage=%~2
+
+if %globalLogLevel% GEQ  %logType% (
+	if %logType%==0 ECHO [91m%logMessage%[0m
+	if %logType%==1 ECHO [92m%logMessage%[0m
+	if %logType%==2 ECHO [93m%logMessage%[0m
+)
+
+GOTO:EOF
+
 :error
 SET criticalError=%~1
 SET errorMessage=%~2
-echo.
-if %criticalError%==0 (
-	echo [103;94mWARNING: %errorMessage%[0m
-) else (
-	echo [101;93mCRITICAL ERROR: %errorMessage%[0m
-	echo.
-	echo.
-	echo [101;93mPreparing environment has failed![0m
-	echo.
+
+IF %criticalError%==0 (
+	ECHO.
+	CALL:print %warning% "WARNING: %errorMessage%"
+	ECHO.
+) ELSE (
+	ECHO.
+	CALL:print %error% "CRITICAL ERROR: %errorMessage%"
+	ECHO.
+	ECHO.
+	CALL:print %error% "FAILURE:Preparing environment has failed!"
+	ECHO.
 	::terminate batch execution
-	call bin\batchTerminator.bat
+	CALL bin\batchTerminator.bat
 )
+GOTO:EOF
 
-goto:eof
-
+:done
+ECHO.
+CALL:print %info% "Success: Development environment is set."
+ECHO. 
