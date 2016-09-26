@@ -12,9 +12,9 @@ set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set taskFailed=0
 
 ::platfroms
-SET platform_ARM=1
-SET platfrom_x86=1
-SET platfrom_x64=1
+SET platform_ARM=0
+SET platform_x86=0
+SET platform_x64=0
 
 ::log variables
 SET globalLogLevel=2											
@@ -128,9 +128,10 @@ IF /I "%platfrom%"=="all" (
 		SET messageText=Preparing development environment for %platfrom% platform...
 	)
 )
+GOTO:EOF
 
 :prepareWebRTC
-
+echo  prepareWebRTC
 IF NOT EXIST %baseWebRTCPath% CALL:error 1 "%folderStructureError:"=% %baseWebRTCPath% does not exist!"
 
 PUSHD %baseWebRTCPath% > NUL
@@ -171,7 +172,6 @@ CALL:makeLink . chromium\src\third_party\libvpx_new\source\libvpx ..\libvpx
 CALL:makeLink . chromium\src\testing ..\chromium-pruned\testing
 CALL:makeLink . testing chromium\src\testing
 CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
-CALL:makeLink . third_party\protobuf chromium\src\third_party\protobuf
 CALL:makeLink . third_party\yasm chromium\src\third_party\yasm
 CALL:makeLink . third_party\yasm\binaries ..\yasm\binaries
 CALL:makeLink . third_party\yasm\source\patched-yasm ..\patched-yasm
@@ -184,6 +184,8 @@ CALL:makeLink . third_party\boringssl\src ..\boringssl
 CALL:makeLink . third_party\usrsctp chromium\src\third_party\usrsctp
 CALL:makeLink . third_party\usrsctp\usrsctplib ..\usrsctp
 CALL:makeLink . third_party\protobuf chromium\src\third_party\protobuf
+CALL:makeLink . chromium\src\third_party\expat ..\chromium-pruned\third_party\expat
+CALL:makeLink . third_party\expat chromium\src\third_party\expat
 CALL:makeLink . third_party\libsrtp ..\libsrtp
 CALL:makeLink . third_party\libvpx_new .\chromium\src\third_party\libvpx_new
 CALL:makeLink . third_party\libyuv ..\libyuv
@@ -196,41 +198,41 @@ CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium-pruned\tools\clang
 CALL:makeLink . testing\gtest ..\googletest
 CALL:makeLink . testing\gmock ..\googlemock
+
 GOTO:EOF
 
 :generateProjects
 SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
-
-IF %platform_ARM% EQU 1(
+IF %platform_ARM% EQU 1 (
 	ECHO.
-	CALL:print 2 Generating WebRTC projects for ARM platfrom
-	ECHO.
+	CALL:print 2 "Generating WebRTC projects for ARM platfrom"
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
-	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=arm
+	::Not setting target_arch because of logic used in gyp files
+	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
 	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for ARM platfrom"
 )
 
-IF %platform_x64% EQU 1(
+IF %platform_x64% EQU 1 (
 	ECHO.
-	CALL:print 2 Generating WebRTC projects for x64 platfrom
-	ECHO.
+	CALL:print 2 "Generating WebRTC projects for x64 platfrom"
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
 	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platfrom"
 )
 
-IF %platform_x86% EQU 1(
+IF %platform_x86% EQU 1 (
 	ECHO.
-	CALL:print 2 Generating WebRTC projects for x86 platfrom
-	ECHO.
+	CALL:print 2 "Generating WebRTC projects for x86 platfrom"
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
+	::Not setting target_arch because of logic used in gyp files
 	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
 	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platfrom"
 )
+
 GOTO:EOF
 
 :makeDirectory
@@ -241,7 +243,6 @@ GOTO:EOF
 IF NOT EXIST %~1\NUL CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
 
 PUSHD %~1
-
 IF EXIST .\%~2\NUL GOTO:alreadyexists
 IF NOT EXIST %~3\NUL CALL:error 1 "%folderStructureError:"=% %~3 does not exist!"
 
@@ -250,6 +251,7 @@ CALL:print %trace% In path "%~1" creating symbolic link for "%~2" to "%~3"
 MKLINK /J %~2 %~3
 IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %~3"
 
+:alreadyexists
 POPD
 
 GOTO:EOF
@@ -282,6 +284,7 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "FAILURE:Preparing environment has failed!"
 	ECHO.
+	POPD
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
 )
