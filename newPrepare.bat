@@ -11,9 +11,14 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set taskFailed=0
 
-::targeted platforms
+::targets
 SET prepare_ORTC_Environemnt=0
 SET prepare_WebRTC_Environemnt=0
+
+::platfroms
+SET platform_ARM=1
+SET platfrom_x86=1
+SET platfrom_x64=1
 
 ::log variables
 SET globalLogLevel=2											
@@ -25,15 +30,17 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;help;logLevel;diagnostic;					
-SET platform=all
+SET supportedInputArguments=;platfrom;target;help;logLevel;diagnostic;					
+SET target=all
+SET platfrom=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input parameter. For the list of available parameters and usage examples, please run script with -help option."
-SET errorMessageInvalidPlatform="Invalid platform name. For the list of available platforms and usage examples, please run script with -help option."
+SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
 
 ECHO.
 CALL:print %info% "Running prepare script ..."
@@ -71,12 +78,18 @@ IF "%aux:~0,1%"=="-" (
 SHIFT
 GOTO parseInputArguments
 
+::===========================================================================
+:: Start execution of main flow (if parsing input parameters passed without issues)
+
 :main
 
 IF %diagnostic% EQU 1 CALL:diagnostic
 
+::Determine targets
+CALL:identifyTarget
+
 ::Determine targeted platforms
-CALL:identifyTargetedPlatforms
+CALL:identifyPlatform
 
 ::Check is perl is installed
 CALL:perlCheck
@@ -84,10 +97,13 @@ CALL:perlCheck
 ::Check if python is installed, and if it is not install it and add in the path
 CALL:pythonSetup
 
+CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
+
 ::Finish script execution
 CALL:done
 
 GOTO:EOF
+::===========================================================================
 
 :diagnostic
 SET logLevel=3
@@ -114,28 +130,68 @@ CALL:print 1 "Diagnostic finished"
 CALL bin\batchTerminator.bat
 GOTO:EOF
 
-REM Based on input arguments determine targeted platforms (WebRTC or ORTC)
-:identifyTargetedPlatforms
+REM Based on input arguments determine targeted projects (WebRTC or ORTC)
+:identifyTarget
 SET validInput=0
 SET messageText=
 
-IF /I "%platform%"=="all" (
+IF /I "%target%"=="all" (
 	SET prepare_ORTC_Environemnt=1
 	SET prepare_WebRTC_Environemnt=1
 	SET validInput=1
 	SET messageText=Preparing webRTC and ORTC development environment ...
 ) ELSE (
-	IF /I "%platform%"=="webrtc" (
+	IF /I "%target%"=="webrtc" (
 		SET prepare_WebRTC_Environemnt=1
 		SET validInput=1
 	)
-	IF /I "%platform%"=="ortc" (
+	IF /I "%target%"=="ortc" (
 		SET prepare_ORTC_Environemnt=1
 		SET validInput=1
 	)
 
 	IF !validInput!==1 (
-		SET messageText=Preparing %platform% development environment ...
+		SET messageText=Preparing %target% development environment ...
+	)
+)
+
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %info% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidTarget%
+)
+GOTO:EOF
+
+REM Based on input arguments determine targeted platforms (x64, x86 or ARM)
+:identifyPlatform
+SET validInput=0
+SET messageText=
+
+IF /I "%platfrom%"=="all" (
+	SET platform_ARM=1
+	SET platform_x64=1
+	SET platform_x86=1
+	SET validInput=1
+	SET messageText=Preparing development environment for ARM, x64 and x86 platforms ...
+) ELSE (
+	IF /I "%platfrom%"=="arm" (
+		SET platform_ARM=1
+		SET validInput=1
+	)
+	
+	IF /I "%platfrom%"=="x64" (
+		SET platform_x64=1
+		SET validInput=1
+	)
+
+	IF /I "%platfrom%"=="x86" (
+		SET platform_x86=1
+		SET validInput=1
+	)
+	
+	IF !validInput!==1 (
+		SET messageText=Preparing development environment for %platfrom% platform...
 	)
 )
 
