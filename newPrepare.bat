@@ -97,8 +97,9 @@ CALL:perlCheck
 ::Check if python is installed, and if it is not install it and add in the path
 CALL:pythonSetup
 
+CALL:prepareWebRTC
 
-CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
+CALL:prepareORTC
 
 ::Finish script execution
 CALL:done
@@ -197,7 +198,7 @@ IF /I "%platfrom%"=="all" (
 )
 :: If input is not valid terminate script execution
 IF !validInput!==1 (
-	CALL:print %debug% "!messageText!"
+	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidPlatform%
 )
@@ -273,6 +274,24 @@ IF %ERRORLEVEL% EQU 1 (
 ) ELSE (
 	CALL:print 3  "Python is present."
 )
+
+GOTO:EOF
+
+:prepareORTC
+
+IF NOT EXIST .\solutions\NUL MKDIR solutions
+
+IF EXIST .\solutions\ortc-lib-sdk-win.vs2015.sln GOTO:alreadyexists
+
+IF NOT EXIST solutions\ortc-lib-sdk-win.vs20151.sln MKLINK /H solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
+
+START solutions\ortc-lib-sdk-win.vs20151.sln
+:alreadyexists
+GOTO:EOF
+
+:prepareWebRTC
+
+CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
 
 GOTO:EOF
 
