@@ -38,7 +38,7 @@ SET logLevel=2
 SET diagnostic=0
 
 ::predefined messages
-SET errorMessageInvalidArgument="Invalid input parameter. For the list of available parameters and usage examples, please run script with -help option."
+SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
 
@@ -96,6 +96,7 @@ CALL:perlCheck
 
 ::Check if python is installed, and if it is not install it and add in the path
 CALL:pythonSetup
+
 
 CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
 
@@ -157,7 +158,7 @@ IF /I "%target%"=="all" (
 
 :: If input is not valid terminate script execution
 IF !validInput!==1 (
-	CALL:print %info% "!messageText!"
+	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidTarget%
 )
@@ -194,10 +195,9 @@ IF /I "%platfrom%"=="all" (
 		SET messageText=Preparing development environment for %platfrom% platform...
 	)
 )
-
 :: If input is not valid terminate script execution
 IF !validInput!==1 (
-	CALL:print %info% "!messageText!"
+	CALL:print %debug% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidPlatform%
 )
@@ -372,6 +372,7 @@ if %logLevel% GEQ  %logType% (
 	if %logType%==1 ECHO [92m%logMessage%[0m
 	if %logType%==2 ECHO [93m%logMessage%[0m
 	if %logType%==3 ECHO [95m%logMessage%[0m
+	if %logType%==4 ECHO %logMessage%
 )
 
 GOTO:EOF

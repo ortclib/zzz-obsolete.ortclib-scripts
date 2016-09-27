@@ -16,6 +16,11 @@ SET platform_ARM=0
 SET platform_x86=0
 SET platform_x64=0
 
+::platfroms
+SET platform_ARM_prepared=0
+SET platform_x86_prepared=0
+SET platform_x64_prepared=0
+
 ::log variables
 SET globalLogLevel=2											
 
@@ -34,13 +39,16 @@ SET diagnostic=0
 
 ::predefined messages
 SET folderStructureError="WebRTC invalid folder structure."
+SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
+SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
 
 ECHO.
 CALL:print %info% "Running WebRTC prepare script ..."
-ECHO.
+CALL:print %info% "================================="
+::ECHO.
 
 :parseInputArguments
 IF "%1"=="" (
@@ -107,7 +115,7 @@ IF /I "%platfrom%"=="all" (
 	SET platform_x64=1
 	SET platform_x86=1
 	SET validInput=1
-	SET messageText=Preparing development environment for ARM, x64 and x86 platforms ...
+	SET messageText=Preparing WebRTC development environment for arm, x64 and x86 platforms ...
 ) ELSE (
 	IF /I "%platfrom%"=="arm" (
 		SET platform_ARM=1
@@ -125,16 +133,25 @@ IF /I "%platfrom%"=="all" (
 	)
 	
 	IF !validInput!==1 (
-		SET messageText=Preparing development environment for %platfrom% platform...
+		SET messageText=Preparing WebRTC development environment for %platfrom% platform ...
 	)
+)
+
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidPlatform%
 )
 GOTO:EOF
 
 :prepareWebRTC
-echo  prepareWebRTC
+CALL:print %trace% "Executing prepareWebRTC function"
+
 IF NOT EXIST %baseWebRTCPath% CALL:error 1 "%folderStructureError:"=% %baseWebRTCPath% does not exist!"
 
 PUSHD %baseWebRTCPath% > NUL
+CALL:print %trace% "Pushed %baseWebRTCPath% path"
 
 CALL:generateChromiumFolders
 
@@ -143,10 +160,14 @@ CALL:makeJunctionLinks
 CALL:generateProjects
 
 popd
+CALL:print %trace% "Popped %baseWebRTCPath% path"
+
+CALL:done
 
 GOTO:EOF
 
 :generateChromiumFolders
+CALL:print %trace% "Executing generateChromiumFolders function"
 
 CALL:makeDirectory chromium\src
 CALL:makeDirectory chromium\src\tools
@@ -156,6 +177,7 @@ CALL:makeDirectory chromium\src\third_party\libjingle\source\talk\media\testdata
 GOTO:EOF
 
 :makeJunctionLinks
+CALL:print %trace% "Executing makeJunctionLinks function"
 
 CALL:makeLink . build ..\chromium-pruned\build
 CALL:makeLink . chromium\src\third_party\jsoncpp ..\chromium-pruned\third_party\jsoncpp
@@ -202,41 +224,63 @@ CALL:makeLink . testing\gmock ..\googlemock
 GOTO:EOF
 
 :generateProjects
+CALL:print %trace% "Executing generateProjects function"
+
 SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
 IF %platform_ARM% EQU 1 (
-	ECHO.
-	CALL:print 2 "Generating WebRTC projects for ARM platfrom"
+	CALL:print %warning% "Generating WebRTC projects for arm platfrom ..."
+	SET platform_ARM_prepared=1
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
-	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for ARM platfrom"
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
+	) ELSE (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
+	)
+	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platfrom"
+	SET platform_ARM_prepared=2
 )
 
 IF %platform_x64% EQU 1 (
-	ECHO.
-	CALL:print 2 "Generating WebRTC projects for x64 platfrom"
+	SET platform_x64_prepared=1
+	CALL:print %warning% "Generating WebRTC projects for x64 platfrom ..."
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
-	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
+	) ELSE (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
+	)
 	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platfrom"
+	SET platform_x64_prepared=2
 )
 
 IF %platform_x86% EQU 1 (
-	ECHO.
-	CALL:print 2 "Generating WebRTC projects for x86 platfrom"
+	CALL:print %warning% "Generating WebRTC projects for x86 platfrom ..."
+	SET platform_x86_prepared=1
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
-	PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
+	) ELSE (
+		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
+	)
 	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platfrom"
+	SET platform_x86_prepared=2
 )
 
 GOTO:EOF
 
 :makeDirectory
-IF NOT EXIST %~1\NUL MKDIR %~1
+IF NOT EXIST %~1\NUL (
+	MKDIR %~1
+	CALL:print %trace% "Created folder %~1"
+) ELSE (
+	CALL:print %trace% "%~1 folder already exists"
+)
 GOTO:EOF
 
 :makeLink
@@ -255,6 +299,44 @@ IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %
 POPD
 
 GOTO:EOF
+:summary
+SET logLevel=%trace%
+CALL:print %trace% "=======   WebRTC prepare script summary   ======="
+CALL:print %trace% "=======   platfrom   =========   result   ======="
+
+IF %platform_ARM_prepared% EQU 2 (
+	CALL:print %info% "            arm                 prepared"
+) ELSE (
+	IF %platform_ARM_prepared% EQU 1 (
+		CALL:print %error% "            arm                  failed"
+	) ELSE (
+		CALL:print %warning% "            arm                 not run"
+	)
+)
+
+IF %platform_x64_prepared% EQU 2 (
+	CALL:print %info% "            x64                 prepared"
+) ELSE (
+	IF %platform_x64_prepared% EQU 1 (
+		CALL:print %error% "            x64                  failed"
+	) ELSE (
+		CALL:print %warning% "            x64                 not run"
+	)
+)
+
+IF %platform_x86_prepared% EQU 2 (
+	CALL:print %info% "            x86                 prepared"
+) ELSE (
+	IF %platform_x86_prepared% EQU 1 (
+		CALL:print %error% "            x86                  failed"
+	) ELSE (
+		CALL:print %warning% "            x86                 not run"
+	)
+)
+
+CALL:print %trace% "================================================="
+ECHO.
+GOTO:EOF
 
 :print
 SET logType=%1
@@ -265,6 +347,7 @@ if %logLevel% GEQ  %logType% (
 	if %logType%==1 ECHO [92m%logMessage%[0m
 	if %logType%==2 ECHO [93m%logMessage%[0m
 	if %logType%==3 ECHO [95m%logMessage%[0m
+	if %logType%==4 ECHO %logMessage%
 )
 
 GOTO:EOF
@@ -281,10 +364,9 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "CRITICAL ERROR: %errorMessage%"
 	ECHO.
-	ECHO.
-	CALL:print %error% "FAILURE:Preparing environment has failed!"
-	ECHO.
+	CALL:print %error% "FAILURE:Preparing WebRTC development environment has failed.	"
 	POPD
+	CALL:summary
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
 )
@@ -292,5 +374,5 @@ GOTO:EOF
 
 :done
 ECHO.
-CALL:print %info% "Success: Development environment is set."
-ECHO. 
+CALL:print %info% "Success: WebRTC development environment is prepared."
+CALL:summary 
