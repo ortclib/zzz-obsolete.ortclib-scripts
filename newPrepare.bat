@@ -102,7 +102,7 @@ CALL:perlCheck
 CALL:pythonSetup
 
 ::Generate WebRTC VS2015 projects from gyp files
-::CALL:prepareWebRTC
+CALL:prepareWebRTC
 
 ::Prepare ORTC development environment
 CALL:prepareORTC
