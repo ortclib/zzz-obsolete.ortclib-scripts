@@ -196,7 +196,7 @@ CALL:makeLink . testing chromium\src\testing
 CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
 CALL:makeLink . third_party\yasm chromium\src\third_party\yasm
 CALL:makeLink . third_party\yasm\binaries ..\yasm\binaries
-CALL:makeLink . third_party\yasm\source\patched-yasm ..\patched-yasm
+CALL:makeLink . third_party\yasm\source\patched-yasm ..\yasm\patched-yasm
 CALL:makeLink . third_party\opus chromium\src\third_party\opus
 CALL:makeLink . third_party\opus\src ..\opus
 ::CALL:makeLink . third_party\colorama chromium\src\third_party\colorama

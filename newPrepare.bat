@@ -8,8 +8,13 @@
 
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
-set taskFailed=0
+::paths
+SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
+SET curlPath=ortc\xplatform\curl
+SET ortcWebRTCTemplatePath=ortc\windows\wrapper\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
+SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
+::helper flags
+SET taskFailed=0
 
 ::targets
 SET prepare_ORTC_Environemnt=0
@@ -20,9 +25,8 @@ SET platform_ARM=1
 SET platfrom_x86=1
 SET platfrom_x64=1
 
-::log variables
+::log levels
 SET globalLogLevel=2											
-
 SET error=0														
 SET info=1														
 SET warning=2													
@@ -41,11 +45,11 @@ SET diagnostic=0
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
+SET folderStructureError="ORTC invalid folder structure."
 
 ECHO.
 CALL:print %info% "Running prepare script ..."
 ECHO.
-
 
 :parseInputArguments
 IF "%1"=="" (
@@ -74,7 +78,6 @@ IF "%aux:~0,1%"=="-" (
 	)
    SET nome=
 )
-
 SHIFT
 GOTO parseInputArguments
 
@@ -83,6 +86,7 @@ GOTO parseInputArguments
 
 :main
 
+::Run diganostic if script is run in diagnostic mode
 IF %diagnostic% EQU 1 CALL:diagnostic
 
 ::Determine targets
@@ -91,15 +95,20 @@ CALL:identifyTarget
 ::Determine targeted platforms
 CALL:identifyPlatform
 
-::Check is perl is installed
+::Check is perl installed
 CALL:perlCheck
 
-::Check if python is installed, and if it is not install it and add in the path
+::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
-CALL:prepareWebRTC
+::Generate WebRTC VS2015 projects from gyp files
+::CALL:prepareWebRTC
 
+::Prepare ORTC development environment
 CALL:prepareORTC
+
+::Download curl and build it
+CALL:prepareCurl
 
 ::Finish script execution
 CALL:done
@@ -113,14 +122,14 @@ CALL:print 2 "Diagnostic mode - checking if some required programs are missing"
 CALL:print 2  "================================================================================"
 ECHO.
 WHERE perl > NUL 2>&1
-IF %errorlevel% equ 1 (
+IF %ERRORLEVEL% EQU 1 (
 	CALL:print 0 "Perl				not installed"
 ) else (
 	CALL:print 1 "Perl				    installed"
 )
 
 WHERE python > NUL 2>&1
-IF %errorlevel% equ 1 (
+IF %ERRORLEVEL% EQU 1 (
 	CALL:print 0 "Python				not installed"
 ) else (
 	CALL:print 1 "Python				    installed"
@@ -204,7 +213,7 @@ IF !validInput!==1 (
 )
 GOTO:EOF
 
-REM check if entered valid input argument
+REM Check if entered valid input argument
 :checkIfArgumentIsValid
 IF "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
 	::it is valid
@@ -218,7 +227,7 @@ GOTO:EOF
 REM check if perl is installed
 :perlCheck
 WHERE perl > NUL 2>&1
-IF %errorlevel% equ 1 (
+IF %ERRORLEVEL% EQU 1 (
 	ECHO.
 	CALL:print 2  "================================================================================"
 	ECHO.
@@ -244,7 +253,7 @@ GOTO:EOF
 WHERE python > NUL 2>&1
 IF %ERRORLEVEL% EQU 1 (
 	CALL:error 0  "Python is not installed or added in the path"
-	CALL:print 2  "Installing Python ..."
+	CALL:print %debug%  "Installing Python ..."
 	CALL:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
 	IF !taskFailed!==1 (
 		CALL:error 1  "Downloading python installer has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
@@ -252,11 +261,11 @@ IF %ERRORLEVEL% EQU 1 (
 		START "Python install" /wait msiexec /i python-2.7.6.msi /quiet
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 1  "Python installation has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
-		) else (
-			CALL:print 1 "Python is successfully installed"
+		) ELSE (
+			CALL:print %debug% "Python is successfully installed"
 		)
-		CALL:print 3  "Deleting downloaded file."
-		del python-2.7.6.msi
+		CALL:print %trace%  "Deleting downloaded file."
+		DEL python-2.7.6.msi
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 0  "Deleting python installer from /bin folder has failed. You can delete it manually."
 		)
@@ -269,39 +278,67 @@ IF %ERRORLEVEL% EQU 1 (
 	IF !ERRORLEVEL! EQU 1 (
 		CALL:error 0  "Python is not added to the path."
 	) else (
-		CALL:print 1  "Python is added to the path."
+		CALL:print %debug%  "Python is added to the path."
 	)
 ) ELSE (
-	CALL:print 3  "Python is present."
+	CALL:print %trace%  "Python is present."
 )
 
 GOTO:EOF
 
 :prepareORTC
 
-IF NOT EXIST .\solutions\NUL MKDIR solutions
+:: Create solutions folder where will be stored links to real solutions
+CALL:makeDirectory .\solutions
 
-IF EXIST .\solutions\ortc-lib-sdk-win.vs2015.sln GOTO:alreadyexists
+:: Make link to ortc-lib-sdk-win.vs2015 solution
+CALL:makeLinkToFile solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
 
-IF NOT EXIST solutions\ortc-lib-sdk-win.vs20151.sln MKLINK /H solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
+:: Copy webrtc solution template
+CALL:copyTemplates
 
-START solutions\ortc-lib-sdk-win.vs20151.sln
-:alreadyexists
+::START solutions\ortc-lib-sdk-win.vs20151.sln
+
 GOTO:EOF
 
+::Generate WebRTC projects
 :prepareWebRTC
 
 CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
 
 GOTO:EOF
 
-:download
-IF EXIST %~2 GOTO:EOF
-%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
-IF ERRORLEVEL 1 SET taskFailed=1
+REM Download and build curl
+:prepareCurl
+CALL:print %debug% "Preparing curl ..."
+
+IF NOT EXIST %curlPath% CALL:error 1 "%folderStructureError:"=% %curlPath% does not exist!"
+
+PUSHD %curlPath% > NUL
+CALL:print %trace% "Pushed %curlPath% path"
+
+IF %logLevel% GEQ %trace% (
+	CALL prepare.bat curl 
+) ELSE (
+	CALL prepare.bat curl  >NUL
+)
+
+if !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
+
+POPD > NUL
+
 
 GOTO:EOF
 
+REM Download file (first argument) to desired destination (second argument)
+:download
+IF EXIST %~2 GOTO:EOF
+%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
+IF %ERRORLEVEL% EQU 1 SET taskFailed=1
+
+GOTO:EOF
+
+REM Add path to the user variables
 :set_path
 IF "%~1"=="" EXIT /b 2
 IF NOT DEFINED PATH EXIT /b 2
@@ -382,6 +419,52 @@ FOR /f "usebackq tokens=1,2" %%A IN ('%%^ ^"') DO (
 
 GOTO:EOF
 
+REM Create a folder
+:makeDirectory
+IF NOT EXIST %~1\NUL (
+	MKDIR %~1
+	CALL:print %trace% "Created folder %~1"
+) ELSE (
+	CALL:print %trace% "%~1 folder already exists"
+)
+GOTO:EOF
+
+REM Create symbolic link (first argument), that will point to desired file (second argument)
+:makeLinkToFile
+
+IF EXIST %~1 GOTO:alreadyexists
+IF NOT EXIST %~2 CALL:error 1 "%folderStructureError:"=% %~2 does not exist!"
+
+CALL:print %trace% Creating symbolic link "%~1" for the file "%~2"
+
+::Make hard link to ortc-lib-sdk-win.vs20151.sln
+
+IF %logLevel% GEQ %trace% (
+	MKLINK /H %~1 %~2
+) ELSE (
+	MKLINK /H %~1 %~2  >NUL
+)
+IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2"
+
+:alreadyexists
+POPD
+
+GOTO:EOF
+
+REM Copy all ORTC template required to set developer environment
+:copyTemplates
+
+IF NOT EXIST %ortcWebRTCTemplatePath% CALL:error 1 "%folderStructureError:"=% %ortcWebRTCTemplatePath% does not exist!"
+
+COPY %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath% >NUL
+
+CALL:print %trace% Copied file %ortcWebRTCTemplatePath% to %ortcWebRTCDestinationPath%
+
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+
+GOTO:EOF
+
+REM Print logger message. First argument is log level, and second one is the message
 :print
 SET logType=%1
 SET logMessage=%~2
@@ -390,12 +473,13 @@ if %logLevel% GEQ  %logType% (
 	if %logType%==0 ECHO [91m%logMessage%[0m
 	if %logType%==1 ECHO [92m%logMessage%[0m
 	if %logType%==2 ECHO [93m%logMessage%[0m
-	if %logType%==3 ECHO [95m%logMessage%[0m
+	if %logType%==3 ECHO %logMessage%
 	if %logType%==4 ECHO %logMessage%
 )
 
 GOTO:EOF
 
+REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message
 :error
 SET criticalError=%~1
 SET errorMessage=%~2
