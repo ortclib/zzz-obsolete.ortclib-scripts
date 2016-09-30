@@ -121,11 +121,11 @@ goto:eof
 set basePath=%~dp1
 
 if /I "%PLATFORM%"=="x64" (
-	set libsSourcePath=%basePath%build\%CONFIGURATION%\
+	set libsSourcePath=%basePath%build_win10_x64\%CONFIGURATION%\
 )
 
 if /I "%PLATFORM%"=="x86" (
-	set libsSourcePath=%basePath%build_win10\%CONFIGURATION%\
+	set libsSourcePath=%basePath%build_win10_x86\%CONFIGURATION%\
 )
 
 if /I "%PLATFORM%"=="ARM" (

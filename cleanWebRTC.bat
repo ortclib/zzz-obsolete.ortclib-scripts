@@ -12,8 +12,8 @@ set cleanWebrtc_arm=0
 set cleanWebrtc_Debug=0
 set cleanWebrtc_Release=0
 
-set webrtcPath_x64=libs\webrtc\build\
-set webrtcPath_x86=libs\webrtc\build_win10\
+set webrtcPath_x64=libs\webrtc\build_win10_x64\
+set webrtcPath_x86=libs\webrtc\build_win10_x86\
 set webrtcPath_ARM=libs\webrtc\build_win10_arm\
 set webrtcPath=libs\webrtc\WEBRTC_BUILD\
 set isEmpty=1
