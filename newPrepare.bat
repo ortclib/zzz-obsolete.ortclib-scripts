@@ -317,11 +317,13 @@ IF NOT EXIST %curlPath% CALL:error 1 "%folderStructureError:"=% %curlPath% does 
 PUSHD %curlPath% > NUL
 CALL:print %trace% "Pushed %curlPath% path"
 
-IF %logLevel% GEQ %trace% (
-	CALL prepare.bat curl 
-) ELSE (
-	CALL prepare.bat curl  >NUL
-)
+CALL newCurl-Prepare.bat -logLevel %globalLogLevel%
+
+::IF %logLevel% GEQ %trace% (
+::	CALL prepare.bat curl 
+::) ELSE (
+::	CALL prepare.bat curl  >NUL
+::)
 
 if !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
 
