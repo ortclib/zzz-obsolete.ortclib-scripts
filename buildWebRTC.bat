@@ -20,7 +20,6 @@ call:determineVisualStudioPath
 
 call:setCompilerOption
 
-::call:doBuild
 call:build
 if "%failure%" neq "0" goto:eof
 
@@ -67,25 +66,7 @@ if %PLATFORM%==x86 (
 echo Selected compiler option is %currentBuildCompilerOption%
 
 goto:eof
-:doBuild
-rem setlocal EnableDelayedExpansion
 
-set PROGFILES=%ProgramFiles%
-if not "%ProgramFiles(x86)%" == "" set PROGFILES=%ProgramFiles(x86)%
-
-REM Check if Visual Studio 2015 is installed
-set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
-
-if exist %MSVCDIR% (
-    goto:build
-) else (
-	REM Check if Visual Studio 2013 is installed
-	set MSVCDIR="%PROGFILES%\Microsoft Visual Studio 12.0"
-	if exist %MSVCDIR% (
-		goto:build
-	)
-)
-goto:eof
 
 :build
 
