@@ -11,7 +11,7 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 ::paths
 SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
-SET ortcWebRTCTemplatePath=ortc\windows\wrapper\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
+SET ortcWebRTCTemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
 SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
 ::helper flags
 SET taskFailed=0
@@ -289,10 +289,10 @@ GOTO:EOF
 :prepareORTC
 
 :: Create solutions folder where will be stored links to real solutions
-CALL:makeDirectory .\solutions
+::CALL:makeDirectory .\solutions
 
 :: Make link to ortc-lib-sdk-win.vs2015 solution
-CALL:makeLinkToFile solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
+::CALL:makeLinkToFile solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
 
 :: Copy webrtc solution template
 CALL:copyTemplates
