@@ -252,7 +252,7 @@ GOTO:EOF
 :pythonSetup
 WHERE python > NUL 2>&1
 IF %ERRORLEVEL% EQU 1 (
-	CALL:error 0  "Python is not installed or added in the path"
+	CALL:print %warning%  "NOTE: Installing Python and continuing build..."
 	CALL:print %debug%  "Installing Python ..."
 	CALL:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
 	IF !taskFailed!==1 (
