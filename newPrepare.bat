@@ -13,6 +13,9 @@ SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
 SET ortcWebRTCTemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
 SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
+SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
+SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+
 ::helper flags
 SET taskFailed=0
 
@@ -102,7 +105,7 @@ CALL:perlCheck
 CALL:pythonSetup
 
 ::Generate WebRTC VS2015 projects from gyp files
-CALL:prepareWebRTC
+::CALL:prepareWebRTC
 
 ::Prepare ORTC development environment
 CALL:prepareORTC
@@ -295,7 +298,8 @@ GOTO:EOF
 ::CALL:makeLinkToFile solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
 
 :: Copy webrtc solution template
-CALL:copyTemplates
+CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
+CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
@@ -456,11 +460,11 @@ GOTO:EOF
 REM Copy all ORTC template required to set developer environment
 :copyTemplates
 
-IF NOT EXIST %ortcWebRTCTemplatePath% CALL:error 1 "%folderStructureError:"=% %ortcWebRTCTemplatePath% does not exist!"
+IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
 
-COPY %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath% >NUL
+COPY %~1 %~2 >NUL
 
-CALL:print %trace% Copied file %ortcWebRTCTemplatePath% to %ortcWebRTCDestinationPath%
+CALL:print %trace% Copied file %~1 to %~2
 
 IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
 
