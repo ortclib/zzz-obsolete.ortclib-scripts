@@ -5,6 +5,7 @@ setlocal EnableDelayedExpansion
 set SOLUTIONPATH=%1
 set CONFIGURATION=%2
 set PLATFORM=%3
+set SOFTWARE_PLATFORM=%4
 set MSVCDIR=""
 set failure=0
 set x86BuildCompilerOption=amd64_x86
@@ -24,6 +25,9 @@ call:build
 if "%failure%" neq "0" goto:eof
 
 call:combineLibs
+if "%failure%" neq "0" goto:eof
+
+call:moveLibs
 if "%failure%" neq "0" goto:eof
 
 goto:done
@@ -91,30 +95,46 @@ if NOT EXIST %destinationPath% (
 
 if "%failure%"=="0" (
 	echo %MSVCDIR%
-	%MSVCDIR%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%*.lib %libsSourcePath%lib\*.lib
+	%MSVCDIR%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%\*.lib %libsSourcePath%\lib\*.lib
 	if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
 )
 
 echo All WebRTC libs for %PLATFORM% %CONFIGURATION% are combined in one lib.
 goto:eof
 
+:moveLibs
+
+IF NOT EXIST %libsSourcePathDestianation%NUL (
+	MKDIR %libsSourcePathDestianation%
+	echo %trace% "Created folder %libsSourcePathDestianation%"
+)
+echo started
+echo %libsSourcePath%
+echo %libsSourcePathDestianation%%CONFIGURATION%
+MOVE %libsSourcePath% %libsSourcePathDestianation%%CONFIGURATION%
+echo finished
+GOTO:EOF
+
 :setPaths
 set basePath=%~dp1
 
 if /I "%PLATFORM%"=="x64" (
-	set libsSourcePath=%basePath%build_win10_x64\%CONFIGURATION%\
+	set libsSourcePath=%basePath%build_win10_x64\%CONFIGURATION%
+	set libsSourcePathDestianation=%basePath%build_win10_x64\%SOFTWARE_PLATFORM%\
 )
 
 if /I "%PLATFORM%"=="x86" (
-	set libsSourcePath=%basePath%build_win10_x86\%CONFIGURATION%\
+	set libsSourcePath=%basePath%build_win10_x86\%CONFIGURATION%
+	set libsSourcePathDestianation=%basePath%build_win10_x86\%SOFTWARE_PLATFORM%\
 )
 
 if /I "%PLATFORM%"=="ARM" (
-	set libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%\
+	set libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%
+	set libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
 )
 echo Source path is %libsSourcePath%
 
-set destinationPath=%basePath%WEBRTC_BUILD\%CONFIGURATION%\%PLATFORM%\
+set destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%PLATFORM%\
 
 echo Destination path is %destinationPath%
 goto :eof
