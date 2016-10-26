@@ -44,6 +44,8 @@ SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of availabl
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
+SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
+SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 ECHO.
 CALL:print %info% "Running WebRTC prepare script ..."
@@ -161,6 +163,8 @@ CALL:generateProjects
 
 popd
 CALL:print %trace% "Popped %baseWebRTCPath% path"
+
+CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 CALL:done
 
@@ -341,6 +345,19 @@ IF %platform_x86_prepared% EQU 2 (
 
 CALL:print %trace% "================================================="
 ECHO.
+GOTO:EOF
+
+REM Copy all ORTC template required to set developer environment
+:copyTemplates
+
+IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
+
+COPY %~1 %~2 >NUL
+
+CALL:print %trace% Copied file %~1 to %~2
+
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+
 GOTO:EOF
 
 :print

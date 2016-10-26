@@ -18,7 +18,7 @@ SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 ::helper flags
 SET taskFailed=0
-
+SET ortcAvailable=0
 ::targets
 SET prepare_ORTC_Environemnt=0
 SET prepare_WebRTC_Environemnt=0
@@ -92,6 +92,9 @@ GOTO parseInputArguments
 ::Run diganostic if script is run in diagnostic mode
 IF %diagnostic% EQU 1 CALL:diagnostic
 
+::Check if ORTC is available
+CALL:checkOrtcAvailability
+ 
 ::Determine targets
 CALL:identifyTarget
 
@@ -107,11 +110,13 @@ CALL:pythonSetup
 ::Generate WebRTC VS2015 projects from gyp files
 CALL:prepareWebRTC
 
-::Prepare ORTC development environment
-CALL:prepareORTC
+IF %prepare_ORTC_Environemnt% EQU 1 (
+	::Prepare ORTC development environment
+	CALL:prepareORTC
 
-::Download curl and build it
-CALL:prepareCurl
+	::Download curl and build it
+	CALL:prepareCurl
+)
 
 ::Finish script execution
 CALL:done
@@ -150,16 +155,21 @@ SET validInput=0
 SET messageText=
 
 IF /I "%target%"=="all" (
-	SET prepare_ORTC_Environemnt=1
+	SET prepare_ORTC_Environemnt=%ortcAvailable%
 	SET prepare_WebRTC_Environemnt=1
 	SET validInput=1
-	SET messageText=Preparing webRTC and ORTC development environment ...
+	IF !prepare_ORTC_Environemnt! EQU 1 (
+		SET messageText=Preparing webRTC and ORTC development environment ...
+	) ELSE (
+		SET messageText=Preparing webRTC development environment ...
+		)
 ) ELSE (
 	IF /I "%target%"=="webrtc" (
 		SET prepare_WebRTC_Environemnt=1
 		SET validInput=1
 	)
 	IF /I "%target%"=="ortc" (
+	IF %ortcAvailable% EQU 0 CALL:ERROR 1 "ORTC is not available!"
 		SET prepare_ORTC_Environemnt=1
 		SET validInput=1
 	)
@@ -299,7 +309,7 @@ GOTO:EOF
 
 :: Copy webrtc solution template
 CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
-CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
+::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
@@ -468,6 +478,10 @@ CALL:print %trace% Copied file %~1 to %~2
 
 IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
 
+GOTO:EOF
+
+:checkOrtcAvailability
+IF EXIST ortc\NUL SET ortcAvailable=1
 GOTO:EOF
 
 REM Print logger message. First argument is log level, and second one is the message
