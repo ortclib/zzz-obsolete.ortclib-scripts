@@ -103,15 +103,17 @@ echo All WebRTC libs for %PLATFORM% %CONFIGURATION% are combined in one lib.
 goto:eof
 
 :moveLibs
-
+echo %CD%
 IF NOT EXIST %libsSourcePathDestianation%NUL (
 	MKDIR %libsSourcePathDestianation%
 	echo %trace% "Created folder %libsSourcePathDestianation%"
+) ELSE (
+	IF EXIST %libsSourcePathDestianation%%CONFIGURATION%\NUL RD /S /Q %libsSourcePathDestianation%%CONFIGURATION%
 )
 echo started
 echo %libsSourcePath%
-echo %libsSourcePathDestianation%%CONFIGURATION%
-MOVE %libsSourcePath% %libsSourcePathDestianation%%CONFIGURATION%
+echo %libsSourcePathDestianation%
+MOVE %libsSourcePath% %libsSourcePathDestianation%
 echo finished
 GOTO:EOF
 
