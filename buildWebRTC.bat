@@ -99,7 +99,8 @@ if "%failure%"=="0" (
 	if ERRORLEVEL 1 call:failure %errorlevel% "Failed combining libs"
 )
 
-echo All WebRTC libs for %PLATFORM% %CONFIGURATION% are combined in one lib.
+IF ERRORLEVEL 0 MOVE %libsSourcePath%\*.pdb %destinationPath%
+::echo All WebRTC libs for %PLATFORM% %CONFIGURATION% are combined in one lib.
 goto:eof
 
 :moveLibs
