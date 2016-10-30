@@ -111,6 +111,9 @@ CALL:pythonSetup
 ::Generate WebRTC VS2015 projects from gyp files
 CALL:prepareWebRTC
 
+::Install ninja if missing
+IF %platform_win32% EQU 1 CALL:installNinja
+
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
 	CALL:prepareORTC
@@ -489,6 +492,47 @@ GOTO:EOF
 
 :checkOrtcAvailability
 IF EXIST ortc\NUL SET ortcAvailable=1
+GOTO:EOF
+
+:installNinja
+
+WHERE ninja > NUL 2>&1
+IF !ERRORLEVEL! EQU 1 (
+	echo bbb
+	CALL:print %trace% "Ninja is not in the path"
+	
+	IF NOT EXIST .\bin\ninja.exe (
+		CALL:print %trace% "Downloading ninja ..."
+		CALL:downloadNinja
+
+		IF EXIST .\bin\ninja-win.zip CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
+	)
+
+	CALL::print %trace% "Updating projects ..."
+	IF EXIST .\bin\ninja.exe START /B /wait .\bin\upn.exe .\bin\ .\webrtc\xplatform\webrtc\ .\webrtc\xplatform\webrtc\chromium\src\
+)
+
+GOTO:EOF
+
+:downloadNinja
+%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','.\bin\ninja-win.zip')
+GOTO:EOF
+:unzipfile 
+echo unzip
+SET vbs="%temp%\_.vbs"
+IF EXIST %vbs% DEL /f /q %vbs%
+>%vbs%  ECHO Set fso = CreateObject("Scripting.FileSystemObject")
+>>%vbs% ECHO If NOT fso.FolderExists(%1) Then
+>>%vbs% ECHO fso.CreateFolder(%1)
+>>%vbs% ECHO End If
+>>%vbs% ECHO set objShell = CreateObject("Shell.Application")
+>>%vbs% ECHO set FilesInZip=objShell.NameSpace(%2).items
+>>%vbs% ECHO objShell.NameSpace(%1).CopyHere(FilesInZip)
+>>%vbs% ECHO Set fso = Nothing
+>>%vbs% ECHO Set objShell = Nothing
+CSCRIPT //nologo %vbs%
+IF EXIST %vbs% DEL /f /q %vbs%
+DEL /f /q %2
 GOTO:EOF
 
 REM Print logger message. First argument is log level, and second one is the message
