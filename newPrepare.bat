@@ -23,10 +23,11 @@ SET ortcAvailable=0
 SET prepare_ORTC_Environemnt=0
 SET prepare_WebRTC_Environemnt=0
 
-::platfroms
+::platforms
 SET platform_ARM=1
-SET platfrom_x86=1
-SET platfrom_x64=1
+SET platform_x86=1
+SET platform_x64=1
+SET platform_win32=1
 
 ::log levels
 SET globalLogLevel=2											
@@ -37,9 +38,9 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platfrom;target;help;logLevel;diagnostic;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;					
 SET target=all
-SET platfrom=all
+SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
@@ -47,7 +48,7 @@ SET diagnostic=0
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
-SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 SET folderStructureError="ORTC invalid folder structure."
 
 ECHO.
@@ -192,30 +193,36 @@ REM Based on input arguments determine targeted platforms (x64, x86 or ARM)
 SET validInput=0
 SET messageText=
 
-IF /I "%platfrom%"=="all" (
+IF /I "%platform%"=="all" (
 	SET platform_ARM=1
 	SET platform_x64=1
 	SET platform_x86=1
+	SET platform_win32=1
 	SET validInput=1
-	SET messageText=Preparing development environment for ARM, x64 and x86 platforms ...
+	SET messageText=Preparing development environment for ARM, x64, x86 and win32 platforms ...
 ) ELSE (
-	IF /I "%platfrom%"=="arm" (
+	IF /I "%platform%"=="arm" (
 		SET platform_ARM=1
 		SET validInput=1
 	)
 	
-	IF /I "%platfrom%"=="x64" (
+	IF /I "%platform%"=="x64" (
 		SET platform_x64=1
 		SET validInput=1
 	)
 
-	IF /I "%platfrom%"=="x86" (
+	IF /I "%platform%"=="x86" (
 		SET platform_x86=1
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32" (
+		SET platform_win32=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
-		SET messageText=Preparing development environment for %platfrom% platform...
+		SET messageText=Preparing development environment for %platform% platform...
 	)
 )
 :: If input is not valid terminate script execution

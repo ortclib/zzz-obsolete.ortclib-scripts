@@ -11,16 +11,16 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set taskFailed=0
 
-::platfroms
+::platforms
 SET platform_ARM=0
 SET platform_x86=0
 SET platform_x64=0
-
-::platfroms
+SET platform_win32=0
+::platforms
 SET platform_ARM_prepared=0
 SET platform_x86_prepared=0
 SET platform_x64_prepared=0
-
+SET platform_win32_prepared=0
 ::log variables
 SET globalLogLevel=2											
 
@@ -40,7 +40,7 @@ SET diagnostic=0
 ::predefined messages
 SET folderStructureError="WebRTC invalid folder structure."
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
-SET errorMessageInvalidPlatform="Invalid platfrom name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
@@ -112,30 +112,36 @@ REM Based on input arguments determine targeted platforms (x64, x86 or ARM)
 SET validInput=0
 SET messageText=
 
-IF /I "%platfrom%"=="all" (
+IF /I "%platform%"=="all" (
 	SET platform_ARM=1
 	SET platform_x64=1
 	SET platform_x86=1
+	SET platform_win32=1
 	SET validInput=1
 	SET messageText=Preparing WebRTC development environment for arm, x64 and x86 platforms ...
 ) ELSE (
-	IF /I "%platfrom%"=="arm" (
+	IF /I "%platform%"=="arm" (
 		SET platform_ARM=1
 		SET validInput=1
 	)
 	
-	IF /I "%platfrom%"=="x64" (
+	IF /I "%platform%"=="x64" (
 		SET platform_x64=1
 		SET validInput=1
 	)
 
-	IF /I "%platfrom%"=="x86" (
+	IF /I "%platform%"=="x86" (
 		SET platform_x86=1
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32" (
+		SET platform_win32=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
-		SET messageText=Preparing WebRTC development environment for %platfrom% platform ...
+		SET messageText=Preparing WebRTC development environment for %platform% platform ...
 	)
 )
 
@@ -233,7 +239,7 @@ CALL:print %trace% "Executing generateProjects function"
 SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
 IF %platform_ARM% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for arm platfrom ..."
+	CALL:print %warning% "Generating WebRTC projects for arm platform ..."
 	SET platform_ARM_prepared=1
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
@@ -243,13 +249,13 @@ IF %platform_ARM% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platfrom"
+	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
 	SET platform_ARM_prepared=2
 )
 
 IF %platform_x64% EQU 1 (
 	SET platform_x64_prepared=1
-	CALL:print %warning% "Generating WebRTC projects for x64 platfrom ..."
+	CALL:print %warning% "Generating WebRTC projects for x64 platform ..."
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	IF %logLevel% GEQ %debug% (
@@ -257,12 +263,12 @@ IF %platform_x64% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platfrom"
+	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
 	SET platform_x64_prepared=2
 )
 
 IF %platform_x86% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for x86 platfrom ..."
+	CALL:print %warning% "Generating WebRTC projects for x86 platform ..."
 	SET platform_x86_prepared=1
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
@@ -272,8 +278,23 @@ IF %platform_x86% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platfrom"
+	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
 	SET platform_x86_prepared=2
+)
+
+IF %platform_win32% EQU 1 (
+	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
+	SET platform_win32_prepared=1
+	SET GYP_DEFINES=component=shared_library
+	SET GYP_GENERATORS=ninja,msvs-ninja
+	::Not setting target_arch because of logic used in gyp files
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
+	) ELSE (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
+	)
+	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	SET platform_win32_prepared=2
 )
 
 GOTO:EOF
@@ -311,7 +332,7 @@ GOTO:EOF
 :summary
 SET logLevel=%trace%
 CALL:print %trace% "=======   WebRTC prepare script summary   ======="
-CALL:print %trace% "=======   platfrom   =========   result   ======="
+CALL:print %trace% "=======   platform   =========   result   ======="
 
 IF %platform_ARM_prepared% EQU 2 (
 	CALL:print %info% "            arm                 prepared"
@@ -343,6 +364,15 @@ IF %platform_x86_prepared% EQU 2 (
 	)
 )
 
+IF %platform_win32_prepared% EQU 2 (
+	CALL:print %info% "            win32                 prepared"
+) ELSE (
+	IF %platform_win32_prepared% EQU 1 (
+		CALL:print %error% "            win32                  failed"
+	) ELSE (
+		CALL:print %warning% "            win32                 not run"
+	)
+)
 CALL:print %trace% "================================================="
 ECHO.
 GOTO:EOF
