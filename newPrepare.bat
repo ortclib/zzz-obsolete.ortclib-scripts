@@ -16,6 +16,15 @@ SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
+::downloads
+SET pythonVersion=2.7.6
+SET ninjaVersion=v1.6.0
+SET pythonDestinationPath=python-%pythonVersion%.msi
+SET ninjaDestinationPath=.\bin\ninja-win.zip
+::urls
+SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
+SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
+
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
@@ -277,18 +286,18 @@ WHERE python > NUL 2>&1
 IF %ERRORLEVEL% EQU 1 (
 	CALL:print %warning%  "NOTE: Installing Python and continuing build..."
 	CALL:print %debug%  "Installing Python ..."
-	CALL:download https://www.python.org/ftp/python/2.7.6/python-2.7.6.msi  python-2.7.6.msi
+	CALL:download %pythonDownloadUrl% %pythonDestinationPath%
 	IF !taskFailed!==1 (
 		CALL:error 1  "Downloading python installer has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 	) ELSE (
-		START "Python install" /wait msiexec /i python-2.7.6.msi /quiet
+		START "Python install" /wait msiexec /i %pythonDestinationPath% /quiet
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 1  "Python installation has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 		) ELSE (
 			CALL:print %debug% "Python is successfully installed"
 		)
 		CALL:print %trace%  "Deleting downloaded file."
-		DEL python-2.7.6.msi
+		DEL %pythonDestinationPath%
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 0  "Deleting python installer from /bin folder has failed. You can delete it manually."
 		)
@@ -505,7 +514,7 @@ IF !ERRORLEVEL! EQU 1 (
 	
 	IF NOT EXIST .\bin\ninja.exe (
 		CALL:print %trace% "Downloading ninja ..."
-		CALL:download http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip .\bin\ninja-win.zip
+		CALL:download %ninjaDownloadUrl% %ninjaDestinationPath%
 
 		IF EXIST .\bin\ninja-win.zip (
 			CALL::print %trace% "Unarchiving ninja-win.zip ..."
