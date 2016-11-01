@@ -182,6 +182,7 @@ CALL:print %trace% "Executing generateChromiumFolders function"
 CALL:makeDirectory chromium\src
 CALL:makeDirectory chromium\src\tools
 CALL:makeDirectory chromium\src\third_party
+CALL:makeDirectory chromium\src\third_party\winsdk_samples
 CALL:makeDirectory chromium\src\third_party\libjingle\source\talk\media\testdata\
 
 GOTO:EOF
@@ -225,7 +226,7 @@ CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
 CALL:makeLink . third_party\gflags\src ..\gflags
-CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
+CALL:makeLink . third_party\winsdk_samples\src ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium-pruned\tools\clang
 CALL:makeLink . testing\gtest ..\googletest
