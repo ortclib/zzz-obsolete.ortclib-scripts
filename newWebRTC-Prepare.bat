@@ -365,12 +365,12 @@ IF %platform_x86_prepared% EQU 2 (
 )
 
 IF %platform_win32_prepared% EQU 2 (
-	CALL:print %info% "            win32                prepared"
+	CALL:print %info% "            win32               prepared"
 ) ELSE (
 	IF %platform_win32_prepared% EQU 1 (
-		CALL:print %error% "            win32                 failed"
+		CALL:print %error% "            win32                failed"
 	) ELSE (
-		CALL:print %warning% "            win32                not run"
+		CALL:print %warning% "            win32               not run"
 	)
 )
 CALL:print %trace% "================================================="

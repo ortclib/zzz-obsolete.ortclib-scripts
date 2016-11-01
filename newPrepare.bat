@@ -359,7 +359,9 @@ GOTO:EOF
 REM Download file (first argument) to desired destination (second argument)
 :download
 IF EXIST %~2 GOTO:EOF
-%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
+::%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
+%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('%~1','%~2')
+
 IF %ERRORLEVEL% EQU 1 SET taskFailed=1
 
 GOTO:EOF
@@ -503,22 +505,25 @@ IF !ERRORLEVEL! EQU 1 (
 	
 	IF NOT EXIST .\bin\ninja.exe (
 		CALL:print %trace% "Downloading ninja ..."
-		CALL:downloadNinja
+		CALL:download http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip .\bin\ninja-win.zip
 
-		IF EXIST .\bin\ninja-win.zip CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
+		IF EXIST .\bin\ninja-win.zip (
+			CALL::print %trace% "Unarchiving ninja-win.zip ..."
+			CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
+		) ELSE (
+			CALL:error 0 "Ninja is not installed. Win32 projects cwon't be buildable."
+		)
 	)
-
-	CALL::print %trace% "Updating projects ..."
-	IF EXIST .\bin\ninja.exe START /B /wait .\bin\upn.exe .\bin\ .\webrtc\xplatform\webrtc\ .\webrtc\xplatform\webrtc\chromium\src\
+	
+	IF EXIST .\bin\ninja.exe (
+		CALL::print %trace% "Updating projects ..."
+		START /B /wait .\bin\upn.exe .\bin\ .\webrtc\xplatform\webrtc\ .\webrtc\xplatform\webrtc\chromium\src\
+	)
 )
 
 GOTO:EOF
 
-:downloadNinja
-%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('http://github.com/martine/ninja/releases/download/v1.6.0/ninja-win.zip','.\bin\ninja-win.zip')
-GOTO:EOF
 :unzipfile 
-echo unzip
 SET vbs="%temp%\_.vbs"
 IF EXIST %vbs% DEL /f /q %vbs%
 >%vbs%  ECHO Set fso = CreateObject("Scripting.FileSystemObject")
