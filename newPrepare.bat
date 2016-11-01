@@ -498,7 +498,7 @@ GOTO:EOF
 
 WHERE ninja > NUL 2>&1
 IF !ERRORLEVEL! EQU 1 (
-	echo bbb
+
 	CALL:print %trace% "Ninja is not in the path"
 	
 	IF NOT EXIST .\bin\ninja.exe (

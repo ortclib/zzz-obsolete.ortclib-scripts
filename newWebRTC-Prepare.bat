@@ -225,7 +225,7 @@ CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
 CALL:makeLink . third_party\gflags\src ..\gflags
-::CALL:makeLink . third_party\winsdk_samples\src ..\winsdk_samples_v71
+CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium-pruned\tools\clang
 CALL:makeLink . testing\gtest ..\googletest
@@ -249,7 +249,7 @@ IF %platform_ARM% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
 	SET platform_ARM_prepared=2
 )
 
@@ -263,7 +263,7 @@ IF %platform_x64% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
 	SET platform_x64_prepared=2
 )
 
@@ -278,7 +278,7 @@ IF %platform_x86% EQU 1 (
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
 	SET platform_x86_prepared=2
 )
 
@@ -293,7 +293,7 @@ IF %platform_win32% EQU 1 (
 	) ELSE (
 		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
 	)
-	IF %errorlevel% NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
 	SET platform_win32_prepared=2
 )
 
@@ -365,12 +365,12 @@ IF %platform_x86_prepared% EQU 2 (
 )
 
 IF %platform_win32_prepared% EQU 2 (
-	CALL:print %info% "            win32                 prepared"
+	CALL:print %info% "            win32                prepared"
 ) ELSE (
 	IF %platform_win32_prepared% EQU 1 (
-		CALL:print %error% "            win32                  failed"
+		CALL:print %error% "            win32                 failed"
 	) ELSE (
-		CALL:print %warning% "            win32                 not run"
+		CALL:print %warning% "            win32                not run"
 	)
 )
 CALL:print %trace% "================================================="
