@@ -219,17 +219,17 @@ SET nugetRuntimesx86Path=%nugetRuntimesPath%\win10-x86\native
 SET nugetRuntimesx64Path=%nugetRuntimesPath%\win10-x64\native
 SET nugetRuntimesARMPath=%nugetRuntimesPath%\win10-arm\native
 
-SET sourcex86Path=%libSourceBasePath%\x86\Release
+SET sourcex86Path=%libSourceBasePath%\x86\Release\%projectName%
 SET sourcex86DllPath=%sourcex86Path%\%projectNameForNuget%.dll
 SET sourcex86WinmdPath=%sourcex86Path%\%projectNameForNuget%.winmd
 SET sourcex86PdbPath=%sourcex86Path%\%projectNameForNuget%.pdb
 
-SET sourcex64Path=%libSourceBasePath%\x64\Release
+SET sourcex64Path=%libSourceBasePath%\x64\Release\%projectName%
 SET sourcex64DllPath=%sourcex64Path%\%projectNameForNuget%.dll
 SET sourcex64WinmdPath=%sourcex64Path%\%projectNameForNuget%.winmd
 SET sourcex64PdbPath=%sourcex64Path%\%projectNameForNuget%.pdb
 
-SET sourcexARMPath=%libSourceBasePath%\ARM\Release
+SET sourcexARMPath=%libSourceBasePath%\ARM\Release\%projectName%
 SET sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
 SET sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
 SET sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
@@ -330,7 +330,7 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 GOTO:EOF
 
 :build
-
+goto:eof
 SET CONFIGURATION=Release
 CALL:setCompilerOption %~3
 echo %msVS_Path%
