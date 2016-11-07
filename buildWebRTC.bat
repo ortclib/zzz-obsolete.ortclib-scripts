@@ -16,7 +16,6 @@ set currentBuildCompilerOption=amd64
 echo Webrtc build is started. It will take couple of minutes.
 echo Working ...
 
-
 call:determineVisualStudioPath
 
 call:setCompilerOption
@@ -51,23 +50,23 @@ goto:eof
 reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set CPU=x86 || set CPU=x64
 echo CPU arhitecture is %CPU%
 
-if %CPU% == x86 (
+if /I %CPU% == x86 (
 	set x86BuildCompilerOption=x86
 	set x64BuildCompilerOption=x86_amd64
 	set armBuildCompilerOption=x86_arm
 )
 
-if %PLATFORM%==x86 (
+if /I %PLATFORM%==x86 (
 	set currentBuildCompilerOption=%x86BuildCompilerOption%
 ) else (
-	if %PLATFORM%==ARM (
+	if /I %PLATFORM%==ARM (
 		set currentBuildCompilerOption=%armBuildCompilerOption%
 	) else (
 		set currentBuildCompilerOption=%x64BuildCompilerOption%
 	)
 )
 
-echo Selected compiler option is %currentBuildCompilerOption%
+echo Selected compiler option is !currentBuildCompilerOption!
 
 goto:eof
 
@@ -111,11 +110,11 @@ IF NOT EXIST %libsSourcePathDestianation%NUL (
 ) ELSE (
 	IF EXIST %libsSourcePathDestianation%%CONFIGURATION%\NUL RD /S /Q %libsSourcePathDestianation%%CONFIGURATION%
 )
-echo started
+
 echo %libsSourcePath%
 echo %libsSourcePathDestianation%
 MOVE %libsSourcePath% %libsSourcePathDestianation%
-echo finished
+
 GOTO:EOF
 
 :setPaths

@@ -16,12 +16,14 @@ IF NOT "%ProgramFiles(x86)%" == "" SET PROGFILES=%ProgramFiles(x86)%
 SET MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 SET nuget=bin\nuget.exe
 SET SolutionPath=""
-SET SolutionPathOrtc=ortc\windows\solutions\Ortc.sln
-SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.sln
+SET SolutionPathOrtc=ortc\windows\solutions\Ortc.Nuget.sln
+SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.Nuget.sln
 SET PROJECTPATH=winrt\projects\ortc-template.csproj
 SET nugetOrtcBasePath=ortc\windows\nuget
 SET nugetWebRtcBasePath=webrtc\windows\nuget
-
+SET OrtcWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
+SET WinrtWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcLib.sln
+SET WebRtcSolutionPath=""
 ::SET nugetSpec=%nugetBasePath%\package\%nugetName%\%projectNameForNuget%.nuspec
 ::SET nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectNameForNuget%
 ::SET nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectNameForNuget%
@@ -310,16 +312,19 @@ CALL:determineVisualStudioPath
 
 IF %generate_Ortc_Nuget% EQU 1 (
 	ECHO Creating Ortc nuget package ...
-	
+	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
+	SET nugetName=%nugetOrtcName%
 	CALL:build %SolutionPathOrtc% %projectNameOrtc% x86
 	CALL:build %SolutionPathOrtc% %projectNameOrtc% x64
 	CALL:build %SolutionPathOrtc% %projectNameOrtc% arm
 	
 	CALL:preparePackage Ortc
 )
-echo ohoho
+
 IF %generate_WebRtc_Nuget% EQU 1 (
 	ECHO Creating WebRtc nuget package ...
+	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
+	SET nugetName=%nugetWebRtcName%
 	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x86
 	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x64
 	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% arm
@@ -330,7 +335,7 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 GOTO:EOF
 
 :build
-goto:eof
+
 SET CONFIGURATION=Release
 CALL:setCompilerOption %~3
 echo %msVS_Path%
@@ -344,8 +349,11 @@ echo project: %~2
 echo compiler option: %~3
 echo CONFIGURATION: %CONFIGURATION%
 echo PLATFORM: %PLATFORM%
-MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
-::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
+call bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%
+if ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+
+::MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
+MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
 
 if ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
 GOTO:EOF
