@@ -1,46 +1,50 @@
+:: Name:     newCreateNuget.bat
+:: Purpose:  Creates ORTC and WebRTC nuget packages
+:: Author:   Sergej Jovanovic
+:: Email:	 sergej@gnedo.com
+:: Revision: November 2016 - initial version
+
 @ECHO off
 
-setlocal EnableDelayedExpansion
-ECHO Started creating ortc nuget package...
+SETLOCAL EnableDelayedExpansion
 
+::projects
 SET projectNameOrtc=org.ortc
 SET projectNameWebRtc=webrtc_winrt_api
 SET nugetOrtcName=Ortc
 SET nugetWebRtcName=WebRtc
+
+::nuget
 SET nugetVersion=
 SET publishKey=
-SET failure=0
+SET nugetPackageVersion=""
+SET nugetName=""
+
+::paths
 SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET PROGFILES=%ProgramFiles%
 IF NOT "%ProgramFiles(x86)%" == "" SET PROGFILES=%ProgramFiles(x86)%
 SET MSVCDIR="%PROGFILES%\Microsoft Visual Studio 14.0"
 SET nuget=bin\nuget.exe
 SET SolutionPath=""
-SET SolutionPathOrtc=ortc\windows\solutions\Ortc.Nuget.sln
-SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.Nuget.sln
+SET SolutionPathOrtc=ortc\windows\solutions\Ortc.sln
+SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.sln
 SET PROJECTPATH=winrt\projects\ortc-template.csproj
 SET nugetOrtcBasePath=ortc\windows\nuget
 SET nugetWebRtcBasePath=webrtc\windows\nuget
 SET OrtcWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
 SET WinrtWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcLib.sln
 SET WebRtcSolutionPath=""
-::SET nugetSpec=%nugetBasePath%\package\%nugetName%\%projectNameForNuget%.nuspec
-::SET nugetOutputPath=%nugetBasePath%\..\NugetOutput\%projectNameForNuget%
-::SET nugetTemplateProjectsPath=%nugetBasePath%\templates\%projectNameForNuget%
 SET nugetOutputPath=""
-SET nugetPackageVersion=""
-SET nugetName=""
 SET nugetPath=""
 SET nugetSpec=""
-::SET nugetPackageVersion=%nugetBasePath%\%projectNameForNuget%.version
+SET nugetExecutableDestinationPath=bin\nuget.exe
 
-SET peerCCSourcePath=samples\PeerCC
-SET peerCCTestPath=winrt\test\PeerCC
-SET peerCCProjectTemaplePath=winrt\templates\samples\PeerCC
+::urls
+SET nugetDownloadUrl=https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
-SET nugetVersion=%2
-
-
+::helpers
+SET failure=0
 SET ortcAvailable=0
 
 ::targets
@@ -48,7 +52,7 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;beta;destination;publish;help;
+SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
 SET target=all
 SET version=1.0.0
 SET key=
@@ -56,56 +60,51 @@ SET beta=1
 SET destination=d:\myNugetPackages
 SET publish=0
 SET help=0
+SET logLevel=2
 
 ::build variables
-set msVS_Path=""
-set msVS_Version=""
-set x86BuildCompilerOption=amd64_x86
-set x64BuildCompilerOption=amd64
-set armBuildCompilerOption=amd64_arm
-set currentBuildCompilerOption=amd64
+SET msVS_Path=""
+SET msVS_Version=""
+SET x86BuildCompilerOption=amd64_x86
+SET x64BuildCompilerOption=amd64
+SET armBuildCompilerOption=amd64_arm
+SET currentBuildCompilerOption=amd64
 
-::Version
-SET v=1.0.0
+::log levels
+SET globalLogLevel=2											
+SET error=0														
+SET info=1														
+SET warning=2													
+SET debug=3														
+SET trace=4	
 
-::Api key for publishing
-SET k=
-
-::PreRelease flag
-SET b=0
-
-::Destination nuget storage
-SET s=
-
-::Publish flag
-SET p=
-
-::Prepare test environment
-SET t=
+ECHO.
+CALL:print %info% "Started creating nuget packages ..."
+ECHO.
 
 :parseInputArguments
-if "%1"=="" (
-	if not "%nome%"=="" (
-		set "%nome%=1"
-		set nome=""
-	) else (
-		goto:main
+IF "%1"=="" (
+	IF NOT "%nome%"=="" (
+		SET "%nome%=1"
+		SET nome=""
+	) ELSE (
+		GOTO:main
 	)
-)
-::echo              %1
-set aux=%1
-if "%aux:~0,1%"=="-" (
-	if not "%nome%"=="" (
-		set "%nome%=1"
-	)
-   set nome=%aux:~1,250%
-) else (
-   set "%nome%=%1"
-   set nome=
 )
 
-shift
-goto parseInputArguments
+SET aux=%1
+IF "%aux:~0,1%"=="-" (
+	IF NOT "%nome%"=="" (
+		SET "%nome%=1"
+	)
+   SET nome=%aux:~1,250%
+) ELSE (
+   SET "%nome%=%1"
+   SET nome=
+)
+
+SHIFT
+GOTO parseInputArguments
 
 ::===========================================================================
 :: Start execution of main flow (if parsing input parameters passed without issues)
@@ -125,13 +124,15 @@ CALL:generateNugetPackages
 GOTO:DONE
 
 :checkOrtcAvailability
+CALL:print %trace% "Checking is Ortc available"
 IF EXIST ortc\NUL SET ortcAvailable=1
 GOTO:EOF
 
 :identifyTarget
+CALL:print %trace% "Identifying build targets"
 SET validInput=0
 SET messageText=
-echo "%target%"
+
 IF /I "%target%"=="all" (
 	SET generate_Ortc_Nuget=%ortcAvailable%
 	SET generate_WebRtc_Nuget=1
@@ -140,7 +141,7 @@ IF /I "%target%"=="all" (
 		SET messageText=Generating WebRtc and Ortc nuget packages ...
 	) ELSE (
 		SET messageText=Generating WebRtc nuget package ...
-		)
+	)
 ) ELSE (
 	IF /I "%target%"=="webrtc" (
 		SET generate_WebRtc_Nuget=1
@@ -153,29 +154,93 @@ IF /I "%target%"=="all" (
 	)
 
 	IF !validInput!==1 (
-		SET messageText=Preparing %target% development environment ...
+		SET messageText=Generating %target% nuget package ...
 	)
 )
 
 :: If input is not valid terminate script execution
 IF !validInput!==1 (
-	CALL:error 0 %warning% "!messageText!"
+	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidTarget%
 )
-
 GOTO:EOF
+
 :downloadNuget
-if NOT EXIST %nuget% (
-	echo Nuget donwload started
-	%powershell_path% "Start-BitsTransfer https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -Destination bin\nuget.exe"
+IF NOT EXIST %nuget% (
+	CALL:print %debug% "Downloading nuget.exe"
+	%powershell_path% "Start-BitsTransfer %nugetDownloadUrl% -Destination %nugetExecutableDestinationPath%"
 	
 	IF ERRORLEVEL 1 CALL:error 1 "Could not download nuget.exe"
 )
 GOTO:EOF
 
-:preparePackage
+:generateNugetPackages
+CALL:print %warning% "Generating nuget packages ..."
+ 
+CALL:determineVisualStudioPath
 
+IF %generate_Ortc_Nuget% EQU 1 (
+	CALL:print %warning% "Creating Ortc nuget package ..."
+	 
+	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
+	SET nugetName=%nugetOrtcName%
+	CALL:build %SolutionPathOrtc% org_ortc x86
+	CALL:build %SolutionPathOrtc% org_ortc x64
+	CALL:build %SolutionPathOrtc% org_ortc arm
+	
+	CALL:preparePackage Ortc
+)
+
+IF %generate_WebRtc_Nuget% EQU 1 (
+	CALL:print %warning% "Creating WebRtc nuget package ..."
+
+	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
+	SET nugetName=%nugetWebRtcName%
+	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x86
+	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x64
+	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% arm
+
+	CALL:preparePackage WebRtc
+)
+GOTO:EOF
+
+:build
+
+SET CONFIGURATION=Release
+CALL:setCompilerOption %~3
+
+CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Could not setup %~2 compiler"
+
+CALL:print %warning% "Building WebRtc for %PLATFORM%"
+CALL:print %trace% "Solution: %~1"
+CALL:print %trace% "Project: %~2"
+CALL:print %trace% "Compiler option: %~3"
+CALL:print %trace% "CONFIGURATION: %CONFIGURATION%"
+CALL:print %trace% "PLATFORM: %PLATFORM%"
+
+IF %logLevel% GEQ %trace% (
+	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%
+) ELSE (
+	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%  >NUL
+)
+IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+
+CALL:print %warning% "Building %~2 for %PLATFORM%"
+IF %logLevel% GEQ %trace% (
+	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
+) ELSE (
+	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3  >NUL
+)
+
+::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
+
+IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+GOTO:EOF
+
+:preparePackage
+CALL:print %trace% "Creating a package ..."
 SET nugetTargetPath=""
 SET nugetSpecPath=""
 SET nugetBasePath=""
@@ -260,28 +325,28 @@ GOTO:EOF
 
 
 :setCompilerOption
+CALL:print %trace% "Determining compiler options ..."
+REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
 
-REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
+CALL:print %trace% "CPU arhitecture is %CPU%"
 
-echo CPU arhitecture is %CPU%
-
-if %CPU% == x86 (
-	set x86BuildCompilerOption=x86
-	set x64BuildCompilerOption=x86_amd64
-	set armBuildCompilerOption=x86_arm
+IF /I %CPU% == x86 (
+	SET x86BuildCompilerOption=x86
+	SET x64BuildCompilerOption=x86_amd64
+	SET armBuildCompilerOption=x86_arm
 )
 
-if %~1%==x86 (
-	set currentBuildCompilerOption=%x86BuildCompilerOption%
-) else (
-	if %~1%==ARM (
-		set currentBuildCompilerOption=%armBuildCompilerOption%
-	) else (
-		set currentBuildCompilerOption=%x64BuildCompilerOption%
+IF /I %~1==x86 (
+	SET currentBuildCompilerOption=%x86BuildCompilerOption%
+) ELSE (
+	IF /I %~1==ARM (
+		SET currentBuildCompilerOption=%armBuildCompilerOption%
+	) ELSE (
+		SET currentBuildCompilerOption=%x64BuildCompilerOption%
 	)
 )
 
-echo Selected compiler option is %currentBuildCompilerOption%
+CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
 
 GOTO:EOF
 
@@ -306,64 +371,12 @@ ECHO "Visual Studio path is %msVS_Path%"
 
 GOTO:EOF
 
-:generateNugetPackages
-ECHO Generating nuget packages...
-CALL:determineVisualStudioPath
-
-IF %generate_Ortc_Nuget% EQU 1 (
-	ECHO Creating Ortc nuget package ...
-	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
-	SET nugetName=%nugetOrtcName%
-	CALL:build %SolutionPathOrtc% %projectNameOrtc% x86
-	CALL:build %SolutionPathOrtc% %projectNameOrtc% x64
-	CALL:build %SolutionPathOrtc% %projectNameOrtc% arm
-	
-	CALL:preparePackage Ortc
-)
-
-IF %generate_WebRtc_Nuget% EQU 1 (
-	ECHO Creating WebRtc nuget package ...
-	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
-	SET nugetName=%nugetWebRtcName%
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x86
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x64
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% arm
-
-	CALL:preparePackage WebRtc
-)
-
-GOTO:EOF
-
-:build
-
-SET CONFIGURATION=Release
-CALL:setCompilerOption %~3
-echo %msVS_Path%
-echo %currentBuildCompilerOption%
-::CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
-CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
-IF !ERRORLEVEL! EQU 1 CALL:error 1 "Could not setup %~2 compiler"
-
-echo solution: %~1
-echo project: %~2
-echo compiler option: %~3
-echo CONFIGURATION: %CONFIGURATION%
-echo PLATFORM: %PLATFORM%
-call bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%
-if ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
-
-::MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
-MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
-
-if ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
-GOTO:EOF
-
 :setNugetVersion
 ECHO version %version%
 ECHO Nuspec: %~1
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %~1 "<version></version>" "<version>%version%</version>" %~1
 if ERRORLEVEL 1 CALL:error 1 "Failed creating the %nugetName% nuget package"
-goto:eof
+GOTO:EOF
 
 :makeNuget
 
@@ -379,12 +392,12 @@ IF EXIST %nugetPath% (
 	RMDIR /s /q %nugetPath%
 )
 
-goto:eof
+GOTO:EOF
 
 :setNugetApiKey
 %nuget% setapikey %publishKey%
 if ERRORLEVEL 1 CALL:error 0 "Failed creating the %nugetName% nuget package"
-goto:eof
+GOTO:EOF
 
 :publishNuget
 IF NOT "%key%"=="" CALL:setNugetApiKey
@@ -398,7 +411,7 @@ IF %platform% EQU 1 (
 )
 IF ERRORLEVEL 1 CALL:error 1 "Failed publishing the %nugetName% nuget package"
 
-goto:eof
+GOTO:EOF
 
 :determineNugetVersion
 IF EXIST %nugetPackageVersion% (
@@ -411,62 +424,14 @@ FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
   SET version=%%a.%%b.!build!
 )
 
-IF BETA EQU 1 SET version=!version!-Beta
+IF %beta% EQU 1 (
+	SET nugetVersion=!version!-Beta
+) ELSE (
+	SET nugetVersion=!version!
+)
 
-ECHO New Nuget Version is !version!
+ECHO New Nuget Version is !nugetVersion!
 GOTO:EOF
-
-:preparePeerCC
-
-rmdir /s /q %peerCCTestPath%
-call:createFolder %peerCCTestPath%
-::Xcopy  /S /I /E %peerCCSourcePath%\*.* %peerCCTestPath%\
-Xcopy  /S /I /Y %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.Win10 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
-Xcopy  /S /I /Y %peerCCSourcePath%\PeerConnectionClient.Win10.Shared %peerCCTestPath%\PeerConnectionClient.Win10.Shared
-Xcopy  /S /I /Y %peerCCSourcePath%\PeerConnectionClient.Shared %peerCCTestPath%\PeerConnectionClient.Shared
-Xcopy  /S /I /Y %peerCCSourcePath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln %peerCCTestPath%\
-
-echo peerCCProjectTemaplePath = %peerCCProjectTemaplePath%
-call:copyFiles %peerCCProjectTemaplePath%\project.json %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json "ORTC.Version" "%nugetVersion%" %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
-
-goto:eof
-
-:makePeerCCPackage
-%nuget% restore %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\project.json
-
-if exist %MSVCDIR% (
-	call %MSVCDIR%\VC\vcvarsall.bat
-	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
-	
-	::MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
-	MSBuild %peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.vs2015.sln  /p:Configuration=Release;Platform="Any CPU";AppxBundle=Always;AppxBundlePlatforms="x86|x64|ARM"
-	if ERRORLEVEL 1 call:failure %errorlevel% "Building ORTC projects for %PLATFORM% %CONFIGURATION% has failed"
-) else (
-	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
-)
-
-set ABS_PATH=%CD%
-
-if exist "%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" (
-	call:zipfile "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\AppPackages\PeerConnectionClient_UsingORTCNuGet.Win10_9.9.9.9_Test\" "%ABS_PATH%\%peerCCTestPath%\PeerConnectionClient_UsingORTCNuget.Win10\PeerConnectionClient_%nugetVersion%.zip"
-)
-goto:eof
-
-:zipfile 
-set vbs="%temp%\_.vbs"
-if exist %vbs% del /f /q %vbs%
-echo %1
-echo %2
->%vbs%  echo InputFolder = WScript.Arguments(0)
->>%vbs% echo ZipFile = WScript.Arguments(1)
->>%vbs% echo CreateObject("Scripting.FileSystemObject").CreateTextFile(ZipFile, True).Write "PK" ^& Chr(5) ^& Chr(6) ^& String(18, vbNullChar)
->>%vbs% echo set objShell = CreateObject("Shell.Application")
->>%vbs% echo Set source = objShell.NameSpace(InputFolder).Items
->>%vbs% echo objShell.NameSpace(ZipFile).CopyHere(source)
->>%vbs% echo wScript.Sleep 2000
-cscript //nologo %vbs% %1 %2
-goto:eof
 
 :copyFiles
 IF EXIST %1 (
@@ -477,14 +442,14 @@ IF EXIST %1 (
 ) else (
 	CALL:error 1 "Could not copy a %1"
 )
-goto:eof
+GOTO:EOF
 
 :createFolder
 IF NOT EXIST %1 (
 	MKDIR %1
 	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %1"
 )
-goto:eof
+GOTO:EOF
 
 :showHelp
 IF NOT %help% EQU 0 GOTO:EOF
@@ -521,7 +486,23 @@ echo Creating prerelase nuget package and publish it to locally nuget storage
 echo bin\createNuget.bat -b -p -s [path to local nuget storage]
 echo.
 
-goto:eof
+GOTO:EOF
+
+REM Print logger message. First argument is log level, and second one is the message
+:print
+SET logType=%1
+SET logMessage=%~2
+
+if %logLevel% GEQ  %logType% (
+	if %logType%==0 ECHO [91m%logMessage%[0m
+	if %logType%==1 ECHO [92m%logMessage%[0m
+	if %logType%==2 ECHO [93m%logMessage%[0m
+	if %logType%==3 ECHO %logMessage%
+	if %logType%==4 ECHO %logMessage%
+)
+
+GOTO:EOF
+
 REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message
 :error
 SET criticalError=%~1
@@ -536,7 +517,7 @@ IF %criticalError%==0 (
 	ECHO "CRITICAL ERROR: %errorMessage%"
 	ECHO.
 	ECHO.
-	ECHO "FAILURE:Preparing environment has failed!"
+	ECHO "FAILURE: Creating nuget package has failed!"
 	ECHO.
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
@@ -544,10 +525,10 @@ IF %criticalError%==0 (
 GOTO:EOF
 
 :done
-echo %v%
+echo %version%
 echo %nugetPackageVersion%
-echo %v%>%nugetPackageVersion%
+echo %version%>%nugetPackageVersion%
 echo.
-echo Success: ORTC nuget package is created.
+echo Success:  Nuget package is created.
 echo.
 :end
