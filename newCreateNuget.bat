@@ -229,9 +229,9 @@ IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION
 
 CALL:print %warning% "Building %~2 for %PLATFORM%"
 IF %logLevel% GEQ %trace% (
-	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3
+	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
 ) ELSE (
-	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3  >NUL
+	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False >NUL
 )
 
 ::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
