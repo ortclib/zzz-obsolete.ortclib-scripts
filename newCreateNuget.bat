@@ -14,12 +14,6 @@ SET projectNameWebRtc=webrtc_winrt_api
 SET nugetOrtcName=Ortc
 SET nugetWebRtcName=WebRtc
 
-::nuget
-SET nugetVersion=
-SET publishKey=
-SET nugetPackageVersion=""
-SET nugetName=""
-
 ::paths
 SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET PROGFILES=%ProgramFiles%
@@ -29,7 +23,6 @@ SET nuget=bin\nuget.exe
 SET SolutionPath=""
 SET SolutionPathOrtc=ortc\windows\solutions\Ortc.sln
 SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.sln
-SET PROJECTPATH=winrt\projects\ortc-template.csproj
 SET nugetOrtcBasePath=ortc\windows\nuget
 SET nugetWebRtcBasePath=webrtc\windows\nuget
 SET OrtcWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
@@ -39,6 +32,16 @@ SET nugetOutputPath=""
 SET nugetPath=""
 SET nugetSpec=""
 SET nugetExecutableDestinationPath=bin\nuget.exe
+
+::nuget
+SET nugetVersion=
+SET publishKey=
+SET nugetPackageVersion=""
+SET nugetName=""
+SET nugetOrtcTemplateProjectPath=%nugetOrtcBasePath%\templates\Ortc.Nuget.sln
+SET nugetOrtcTemplateProjectDestinationPath=webrtc\windows\solutions\Ortc.Nuget.sln
+SET nugetWebRtcTemplateProjectPath=%nugetWebRtcBasePath%\templates\WebRtc.Nuget.sln
+SET nugetWebRtcTemplateProjectDestinationPath=webrtc\windows\solutions\WebRtc.Nuget.sln
 
 ::urls
 SET nugetDownloadUrl=https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
@@ -182,12 +185,16 @@ CALL:determineVisualStudioPath
 
 IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating Ortc nuget package ..."
-	 
+	
+	CALL:preparePackage ortc
+	
+	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!
 	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
 	SET nugetName=%nugetOrtcName%
-	CALL:build %SolutionPathOrtc% org_ortc x86
-	CALL:build %SolutionPathOrtc% org_ortc x64
-	CALL:build %SolutionPathOrtc% org_ortc arm
+	
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc x86
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc x64
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc arm
 	
 	CALL:preparePackage Ortc
 )
@@ -195,11 +202,15 @@ IF %generate_Ortc_Nuget% EQU 1 (
 IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating WebRtc nuget package ..."
 
+	CALL:preparePackage webrtc
+	
+	SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!
 	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x86
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% x64
-	CALL:build %SolutionPathWebRtc% %projectNameWebRtc% arm
+	
+	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api x86
+	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api x64
+	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api arm
 
 	CALL:preparePackage WebRtc
 )
@@ -237,6 +248,19 @@ IF %logLevel% GEQ %trace% (
 ::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
 
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+GOTO:EOF
+
+:prepareTemplates
+
+IF /I %~1=webrtc (
+	SET nugetTemplateProjectPath=nugetWebRtcTemplateProjectPath
+	SET nugetTemplateProjectDestinationPath=nugetWebRtcTemplateProjectDestinationPath
+) ELSE (
+	SET nugetTemplateProjectPath=nugetOrtcTemplateProjectPath
+)
+
+CALL:copyFiles !nugetTemplateProjectPath! !nugetTemplateProjectDestinationPath! 
+	
 GOTO:EOF
 
 :preparePackage
@@ -503,6 +527,12 @@ if %logLevel% GEQ  %logType% (
 
 GOTO:EOF
 
+:cleanup
+IF EXIST !nugetWebRtcTemplateProjectDestinationPath! DEL !nugetWebRtcTemplateProjectDestinationPath!
+IF EXIST !nugetOrtcTemplateProjectDestinationPath! DEL !nugetOrtcTemplateProjectDestinationPath!
+
+GOTO:EOF
+
 REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message
 :error
 SET criticalError=%~1
@@ -519,12 +549,14 @@ IF %criticalError%==0 (
 	ECHO.
 	ECHO "FAILURE: Creating nuget package has failed!"
 	ECHO.
+	CALL:cleanup
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
 )
 GOTO:EOF
 
 :done
+CALL:cleanup
 echo %version%
 echo %nugetPackageVersion%
 echo %version%>%nugetPackageVersion%
