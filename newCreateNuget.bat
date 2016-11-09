@@ -39,9 +39,9 @@ SET publishKey=
 SET nugetPackageVersion=""
 SET nugetName=""
 SET nugetOrtcTemplateProjectPath=%nugetOrtcBasePath%\templates\Ortc.Nuget.sln
-SET nugetOrtcTemplateProjectDestinationPath=webrtc\windows\solutions\Ortc.Nuget.sln
+SET nugetOrtcTemplateProjectDestinationPath=ortc\windows\solutions\
 SET nugetWebRtcTemplateProjectPath=%nugetWebRtcBasePath%\templates\WebRtc.Nuget.sln
-SET nugetWebRtcTemplateProjectDestinationPath=webrtc\windows\solutions\WebRtc.Nuget.sln
+SET nugetWebRtcTemplateProjectDestinationPath=webrtc\windows\solutions\
 
 ::urls
 SET nugetDownloadUrl=https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
@@ -186,15 +186,15 @@ CALL:determineVisualStudioPath
 IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating Ortc nuget package ..."
 	
-	CALL:preparePackage ortc
+	CALL:prepareTemplates ortc
 	
-	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!
+	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln
 	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
 	SET nugetName=%nugetOrtcName%
 	
-	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc x86
-	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc x64
-	CALL:build !SolutionPathOrtc! Api\org_Ortc\Org_Ortc arm
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc x86
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc x64
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc arm
 	
 	CALL:preparePackage Ortc
 )
@@ -202,15 +202,15 @@ IF %generate_Ortc_Nuget% EQU 1 (
 IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating WebRtc nuget package ..."
 
-	CALL:preparePackage webrtc
+	CALL:prepareTemplates webrtc
 	
-	SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!
+	SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln
 	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
 	
-	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api x86
-	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api x64
-	CALL:build %SolutionPathWebRtc% Api\org_WebRtc\webrtc_winrt_api arm
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api x86
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api x64
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api arm
 
 	CALL:preparePackage WebRtc
 )
@@ -239,6 +239,11 @@ IF %logLevel% GEQ %trace% (
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
 
 CALL:print %warning% "Building %~2 for %PLATFORM%"
+CALL:print %trace% "Solution: %~1"
+CALL:print %trace% "Project: %~2"
+CALL:print %trace% "Compiler option: %~3"
+CALL:print %trace% "CONFIGURATION: %CONFIGURATION%"
+pause
 IF %logLevel% GEQ %trace% (
 	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
 ) ELSE (
@@ -252,11 +257,12 @@ GOTO:EOF
 
 :prepareTemplates
 
-IF /I %~1=webrtc (
-	SET nugetTemplateProjectPath=nugetWebRtcTemplateProjectPath
-	SET nugetTemplateProjectDestinationPath=nugetWebRtcTemplateProjectDestinationPath
+IF /I "%~1"=="webrtc" (
+	SET nugetTemplateProjectPath=%nugetWebRtcTemplateProjectPath%
+	SET nugetTemplateProjectDestinationPath=%nugetWebRtcTemplateProjectDestinationPath%
 ) ELSE (
-	SET nugetTemplateProjectPath=nugetOrtcTemplateProjectPath
+	SET nugetTemplateProjectPath=%nugetOrtcTemplateProjectPath%
+	SET nugetTemplateProjectDestinationPath=%nugetOrtcTemplateProjectDestinationPath%
 )
 
 CALL:copyFiles !nugetTemplateProjectPath! !nugetTemplateProjectDestinationPath! 
@@ -528,8 +534,8 @@ if %logLevel% GEQ  %logType% (
 GOTO:EOF
 
 :cleanup
-IF EXIST !nugetWebRtcTemplateProjectDestinationPath! DEL !nugetWebRtcTemplateProjectDestinationPath!
-IF EXIST !nugetOrtcTemplateProjectDestinationPath! DEL !nugetOrtcTemplateProjectDestinationPath!
+IF EXIST !nugetWebRtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
+IF EXIST !nugetOrtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
 
 GOTO:EOF
 
