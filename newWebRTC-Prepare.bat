@@ -245,7 +245,7 @@ IF %platform_ARM% EQU 1 (
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
+	IF %logLevel% GEQ %trace% (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
 	) ELSE (
 		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL

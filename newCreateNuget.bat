@@ -244,7 +244,7 @@ CALL:print %trace% "PLATFORM: %PLATFORM%"
 IF %logLevel% GEQ %trace% (
 	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%
 ) ELSE (
-	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%  >NUL
+	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName% >NUL
 )
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
 

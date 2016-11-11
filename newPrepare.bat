@@ -28,6 +28,10 @@ SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVer
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
+SET startTime=0
+SET endingTime=0
+SET defaultProperties=0
+
 ::targets
 SET prepare_ORTC_Environemnt=0
 SET prepare_WebRTC_Environemnt=0
@@ -63,6 +67,14 @@ SET folderStructureError="ORTC invalid folder structure."
 ECHO.
 CALL:print %info% "Running prepare script ..."
 ECHO.
+
+IF "%1"=="" (
+	CALL:print %warning% "Running script with default parameters: "
+	CALL:print %warning% "Target: all ^(Ortc and WebRtc^)"
+	CALL:print %warning% "Platform: all ^(x64, x86, arm and win32^)"
+	CALL:print %warning% "Log level: %logLevel% ^(warning^)"
+	SET defaultProperties=1
+)
 
 :parseInputArguments
 IF "%1"=="" (
@@ -101,6 +113,16 @@ GOTO parseInputArguments
 
 ::Run diganostic if script is run in diagnostic mode
 IF %diagnostic% EQU 1 CALL:diagnostic
+
+SET startTime=%time%
+
+IF %defaultProperties% EQU 0 (
+	CALL:print %warning% "Running script parameters:"
+	CALL:print %warning% "Target: %target%"
+	CALL:print %warning% "Platform: %platform%"
+	CALL:print %warning% "Log level: %logLevel%"
+	SET defaultProperties=1
+)
 
 ::Check if ORTC is available
 CALL:checkOrtcAvailability
@@ -580,12 +602,41 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "FAILURE:Preparing environment has failed!"
 	ECHO.
+	SET endTime=%time%
+	CALL:showTime
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
 )
 GOTO:EOF
 
+:showTime
+
+SET options="tokens=1-4 delims=:.,"
+FOR /f %options% %%a in ("%startTime%") do SET start_h=%%a&SET /a start_m=100%%b %% 100&SET /a start_s=100%%c %% 100&SET /a start_ms=100%%d %% 100
+FOR /f %options% %%a in ("%endTime%") do SET end_h=%%a&SET /a end_m=100%%b %% 100&SET /a end_s=100%%c %% 100&SET /a end_ms=100%%d %% 100
+
+SET /a hours=%end_h%-%start_h%
+SET /a mins=%end_m%-%start_m%
+SET /a secs=%end_s%-%start_s%
+SET /a ms=%end_ms%-%start_ms%
+IF %ms% lss 0 SET /a secs = %secs% - 1 & SET /a ms = 100%ms%
+IF %secs% lss 0 SET /a mins = %mins% - 1 & SET /a secs = 60%secs%
+IF %mins% lss 0 SET /a hours = %hours% - 1 & SET /a mins = 60%mins%
+IF %hours% lss 0 SET /a hours = 24%hours%
+IF 1%ms% lss 100 SET ms=0%ms%
+IF %secs% lss 10 SET secs=0%secs%
+IF %mins% lss 10 SET mins=0%mins%
+IF %hours% lss 10 SET hours=0%hours%
+
+:: mission accomplished
+SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
+ECHO [93mTotal execution time: %hours%:%mins%:%secs% (%totalsecs%s total)[0m
+
+GOTO:EOF
+
 :done
 ECHO.
 CALL:print %info% "Success: Development environment is set."
+SET endTime=%time%
+CALL:showTime
 ECHO. 
