@@ -49,6 +49,8 @@ SET nugetDownloadUrl=https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 ::helpers
 SET failure=0
 SET ortcAvailable=0
+SET startTime=0
+SET endingTime=0
 
 ::targets
 SET generate_Ortc_Nuget=0
@@ -56,9 +58,9 @@ SET generate_WebRtc_Nuget=0
 
 ::input arguments
 SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
-SET target=all
+SET target=""
 SET version=1.0.0
-SET key=
+SET key=""
 SET beta=1
 SET destination=d:\myNugetPackages
 SET publish=0
@@ -81,9 +83,7 @@ SET warning=2
 SET debug=3														
 SET trace=4	
 
-ECHO.
-CALL:print %info% "Started creating nuget packages ..."
-ECHO.
+IF "%1"=="" SET help=1
 
 :parseInputArguments
 IF "%1"=="" (
@@ -114,7 +114,13 @@ GOTO parseInputArguments
 
 :main
 
-::CALL:showHelp
+CALL:showHelp
+
+SET startTime=%time%
+
+ECHO.
+CALL:print %info% "Started creating nuget packages ..."
+ECHO.
 
 CALL:checkOrtcAvailability
 
@@ -123,6 +129,8 @@ CALL:identifyTarget
 CALL:downloadNuget
 
 CALL:generateNugetPackages
+
+IF %publish% EQU 1 CALL:publishNuget
 
 GOTO:DONE
 
@@ -135,6 +143,8 @@ GOTO:EOF
 CALL:print %trace% "Identifying build targets"
 SET validInput=0
 SET messageText=
+
+IF "%target%"=="" CALL:error 1 "Target has to be specified. Available targets are Ortc and WebRtc."
 
 IF /I "%target%"=="all" (
 	SET generate_Ortc_Nuget=%ortcAvailable%
@@ -165,7 +175,7 @@ IF /I "%target%"=="all" (
 IF !validInput!==1 (
 	CALL:print %warning% "!messageText!"
 ) ELSE (
-	CALL:error 1 %errorMessageInvalidTarget%
+	CALL:error 1 "Invalid target name provided. Available targets are Ortc and WebRtc."
 )
 GOTO:EOF
 
@@ -239,11 +249,11 @@ IF %logLevel% GEQ %trace% (
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
 
 CALL:print %warning% "Building %~2 for %PLATFORM%"
-CALL:print %trace% "Solution: %~1"
-CALL:print %trace% "Project: %~2"
-CALL:print %trace% "Compiler option: %~3"
-CALL:print %trace% "CONFIGURATION: %CONFIGURATION%"
-pause
+CALL:print %debug% "Solution: %~1"
+CALL:print %debug% "Project: %~2"
+CALL:print %debug% "Compiler option: %~3"
+CALL:print %debug% "CONFIGURATION: %CONFIGURATION%"
+
 IF %logLevel% GEQ %trace% (
 	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
 ) ELSE (
@@ -270,7 +280,8 @@ CALL:copyFiles !nugetTemplateProjectPath! !nugetTemplateProjectDestinationPath!
 GOTO:EOF
 
 :preparePackage
-CALL:print %trace% "Creating a package ..."
+CALL:print %debug% "Creating a package ..."
+
 SET nugetTargetPath=""
 SET nugetSpecPath=""
 SET nugetBasePath=""
@@ -296,8 +307,8 @@ SET nugetTargetPath=%nugetBasePath%\%projectName%.targets
 SET nugetSpecPath=%nugetBasePath%\%projectName%.nuspec
 SET nugetPackageVersion=%nugetBasePath%\%projectName%.version
 SET nugetPath=%nugetBasePath%\package
-SET nugetOutputPath=%nugetBasePath%\..\NugetOutput\%nugetName%
-	echo determine
+SET nugetOutputPath=%nugetBasePath%\..\NugetOutput
+	
 CALL:determineNugetVersion
 	
 SET nugetBuildPath=%nugetPath%\%nugetName%\build
@@ -331,6 +342,46 @@ SET sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
 SET sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
 SET sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
 SET nugetSpec=%nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
+
+CALL:print %debug% "nugetTargetPath: !nugetTargetPath!"
+CALL:print %debug% "nugetSpecPath: !nugetSpecPath!"
+CALL:print %debug% "nugetPackageVersion: !nugetPackageVersion!"
+CALL:print %debug% "nugetPath: !nugetPath!"
+CALL:print %debug% "nugetOutputPath: !nugetOutputPath!"
+
+CALL:print %debug% "nugetBuildPath: !nugetBuildPath!"
+CALL:print %debug% "nugetBuildNativePath: !nugetBuildNativePath!"
+CALL:print %debug% "nugetBuildNetCorePath: !nugetBuildNetCorePath!"
+CALL:print %debug% "nugetBuildNetCorex86Path: !nugetBuildNetCorex86Path!"
+CALL:print %debug% "nugetBuildNetCorex64Path: !nugetBuildNetCorex64Path!"
+CALL:print %debug% "nugetBuildNetCoreARMPath: !nugetBuildNetCoreARMPath!"
+
+CALL:print %debug% "nugetLibPath: !nugetLibPath!"
+CALL:print %debug% "nugetLibNetCorePath: !nugetLibNetCorePath!"
+CALL:print %debug% "nugetLibUAPPath: !nugetLibUAPPath!"
+
+CALL:print %debug% "nugetRuntimesPath: !nugetRuntimesPath!"
+CALL:print %debug% "nugetRuntimesx86Path: !nugetRuntimesx86Path!"
+CALL:print %debug% "nugetRuntimesx64Path: !nugetRuntimesx64Path!"
+CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
+
+CALL:print %debug% "sourcex86Path: !sourcex86Path!"
+CALL:print %debug% "sourcex86DllPath: !sourcex86DllPath!"
+CALL:print %debug% "sourcex86WinmdPath: !sourcex86WinmdPath!"
+CALL:print %debug% "sourcex86PdbPath: !sourcex86PdbPath!"
+
+CALL:print %debug% "sourcex64Path: !sourcex64Path!"
+CALL:print %debug% "sourcex64DllPath: !sourcex64DllPath!"
+CALL:print %debug% "sourcex64WinmdPath: !sourcex64WinmdPath!"
+CALL:print %debug% "sourcex64PdbPath: !sourcex64PdbPath!"
+
+CALL:print %debug% "sourcexARMPath: !sourcexARMPath!"
+CALL:print %debug% "sourcexARMDllPath: !sourcexARMDllPath!"
+CALL:print %debug% "sourcexARMWinmdPath: !sourcexARMWinmdPath!"
+CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
+
+CALL:print %debug% "nugetSpec: !nugetSpec!"
+
 RMDIR /s /q %nugetPath%\%nugetName%\
 
 CALL:createFolder %nugetPath%\%nugetName%
@@ -410,12 +461,9 @@ GOTO:EOF
 
 :makeNuget
 
-IF EXIST %nugetOutputPath%\%nugetName%\ (
-	RMDIR /s /q %nugetOutputPath%\%nugetName%\
-)
-CALL:createFolder %nugetOutputPath%\%nugetName%
-
-%nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%\%nugetName%
+CALL:createFolder %nugetOutputPath%
+CALL:print %warning% "Packing a nuget package"
+%nuget% pack %nugetSpec% -OutputDirectory %nugetOutputPath%
 IF ERRORLEVEL 1 CALL:error 1 "Failed creating the %nugetName% nuget package"
 
 IF EXIST %nugetPath% (
@@ -425,6 +473,7 @@ IF EXIST %nugetPath% (
 GOTO:EOF
 
 :setNugetApiKey
+CALL:print %warning% "Setting nuget key"
 %nuget% setapikey %publishKey%
 if ERRORLEVEL 1 CALL:error 0 "Failed creating the %nugetName% nuget package"
 GOTO:EOF
@@ -434,9 +483,11 @@ IF NOT "%key%"=="" CALL:setNugetApiKey
 
 IF %platform% EQU 1 (
 	IF NOT "%destination%"=="" (
-		%nuget% push %nugetOutputPath%\%nugetName%\%nugetName%.%nugetVersion%.nupkg -s %destination%
+		CALL:print %debug% "Nuget package will be pushed to %destination%"
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -s %destination%
 	) ELSE (
-		%nuget% push %nugetOutputPath%\%nugetName%\%nugetName%.%nugetVersion%.nupkg
+		CALL:print %debug% "Nuget package will be pushed to default location"
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg
 	)
 )
 IF ERRORLEVEL 1 CALL:error 1 "Failed publishing the %nugetName% nuget package"
@@ -448,7 +499,7 @@ IF EXIST %nugetPackageVersion% (
 	SET /p version=< %nugetPackageVersion%
 )
 
-ECHO Current Nuget Version is !version!
+CALL:print %debug% "Current Nuget Version is !version!"
 FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
   SET /a build=%%c+1
   SET version=%%a.%%b.!build!
@@ -460,13 +511,13 @@ IF %beta% EQU 1 (
 	SET nugetVersion=!version!
 )
 
-ECHO New Nuget Version is !nugetVersion!
+CALL:print %warning%  "New Nuget Version is !nugetVersion!"
 GOTO:EOF
 
 :copyFiles
 IF EXIST %1 (
 	CALL:createFolder %2
-	ECHO Copying %1 to %2
+	CALL:print %debug% "Copying %1 to %2"
 	COPY %1 %2
 	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
 ) else (
@@ -476,45 +527,55 @@ GOTO:EOF
 
 :createFolder
 IF NOT EXIST %1 (
+	CALL:print %trace% "Creating folder %1"
 	MKDIR %1
 	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %1"
 )
 GOTO:EOF
 
 :showHelp
-IF NOT %help% EQU 0 GOTO:EOF
+IF %help% EQU 0 GOTO:EOF
 
-echo Available commands:
-echo.
-echo -b 	Flag for creating prerelase nuget package.
-echo.
-echo -k	Api key that is used for publishing nuget package on nuget.org. This is used in combination with 
-echo		publish flag -p. This will store your API key so that you never need to do this step again on this machine.
-echo.
-echo -h 	Show script usage
-echo.
-echo -p	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
-echo		desired to publish it locally or on some another server, it sholud be used option -s to specify 
-echo		destination server
-echo.
-echo -s	Used for specifying nuget server where package will be published
-echo.
-echo -t	Flag that initiates setting up test environment for newly published nuget package
-echo.
-echo -v	Nuget package version number
-echo.
-echo Generated nuget package will be stored in winrt\NugetOutput\org.ortc.Adapter
-echo Examples:
-echo.
-echo Creating nuget package with version number 1.0.1
-echo bin\createNuget.bat
-echo.
-echo Creating prerelase nuget package with version number 1.0.1-Beta
-echo bin\createNuget.bat -b
-echo.
-echo Creating prerelase nuget package and publish it to locally nuget storage
-echo bin\createNuget.bat -b -p -s [path to local nuget storage]
-echo.
+ECHO.
+ECHO    [92mAvailable parameters:[0m
+ECHO.
+ECHO  	[93m-beta[0m 		Flag for creating prerelase nuget package.
+ECHO.
+ECHO 	[93m-key[0m		Api key that is used for publishing nuget package on nuget.org. This is used in combination with 
+ECHO		publish flag -publish. This will store your API key so that you never need to do this step again on this machine.
+ECHO.
+ECHO 	[93m-help[0m 		Show script usage
+ECHO.
+ECHO 	[93m-logLevel[0m	Log level (error, info, warning, debug, trace)
+ECHO.
+ECHO 	[93m-publish[0m	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
+ECHO		desired to publish it locally or on some another server, it sholud be used option -destination to specify 
+ECHO		destination server
+ECHO.
+ECHO 	[93m-destination[0m	Used for specifying nuget server where package will be published. Default destination is nuget.org
+ECHO.
+ECHO 	[93m-target[0m		Name of the target to generate nuget package. Ortc or WebRtc.
+ECHO.
+ECHO 	[93m-version[0m	Nuget package version number. If this parameter is not passed it will be used incremented previous version number 
+ECHO.
+ECHO    [91mGenerated nuget package will be stored in ortc\windows\NugetOutput\ for Ortc and in webrtc\windows\NugetOutput\ for WebRtc.[0m
+ECHO.
+ECHO    [92mExamples:[0m
+ECHO.
+ECHO   [93mCreating Ortc nuget package with automated versioning and storing in ortc\windows\NugetOutput\ without publishing it.[0m
+ECHO    bin\createNuget.bat -target Ortc
+ECHO.
+ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.1-Beta[0m
+ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.1
+ECHO.
+ECHO   [93mCreating prerelase Ortc nuget package and publish it to locally nuget storage[0m
+ECHO    bin\createNuget.bat -target Ortc -beta -publish -destination [path to local nuget storage]
+ECHO.
+ECHO.
+ECHO   [93mCreating prerelase WebRtc nuget package and publish it to nuget.org[0m
+ECHO    bin\createNuget.bat -target WebRtc -beta -publish -key [nuget.org api key]
+ECHO.
+CALL bin\batchTerminator.bat
 
 GOTO:EOF
 
@@ -523,12 +584,12 @@ REM Print logger message. First argument is log level, and second one is the mes
 SET logType=%1
 SET logMessage=%~2
 
-if %logLevel% GEQ  %logType% (
-	if %logType%==0 ECHO [91m%logMessage%[0m
-	if %logType%==1 ECHO [92m%logMessage%[0m
-	if %logType%==2 ECHO [93m%logMessage%[0m
-	if %logType%==3 ECHO %logMessage%
-	if %logType%==4 ECHO %logMessage%
+IF %logLevel% GEQ  %logType% (
+	IF %logType%==0 ECHO [91m%logMessage%[0m
+	IF %logType%==1 ECHO [92m%logMessage%[0m
+	IF %logType%==2 ECHO [93m%logMessage%[0m
+	IF %logType%==3 ECHO %logMessage%
+	IF %logType%==4 ECHO %logMessage%
 )
 
 GOTO:EOF
@@ -546,27 +607,53 @@ SET errorMessage=%~2
 
 IF %criticalError%==0 (
 	ECHO.
-	ECHO "WARNING: %errorMessage%"
+	CALL:print %warning% "WARNING: %errorMessage%"
 	ECHO.
 ) ELSE (
 	ECHO.
-	ECHO "CRITICAL ERROR: %errorMessage%"
+	CALL:print %error% "CRITICAL ERROR: %errorMessage%"
 	ECHO.
 	ECHO.
-	ECHO "FAILURE: Creating nuget package has failed!"
+	CALL:print %error% "FAILURE: Creating nuget package has failed!"
 	ECHO.
 	CALL:cleanup
+	SET endTime=%time%
+	CALL:showTime
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
 )
 GOTO:EOF
 
+:showTime
+
+SET options="tokens=1-4 delims=:.,"
+FOR /f %options% %%a in ("%startTime%") do SET start_h=%%a&SET /a start_m=100%%b %% 100&SET /a start_s=100%%c %% 100&SET /a start_ms=100%%d %% 100
+FOR /f %options% %%a in ("%endTime%") do SET end_h=%%a&SET /a end_m=100%%b %% 100&SET /a end_s=100%%c %% 100&SET /a end_ms=100%%d %% 100
+
+SET /a hours=%end_h%-%start_h%
+SET /a mins=%end_m%-%start_m%
+SET /a secs=%end_s%-%start_s%
+SET /a ms=%end_ms%-%start_ms%
+IF %ms% lss 0 SET /a secs = %secs% - 1 & SET /a ms = 100%ms%
+IF %secs% lss 0 SET /a mins = %mins% - 1 & SET /a secs = 60%secs%
+IF %mins% lss 0 SET /a hours = %hours% - 1 & SET /a mins = 60%mins%
+IF %hours% lss 0 SET /a hours = 24%hours%
+IF 1%ms% lss 100 SET ms=0%ms%
+
+:: mission accomplished
+SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
+ECHO [93mTotal execution time: %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)[0m
+
+GOTO:EOF
+
 :done
 CALL:cleanup
-echo %version%
-echo %nugetPackageVersion%
-echo %version%>%nugetPackageVersion%
-echo.
-echo Success:  Nuget package is created.
-echo.
+ECHO %version%
+ECHO %nugetPackageVersion%
+ECHO %version%>%nugetPackageVersion%
+ECHO.
+ECHO Success:  Nuget package is created.
+ECHO.
+SET endTime=%time%
+CALL:showTime
 :end
