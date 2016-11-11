@@ -595,8 +595,8 @@ IF %logLevel% GEQ  %logType% (
 GOTO:EOF
 
 :cleanup
-IF EXIST !nugetWebRtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
-IF EXIST !nugetOrtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
+IF EXIST !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
+IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
 
 GOTO:EOF
 
