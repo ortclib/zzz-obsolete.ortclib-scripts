@@ -639,10 +639,13 @@ IF %secs% lss 0 SET /a mins = %mins% - 1 & SET /a secs = 60%secs%
 IF %mins% lss 0 SET /a hours = %hours% - 1 & SET /a mins = 60%mins%
 IF %hours% lss 0 SET /a hours = 24%hours%
 IF 1%ms% lss 100 SET ms=0%ms%
+IF %secs% lss 10 SET secs=0%secs%
+IF %mins% lss 10 SET mins=0%mins%
+IF %hours% lss 10 SET hours=0%hours%
 
 :: mission accomplished
 SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
-ECHO [93mTotal execution time: %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)[0m
+ECHO [93mTotal execution time: %hours%:%mins%:%secs% (%totalsecs%s total)[0m
 
 GOTO:EOF
 

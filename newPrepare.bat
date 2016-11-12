@@ -64,10 +64,6 @@ SET errorMessageInvalidTarget="Invalid target name. For the list of available ta
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 SET folderStructureError="ORTC invalid folder structure."
 
-ECHO.
-CALL:print %info% "Running prepare script ..."
-ECHO.
-
 IF "%1"=="" (
 	CALL:print %warning% "Running script with default parameters: "
 	CALL:print %warning% "Target: all ^(Ortc and WebRtc^)"
@@ -111,8 +107,14 @@ GOTO parseInputArguments
 
 :main
 
+CALL:showHelp
+
 ::Run diganostic if script is run in diagnostic mode
 IF %diagnostic% EQU 1 CALL:diagnostic
+
+ECHO.
+CALL:print %info% "Running prepare script ..."
+ECHO.
 
 SET startTime=%time%
 
@@ -569,6 +571,24 @@ IF EXIST %vbs% DEL /f /q %vbs%
 CSCRIPT //nologo %vbs%
 IF EXIST %vbs% DEL /f /q %vbs%
 DEL /f /q %2
+GOTO:EOF
+
+:showHelp
+IF %help% EQU 0 GOTO:EOF
+
+ECHO.
+ECHO    [92mAvailable parameters:[0m
+ECHO.
+ECHO  	[93m-diagnostic[0m 		Flag for runing check if system is ready for webrtc development.
+ECHO.
+ECHO 	[93m-help[0m 		Show script usage
+ECHO.
+ECHO 	[93m-logLevel[0m	Log level (error, info, warning, debug, trace)
+ECHO.
+ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
+ECHO.
+CALL bin\batchTerminator.bat
+
 GOTO:EOF
 
 REM Print logger message. First argument is log level, and second one is the message
