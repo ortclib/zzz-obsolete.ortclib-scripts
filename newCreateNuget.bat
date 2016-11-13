@@ -60,7 +60,7 @@ SET generate_WebRtc_Nuget=0
 SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
 SET target=""
 SET version=1.0.0
-SET key=""
+SET key=
 SET beta=1
 SET destination=d:\myNugetPackages
 SET publish=0
@@ -255,9 +255,9 @@ CALL:print %debug% "Compiler option: %~3"
 CALL:print %debug% "CONFIGURATION: %CONFIGURATION%"
 
 IF %logLevel% GEQ %trace% (
-	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
+	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
 ) ELSE (
-	MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False >NUL
+	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False >NUL
 )
 
 ::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
@@ -448,15 +448,16 @@ IF NOT EXIST %msVS_Path% (
 
 IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 or 2013 is not installed"
 
-ECHO "Visual Studio path is %msVS_Path%"
+CALL:print %trace% "Visual Studio path is %msVS_Path%"
 
 GOTO:EOF
 
 :setNugetVersion
-ECHO version %version%
-ECHO Nuspec: %~1
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %~1 "<version></version>" "<version>%version%</version>" %~1
-if ERRORLEVEL 1 CALL:error 1 "Failed creating the %nugetName% nuget package"
+CALL:print %debug% "Nuget version: %nugetVersion%"
+CALL:print %debug% "Nuspec path: %~1"
+
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %~1 "<version></version>" "<version>%nugetVersion%</version>" %~1
+IF ERRORLEVEL 1 CALL:error 1 "Failed creating the %nugetName% nuget package"
 GOTO:EOF
 
 :makeNuget
@@ -481,7 +482,7 @@ GOTO:EOF
 :publishNuget
 IF NOT "%key%"=="" CALL:setNugetApiKey
 
-IF %platform% EQU 1 (
+IF %publish% EQU 1 (
 	IF NOT "%destination%"=="" (
 		CALL:print %debug% "Nuget package will be pushed to %destination%"
 		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -s %destination%
@@ -520,7 +521,7 @@ IF EXIST %1 (
 	CALL:print %debug% "Copying %1 to %2"
 	COPY %1 %2
 	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
-) else (
+) ELSE (
 	CALL:error 1 "Could not copy a %1"
 )
 GOTO:EOF
@@ -638,24 +639,25 @@ IF %ms% lss 0 SET /a secs = %secs% - 1 & SET /a ms = 100%ms%
 IF %secs% lss 0 SET /a mins = %mins% - 1 & SET /a secs = 60%secs%
 IF %mins% lss 0 SET /a hours = %hours% - 1 & SET /a mins = 60%mins%
 IF %hours% lss 0 SET /a hours = 24%hours%
+
+SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
+
 IF 1%ms% lss 100 SET ms=0%ms%
 IF %secs% lss 10 SET secs=0%secs%
 IF %mins% lss 10 SET mins=0%mins%
 IF %hours% lss 10 SET hours=0%hours%
 
 :: mission accomplished
-SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
 ECHO [93mTotal execution time: %hours%:%mins%:%secs% (%totalsecs%s total)[0m
 
 GOTO:EOF
 
 :done
 CALL:cleanup
-ECHO %version%
-ECHO %nugetPackageVersion%
+
 ECHO %version%>%nugetPackageVersion%
 ECHO.
-ECHO Success:  Nuget package is created.
+CALL:print %info% "Success:  Nuget package is created."
 ECHO.
 SET endTime=%time%
 CALL:showTime

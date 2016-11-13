@@ -77,7 +77,7 @@ if exist %MSVCDIR% (
 	call %MSVCDIR%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	if ERRORLEVEL 1 call:failure %errorlevel% "Could not setup compiler for  %PLATFORM%"
 	
-	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /m
+	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
 	if ERRORLEVEL 1 call:failure %errorlevel% "Building WebRTC projects has failed"
 ) else (
 	call:failure 2 "Could not compile because proper version of Visual Studio is not found"
