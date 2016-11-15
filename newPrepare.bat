@@ -28,7 +28,7 @@ SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVer
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
-SET startTime=0
+SET startTime=%time%
 SET endingTime=0
 SET defaultProperties=0
 
@@ -63,6 +63,8 @@ SET errorMessageInvalidArgument="Invalid input argument. For the list of availab
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 SET folderStructureError="ORTC invalid folder structure."
+
+CALL:precheck
 
 IF "%1"=="" (
 	CALL:print %warning% "Running script with default parameters: "
@@ -116,8 +118,6 @@ ECHO.
 CALL:print %info% "Running prepare script ..."
 ECHO.
 
-SET startTime=%time%
-
 IF %defaultProperties% EQU 0 (
 	CALL:print %warning% "Running script parameters:"
 	CALL:print %warning% "Target: %target%"
@@ -160,6 +160,14 @@ CALL:done
 
 GOTO:EOF
 ::===========================================================================
+
+:precheck
+IF NOT "%CD%"=="%CD: =%" CALL:error 1 "Path must not contain folders with spaces in name"
+IF EXIST ..\bin\nul (
+	CALL:error 1 "Do not run scripts from bin directory!"
+	CALL batchTerminator.bat
+)
+GOTO:EOF
 
 :diagnostic
 SET logLevel=3

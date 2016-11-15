@@ -69,7 +69,6 @@ SET logLevel=2
 
 ::build variables
 SET msVS_Path=""
-SET msVS_Version=""
 SET x86BuildCompilerOption=amd64_x86
 SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
@@ -113,10 +112,11 @@ GOTO parseInputArguments
 :: Start execution of main flow (if parsing input parameters passed without issues)
 
 :main
+SET startTime=%time%
+
+CALL:precheck
 
 CALL:showHelp
-
-SET startTime=%time%
 
 ECHO.
 CALL:print %info% "Started creating nuget packages ..."
@@ -133,6 +133,14 @@ CALL:generateNugetPackages
 IF %publish% EQU 1 CALL:publishNuget
 
 GOTO:DONE
+
+:precheck
+IF NOT "%CD%"=="%CD: =%" CALL:error 1 "Path must not contain folders with spaces in name"
+IF EXIST ..\bin\nul (
+	CALL:error 1 "Do not run scripts from bin directory!"
+	CALL batchTerminator.bat
+)
+GOTO:EOF
 
 :checkOrtcAvailability
 CALL:print %trace% "Checking is Ortc available"
@@ -438,12 +446,10 @@ IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
 
 REM Check if Visual Studio 2015 is installed
 SET msVS_Path="%progfiles%\Microsoft Visual Studio 14.0"
-SET msVS_Version=14
 
 IF NOT EXIST %msVS_Path% (
 	REM Check if Visual Studio 2013 is installed
 	SET msVS_Path="%progfiles%\Microsoft Visual Studio 12.0"
-	SET msVS_Version=12
 )
 
 IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 or 2013 is not installed"
