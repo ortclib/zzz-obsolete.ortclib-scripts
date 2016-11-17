@@ -10,7 +10,7 @@ SETLOCAL EnableDelayedExpansion
 
 ::projects
 SET projectNameOrtc=org.ortc
-SET projectNameWebRtc=webrtc_winrt_api
+SET projectNameWebRtc=Org.WebRtc
 SET nugetOrtcName=Ortc
 SET nugetWebRtcName=WebRtc
 
@@ -226,9 +226,9 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
 	
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api x86
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api x64
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\webrtc_winrt_api arm
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x86
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x64
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc arm
 
 	CALL:preparePackage WebRtc
 )
