@@ -9,7 +9,7 @@
 SETLOCAL EnableDelayedExpansion
 
 ::projects
-SET projectNameOrtc=org.ortc
+SET projectNameOrtc=Org.Ortc
 SET projectNameWebRtc=Org.WebRtc
 SET nugetOrtcName=Ortc
 SET nugetWebRtcName=WebRtc
