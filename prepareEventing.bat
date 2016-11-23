@@ -1,5 +1,6 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
+
 SET CPU=""
 SET CONFIGURATION=Release
 SET PLATFORM=x86
@@ -10,7 +11,9 @@ SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
 SET currentBuildCompilerOption=amd64
 
-SET compilerPath=%cd%\ortc\windows\solutions\Build\Output\!PLATFORM!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
+SET compilerOutputPath=%cd%\ortc\windows\solutions\Build\Output\!PLATFORM!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
+SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
+
 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%PLATFORM%\"
 
 SET eventsIncludePath=..\Internal\
@@ -37,9 +40,9 @@ CALL:determineVisualStudioPath
 
 CALL:setCompilerOption %PLATFORM%
 
-::CALL:buildEventing
+CALL:buildEventingToolCompiler
 
-CALL:prepareEvent
+CALL:prepareEvents
 GOTO:EOF
 
 :determineVisualStudioPath
@@ -88,7 +91,9 @@ CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
 GOTO:EOF
 
 
-:buildEventing
+:buildEventingToolCompiler
+
+IF EXIST %compilerPath% echo exists & GOTO:EOF
 
 IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
@@ -99,9 +104,10 @@ IF EXIST %msVS_Path% (
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
 )
+CALL:copyFiles %compilerOutputPath% %cd%\bin\
 GOTO:EOF
 
-:compileEvents
+:compileEvent
 SET eventJsonPath=%1
 SET eventPath=%~dp1
 SET providerName=%~n1
@@ -116,48 +122,88 @@ echo intermediatePath=!intermediatePath!
 echo headersPath=!headersPath!
 echo outputPath=!outputPath!
 echo windowsKitPath=%windowsKitPath%
-pause
 
 CALL:createFolder !headersPath!
 CALL:createFolder !intermediatePath!
 CALL:createFolder !outputPath!
 
-pause
 
 PUSHD !eventPath!
 CALL %compilerPath% -c !eventJsonPath! -o %eventsIncludePath%!providerName!\!providerName! > NUL
 
-pause
 echo Create manifest header file...
 
 %windowsKitPath%mc.exe -um -r !intermediatePath! -h "!headersPath!" "!headersPath!\!providerName!_win_etw.man"
 
-pause
 echo Create resource file...
 %windowsKitPath%rc.exe !intermediatePath!!providerName!_win_etw.rc
 
 echo Create manifest resource dll...
-pause
+
 
 echo If compiling to managed code resource DLL use: csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res
 
 %msVS_Path%\VC\bin\link -dll -noentry /MACHINE:%PLATFORM% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
 
 echo Copy files to output directory...
-pause
+
 CALL:copyFiles !intermediatePath!!providerName!_win_etw.dll "!outputPath!\"
 CALL:copyFiles "!headersPath!\!providerName!.jman" "!outputPath!\"
 CALL:copyFiles "!headersPath!\!providerName!_win_etw.man" "!outputPath!\"
 CALL:copyFiles "!headersPath!\!providerName!_win_etw.wprp" "!outputPath!\"
-pause
+
 icacls "!outputPath!\!providerName!_win_etw.dll" /grant Users:RX
 popd
 
+CALL:createRegistrationBatch !outputPath! !providerName!
+CALL:createUnregistrationBatch !outputPath! !providerName!
+
 GOTO:EOF
 
-:prepareEvent
+:createRegistrationBatch
+SET outputFile=%1\register%2.bat
 
-for /r . %%g in (*.events.json) do CALL:compileEvents %%g
+ECHO @ECHO OFF > !outputFile!
+ECHO echo. >> !outputFile!
+ECHO echo Registering manifest file and DLL for Windows Performance Recorder... >> !outputFile!
+ECHO echo. >> !outputFile!
+ECHO echo NOTE: Only run from command prompt as administrator >> !outputFile!
+ECHO echo. >> !outputFile!
+
+ECHO PUSHD %1 >> !outputFile!
+ECHO CALL wevtutil.exe im !providerName!_win_etw.man /rf:"!outputPath!\!providerName!_win_etw.dll" /mf:"!outputPath!\!providerName!_win_etw.dll" >> !outputFile!
+ECHO POPD >> !outputFile!
+GOTO:EOF
+
+:createUnregistrationBatch
+SET outputFile=%1\unregister%2.bat
+
+ECHO @ECHO OFF > !outputFile!
+ECHO echo. >> !outputFile!
+ECHO echo Unregistering manifest file and DLL for Windows Performance Recorder... >> !outputFile!
+ECHO echo. >> !outputFile!
+ECHO echo NOTE: Only run from command prompt as administrator >> !outputFile!
+ECHO echo. >> !outputFile!
+
+ECHO PUSHD %1 >> !outputFile!
+ECHO CALL wevtutil.exe um !providerName!_win_etw.man >> !outputFile!
+ECHO POPD >> !outputFile!
+GOTO:EOF
+
+:addAdminRights
+
+ECHO net session ^>nul 2^>^&1 >> !outputFile!
+ECHO if errorLevel 0 ( >> !outputFile!
+ECHO 	echo Success: Administrative permissions confirmed. >> !outputFile!
+ECHO ) else ( >> !outputFile!
+ECHO 	echo Failure: Current permissions inadequate. >> !outputFile!
+ECHO ) >> !outputFile!
+	
+GOTO:EOF
+
+:prepareEvents
+
+for /r . %%g in (*.events.json) do CALL:compileEvent %%g
 
 GOTO:EOF
 
