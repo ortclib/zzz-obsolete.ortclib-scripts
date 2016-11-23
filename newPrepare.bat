@@ -51,12 +51,13 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;					
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
+SET noEventing=0
 
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
@@ -153,6 +154,8 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 
 	::Download curl and build it
 	CALL:prepareCurl
+	
+	CALL:prepareEventing
 )
 
 ::Finish script execution
@@ -394,6 +397,12 @@ if !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
 
 POPD > NUL
 
+GOTO:EOF
+
+::Generate events providers
+:prepareEventing
+
+IF %noEventing% EQU 0 CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
 
 GOTO:EOF
 
@@ -592,6 +601,8 @@ ECHO.
 ECHO 	[93m-help[0m 		Show script usage
 ECHO.
 ECHO 	[93m-logLevel[0m	Log level (error, info, warning, debug, trace)
+ECHO.
+ECHO		[93m-noEventing[0m 	Flag not to run eventing preparations for Ortc
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
 ECHO.
