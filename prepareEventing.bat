@@ -103,7 +103,9 @@ IF /I "%platform%"=="x64" SET validInput=1
 IF /I "%platform%"=="x86" SET validInput=1
 	
 IF !validInput!==0 CALL:error 1 "Invalid platform"
+
 GOTO:EOF
+
 
 :determineVisualStudioPath
 

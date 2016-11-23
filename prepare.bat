@@ -1,4 +1,4 @@
-:: Name:     newPrepare.bat
+:: Name:     prepare.bat
 :: Purpose:  Prepare development environment for ORTC and WebRTC
 :: Author:   Sergej Jovanovic
 :: Email:	 sergej@gnedo.com
@@ -372,7 +372,7 @@ GOTO:EOF
 ::Generate WebRTC projects
 :prepareWebRTC
 
-CALL bin\newWebRTC-Prepare.bat -platform %platform% -logLevel %logLevel%
+CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
 
 GOTO:EOF
 
@@ -385,7 +385,7 @@ IF NOT EXIST %curlPath% CALL:error 1 "%folderStructureError:"=% %curlPath% does 
 PUSHD %curlPath% > NUL
 CALL:print %trace% "Pushed %curlPath% path"
 
-CALL newCurl-Prepare.bat -logLevel %globalLogLevel%
+CALL prepareCurl.bat -logLevel %globalLogLevel%
 
 ::IF %logLevel% GEQ %trace% (
 ::	CALL prepare.bat curl 

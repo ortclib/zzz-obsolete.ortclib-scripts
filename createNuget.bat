@@ -1,4 +1,4 @@
-:: Name:     newCreateNuget.bat
+:: Name:     createNuget.bat
 :: Purpose:  Creates ORTC and WebRTC nuget packages
 :: Author:   Sergej Jovanovic
 :: Email:	 sergej@gnedo.com

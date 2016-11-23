@@ -1,4 +1,4 @@
-:: Name:     newWebRTC-Prepare.bat
+:: Name:     prepareWebRtc.bat
 :: Purpose:  Prepare webrtc to be buildable
 :: Author:   Sergej Jovanovic
 :: Email:	 sergej@gnedo.com
