@@ -11,6 +11,8 @@ SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
 SET currentBuildCompilerOption=amd64
 
+SET ortcZsLibTemplatePath=ortc\windows\templates\events\zsLib.Eventing.sln
+SET ortcZsLibDestinationPath=ortc\windows\solutions\
 SET compilerOutputPath=%cd%\ortc\windows\solutions\Build\Output\!PLATFORM!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
 SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
 
@@ -99,12 +101,18 @@ IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
+	CALL:copyFiles %ortcZsLibTemplatePath% %ortcZsLibDestinationPath%
+	
 	MSBuild %solutionPath% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
 	if ERRORLEVEL 1 CALL:error 1 "Building zsLib.Eventing.Tool.Compiler projects for %PLATFORM% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
 )
+CALL:cleanup
+
 CALL:copyFiles %compilerOutputPath% %cd%\bin\
+
+CALL:error 1 "Failed copying executable to bin folder"
 GOTO:EOF
 
 :compileEvent
@@ -158,34 +166,35 @@ popd
 CALL:createRegistrationBatch !outputPath! !providerName!
 CALL:createUnregistrationBatch !outputPath! !providerName!
 
+CALL:cleanup
+
 GOTO:EOF
 
 :createRegistrationBatch
-SET outputFile=%1\register%2.bat
+SET outputFile=%1\register.%2.bat
 
 ECHO @ECHO OFF > !outputFile!
 ECHO echo. >> !outputFile!
-ECHO echo Registering manifest file and DLL for Windows Performance Recorder... >> !outputFile!
+ECHO echo Registering manifest file and DLL for !providerName! Windows Performance Recorder... >> !outputFile!
 ECHO echo. >> !outputFile!
 ECHO echo NOTE: Only run from command prompt as administrator >> !outputFile!
 ECHO echo. >> !outputFile!
 
-ECHO PUSHD %1 >> !outputFile!
-ECHO CALL wevtutil.exe im !providerName!_win_etw.man /rf:"!outputPath!\!providerName!_win_etw.dll" /mf:"!outputPath!\!providerName!_win_etw.dll" >> !outputFile!
+ECHO CALL wevtutil.exe im !providerName!_win_etw.man /rf:"%%cd%%\!providerName!_win_etw.dll" /mf:"%%cd%%\!providerName!_win_etw.dll" >> !outputFile!
 ECHO POPD >> !outputFile!
+
 GOTO:EOF
 
 :createUnregistrationBatch
-SET outputFile=%1\unregister%2.bat
+SET outputFile=%1\unregister.%2.bat
 
 ECHO @ECHO OFF > !outputFile!
 ECHO echo. >> !outputFile!
-ECHO echo Unregistering manifest file and DLL for Windows Performance Recorder... >> !outputFile!
+ECHO echo Unregistering manifest file and DLL for !providerName! Windows Performance Recorder... >> !outputFile!
 ECHO echo. >> !outputFile!
 ECHO echo NOTE: Only run from command prompt as administrator >> !outputFile!
 ECHO echo. >> !outputFile!
 
-ECHO PUSHD %1 >> !outputFile!
 ECHO CALL wevtutil.exe um !providerName!_win_etw.man >> !outputFile!
 ECHO POPD >> !outputFile!
 GOTO:EOF
@@ -226,6 +235,14 @@ IF NOT EXIST %1 (
 )
 GOTO:EOF
 
+:cleanup
+IF EXIST %solutionPath% DEL /s /q /f %solutionPath% > NUL
+FOR /D /R ortc\xplatform %%X IN (*IntermediateTemp*) DO RD /S /Q "%%X" > NUL
+::FOR /d /r . %d IN (IntermediateTemp) DO IF EXIST %d rd /s /q %d > NUL
+::for /r . %%g in (IntermediateTemp) do DEL /s /q /f %%g > NUL
+
+GOTO:EOF
+
 REM Print logger message. First argument is log level, and second one is the message
 :print
 
@@ -258,6 +275,7 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "FAILURE: Building zsLib.Eventing.Tool.Compiler executable has failed!"
 	ECHO.
+	CALL:cleanup
 	SET endTime=%time%
 	CALL:showTime
 	::terminate batch execution
