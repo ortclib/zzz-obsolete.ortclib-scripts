@@ -19,7 +19,7 @@ SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
 
 
 
-SET eventsIncludePath=..\Internal\
+SET eventsIncludePath=..\Internal
 SET eventsIntermediatePath=IntermediateTemp
 SET eventsOutput=%cd%\ortc\windows\solutions\Eventing\
 
@@ -182,7 +182,7 @@ SET eventJsonPath=%1
 SET eventPath=%~dp1
 SET providerName=%~n1
 SET intermediatePath=!eventPath!%eventsIntermediatePath%\
-SET headersPath=!eventPath!%eventsIncludePath%!providerName!
+SET headersPath=!eventPath!%eventsIncludePath%
 SET outputPath=%eventsOutput%!providerName!
 
 CALL:print %warning% "Preparing !providerName! ..."
@@ -194,16 +194,16 @@ CALL:print %trace% headersPath=!headersPath!
 CALL:print %trace% outputPath=!outputPath!
 CALL:print %trace% windowsKitPath=%windowsKitPath%
 
-CALL:createFolder !headersPath!
+::CALL:createFolder !headersPath!
 CALL:createFolder !intermediatePath!
 CALL:createFolder !outputPath!
 
 PUSHD !eventPath!
 
 IF %logLevel% GEQ %trace% (
-	CALL %compilerPath% -c !eventJsonPath! -o %eventsIncludePath%!providerName!\!providerName!
+	CALL %compilerPath% -c !eventJsonPath! -o %eventsIncludePath%\!providerName!
 ) ELSE (
-	CALL %compilerPath% -c !eventJsonPath! -o %eventsIncludePath%!providerName!\!providerName! > NUL
+	CALL %compilerPath% -c !eventJsonPath! -o %eventsIncludePath%\!providerName! > NUL
 )
 IF ERRORLEVEL 1 CALL:error 1 "Running events tool has failed"
 
