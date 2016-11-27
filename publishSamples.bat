@@ -6,7 +6,7 @@ set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET supportedInputArguments=;sample;nuget;version;nugetVersion;destination;publish;help;logLevel;
 SET sample=""
 SET nuget=""
-SET version=""
+SET version=1.0.0.0
 SET nugetVersion=""
 SET destination=Publish
 SET publish=0
@@ -79,8 +79,9 @@ call:copyFiles !projectTemplates!\project.json !peerCCPublishingPath!
 echo !peerCCPublishingPath\!packageManifest!
 
 call:copyFiles !projectTemplates!\!packageManifest! !peerCCPublishingPath!
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\!packageManifest! "App.Version" "%nugetVersion%" !peerCCPublishingPath!\!packageManifest!
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\!packageManifest! "App.Version" "%version%" !peerCCPublishingPath!\!packageManifest!
 
+call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
 GOTO:EOF
 
 :publishChatterBox
