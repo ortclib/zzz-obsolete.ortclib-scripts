@@ -32,7 +32,8 @@ SET nugetOutputPath=""
 SET nugetPath=""
 SET nugetSpec=""
 SET nugetExecutableDestinationPath=bin\nuget.exe
-
+SET peerCCPublishingPath=Publish\PeerCC
+SET peerCCSourcePath=common\windows\samples\PeerCC\Client
 ::nuget
 SET nugetVersion=
 SET publishKey=
@@ -62,7 +63,7 @@ SET target=""
 SET version=1.0.0
 SET key=
 SET beta=1
-SET destination=d:\myNugetPackages
+SET destination=
 SET publish=0
 SET help=0
 SET logLevel=2
@@ -130,7 +131,10 @@ CALL:downloadNuget
 
 CALL:generateNugetPackages
 
-IF %publish% EQU 1 CALL:publishNuget
+IF %publish% EQU 1 (
+	CALL:publishNuget
+	CALL:publishSamples
+)
 
 GOTO:DONE
 
@@ -412,6 +416,20 @@ CALL:makeNuget
 
 GOTO:EOF
 
+:publishSamples
+IF generate_Ortc_Nuget EQU 1 (
+	CALL:print %debug% "Publishing PeerCC.Ortc with nuget version !nugetVersion!..."
+	CALL publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion!
+)
+
+IF generate_WebRtc_Nuget EQU 1 (
+	CALL:print %debug% "Publishing PeerCC.WebRtc with nuget version !nugetVersion!..."
+	CALL publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion!
+	
+	CALL:print %debug% "Publishing ChatterBox with nuget version !nugetVersion!..."
+	CALL publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion!
+)
+GOTO:EOF
 
 :setCompilerOption
 CALL:print %trace% "Determining compiler options ..."
@@ -502,14 +520,17 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed publishing the %nugetName% nuget package"
 GOTO:EOF
 
 :determineNugetVersion
-IF EXIST %nugetPackageVersion% (
-	SET /p version=< %nugetPackageVersion%
-)
-
-CALL:print %debug% "Current Nuget Version is !version!"
-FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
-  SET /a build=%%c+1
-  SET version=%%a.%%b.!build!
+IF "%version%"=="1.0.0" (
+	IF EXIST %nugetPackageVersion% (
+		SET /p version=< %nugetPackageVersion%
+		
+		CALL:print %debug% "Current Nuget Version is !version!"
+		
+		FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
+			SET /a build=%%c+1
+			SET version=%%a.%%b.!build!
+		)
+	)
 )
 
 IF %beta% EQU 1 (

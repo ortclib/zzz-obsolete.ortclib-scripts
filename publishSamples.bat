@@ -82,6 +82,7 @@ call:copyFiles !projectTemplates!\!packageManifest! !peerCCPublishingPath!
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\!packageManifest! "App.Version" "%version%" !peerCCPublishingPath!\!packageManifest!
 
 call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
+call:copyFiles !projectTemplates!\AssemblyInfo.cs !peerCCPublishingPath!\Properties
 GOTO:EOF
 
 :publishChatterBox
