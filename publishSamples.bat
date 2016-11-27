@@ -16,6 +16,10 @@ SET logLevel=2
 SET target=""
 SET nonSdk=Ortc
 SET peerCCSourcePath=common\windows\samples\PeerCC\Client
+SET chatterBoxSourcePath=common\windows\samples\ChatterBox
+
+SET peerCCOrtcURL="https://github.com/webrtc-uwp/PeerCC-Sample.git"
+SET sampleURL=TEST
 
 :parseInputArguments
 IF "%1"=="" (
@@ -46,6 +50,7 @@ GOTO parseInputArguments
 IF /I "%sdk%" == "ortc" (
 	SET sdk=Ortc
 	SET nonSdk=WebRtc
+	SET sampleURL=%peerCCOrtcURL%
 )
 IF /I "%sdk%" == "webrtc" SET sdk=WebRtc
 
@@ -62,10 +67,14 @@ GOTO:done
 
 SET projectTemplates=%sdk%\windows\templates\samples\PeerCC
 SET packageManifest=Package.%sdk%.appxmanifest
-SET peerCCPublishingPath=%destination%\%sdk%\%sample%
+SET peerCCPublishingPath=%destination%\%sdk%\%sample%-Sample
 
 echo !peerCCPublishingPath!
-CALL:createFolder !peerCCPublishingPath!
+RMDIR /s /q !peerCCPublishingPath!
+PAUSE
+CALL:createFolder %destination%\%sdk%
+CALL:cloneRepo %destination%\%sdk% !sampleURL!
+PAUSE
 Xcopy  /S /I /Y %peerCCSourcePath% !peerCCPublishingPath!
 
 DEL /s /q /f !peerCCPublishingPath!\Package.%nonSdk%.appxmanifest > NUL
@@ -83,9 +92,42 @@ call:copyFiles !projectTemplates!\!packageManifest! !peerCCPublishingPath!
 
 call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
 call:copyFiles !projectTemplates!\AssemblyInfo.cs !peerCCPublishingPath!\Properties
+
+CALL:publishRepo !peerCCPublishingPath!
 GOTO:EOF
 
 :publishChatterBox
+SET projectTemplates=%sdk%\windows\templates\samples\ChatterBox
+SET samplePublishingPath=%destination%\%sdk%\%sample%
+
+echo !samplePublishingPath!
+CALL:createFolder !samplePublishingPath!
+Xcopy  /S /I /Y %chatterBoxSourcePath% !samplePublishingPath!
+
+call:copyFiles !projectTemplates!\ChatterBox.Background\project.json !samplePublishingPath!\ChatterBox.Background
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !samplePublishingPath!\ChatterBox.Background\project.json "Nuget.Version" "%nugetVersion%" !samplePublishingPath!\ChatterBox.Background\project.json
+
+call:copyFiles !projectTemplates!\ChatterBox.Background\ChatterBox.Background.csproj !samplePublishingPath!\ChatterBox.Background
+GOTO:EOF
+
+:cloneRepo
+ECHO %~1
+ECHO %~2
+PAUSE
+PUSHD %1
+git clone %2
+POPD
+GOTO:EOF
+
+:publishRepo
+echo push repo %1
+pause
+PUSHD %1
+git add .
+git commit -am "References nuget version !nugetVersion!"
+git push
+POPD
+pause
 GOTO:EOF
 
 :createFolder
