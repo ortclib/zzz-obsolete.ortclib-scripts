@@ -70,12 +70,13 @@ SET packageManifest=Package.%sdk%.appxmanifest
 SET peerCCPublishingPath=%destination%\%sdk%\%sample%-Sample
 
 echo !peerCCPublishingPath!
-RMDIR /s /q !peerCCPublishingPath!
-PAUSE
+IF EXIST !peerCCPublishingPath! RMDIR /s /q !peerCCPublishingPath!
+
 CALL:createFolder %destination%\%sdk%
 CALL:cloneRepo %destination%\%sdk% !sampleURL!
-PAUSE
+
 Xcopy  /S /I /Y %peerCCSourcePath% !peerCCPublishingPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed copying %peerCCSourcePath% to !peerCCPublishingPath!"
 
 DEL /s /q /f !peerCCPublishingPath!\Package.%nonSdk%.appxmanifest > NUL
 DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj > NUL
@@ -84,11 +85,13 @@ DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%_TemporaryKey.p
 
 call:copyFiles !projectTemplates!\project.json !peerCCPublishingPath!
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\project.json "Nuget.Version" "%nugetVersion%" !peerCCPublishingPath!\project.json
+IF ERRORLEVEL 1 CALL:error 1 "Failed setting nuget version for PeerCC"
 
 echo !peerCCPublishingPath\!packageManifest!
 
 call:copyFiles !projectTemplates!\!packageManifest! !peerCCPublishingPath!
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\!packageManifest! "App.Version" "%version%" !peerCCPublishingPath!\!packageManifest!
+IF ERRORLEVEL 1 CALL:error 1 "Failed setting app version for PeerCC"
 
 call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
 call:copyFiles !projectTemplates!\AssemblyInfo.cs !peerCCPublishingPath!\Properties
@@ -103,9 +106,11 @@ SET samplePublishingPath=%destination%\%sdk%\%sample%
 echo !samplePublishingPath!
 CALL:createFolder !samplePublishingPath!
 Xcopy  /S /I /Y %chatterBoxSourcePath% !samplePublishingPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed copying %chatterBoxSourcePath% to !samplePublishingPath!"
 
 call:copyFiles !projectTemplates!\ChatterBox.Background\project.json !samplePublishingPath!\ChatterBox.Background
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !samplePublishingPath!\ChatterBox.Background\project.json "Nuget.Version" "%nugetVersion%" !samplePublishingPath!\ChatterBox.Background\project.json
+IF ERRORLEVEL 1 CALL:error 1 "Failed setting nuget version for ChatterBox"
 
 call:copyFiles !projectTemplates!\ChatterBox.Background\ChatterBox.Background.csproj !samplePublishingPath!\ChatterBox.Background
 GOTO:EOF
@@ -113,21 +118,23 @@ GOTO:EOF
 :cloneRepo
 ECHO %~1
 ECHO %~2
-PAUSE
+
 PUSHD %1
 git clone %2
+IF ERRORLEVEL 1 CALL:error 1 "Failed cloning from %2"
 POPD
 GOTO:EOF
 
 :publishRepo
 echo push repo %1
-pause
+
 PUSHD %1
 git add .
 git commit -am "References nuget version !nugetVersion!"
 git push
+IF ERRORLEVEL 1 CALL:error 1 "Pushing on github has failed"
 POPD
-pause
+
 GOTO:EOF
 
 :createFolder
@@ -143,9 +150,33 @@ if EXIST %1 (
 	CALL:createFolder %2
 	echo Copying %1 to %2
 	copy %1 %2
-	if ERRORLEVEL 1 CALL:failure %errorlevel% "Could not copy a %1"
+	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
 ) else (
-	CALL:failure 1 "Could not copy a %1"
+	CALL:error 1 "Could not copy a %1"
 )
 GOTO:EOF
+
+REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message
+:error
+SET criticalError=%~1
+SET errorMessage=%~2
+
+IF %criticalError%==0 (
+	ECHO.
+	echo "WARNING: %errorMessage%"
+	ECHO.
+) ELSE (
+	ECHO.
+	echo "CRITICAL ERROR: %errorMessage%"
+	ECHO.
+	ECHO.
+	echo "FAILURE: Creating nuget package has failed!"
+	ECHO.
+	POPD
+	::terminate batch execution
+	CALL bin\batchTerminator.bat
+)
+GOTO:EOF
+
 :done
+echo Sample published successfully
