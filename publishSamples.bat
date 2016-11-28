@@ -18,8 +18,10 @@ SET nonSdk=Ortc
 SET peerCCSourcePath=common\windows\samples\PeerCC\Client
 SET chatterBoxSourcePath=common\windows\samples\ChatterBox
 
-SET peerCCOrtcURL="https://github.com/webrtc-uwp/PeerCC-Sample.git"
-SET sampleURL=TEST
+SET peerCCOrtcURL="https://github.com/ortclib/PeerCC-Sample.git"
+SET peerCCWebRtcURL="https://github.com/webrtc-uwp/PeerCC-Sample.git"
+SET chatterBoxWebRtcURL="https://github.com/webrtc-uwp/ChatterBox-Sample.git"
+SET sampleURL=
 
 :parseInputArguments
 IF "%1"=="" (
@@ -52,14 +54,21 @@ IF /I "%sdk%" == "ortc" (
 	SET nonSdk=WebRtc
 	SET sampleURL=%peerCCOrtcURL%
 )
-IF /I "%sdk%" == "webrtc" SET sdk=WebRtc
+IF /I "%sdk%" == "webrtc" (
+	SET sdk=WebRtc
+	SET nonSdk=Ortc
+	SET sampleURL=%peerCCWebRtcURL%
+)
 
 IF /I "%sample%" == "peercc" (
 	SET sample=PeerCC
 	CALL:publishPeerCC
 )
-IF /I "%sample%" == "chatterbox" CALL:publishChatterBox
-
+IF /I "%sample%" == "chatterbox" (
+	SET sampleURL=%peerCCWebRtcURL%
+	SET sample=ChatterBox
+	CALL:publishChatterBox
+)
 
 GOTO:done
 
@@ -74,6 +83,10 @@ IF EXIST !peerCCPublishingPath! RMDIR /s /q !peerCCPublishingPath!
 
 CALL:createFolder %destination%\%sdk%
 CALL:cloneRepo %destination%\%sdk% !sampleURL!
+
+::attrib +r +s README.md
+::for /d %%i in ("!peerCCPublishingPath!") do if /i not "%%~nxi"=="server" del /s /q "%%i"
+::attrib -r -s README.md
 
 Xcopy  /S /I /Y %peerCCSourcePath% !peerCCPublishingPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed copying %peerCCSourcePath% to !peerCCPublishingPath!"
@@ -96,12 +109,12 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed setting app version for PeerCC"
 call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
 call:copyFiles !projectTemplates!\AssemblyInfo.cs !peerCCPublishingPath!\Properties
 
-CALL:publishRepo !peerCCPublishingPath!
+::CALL:publishRepo !peerCCPublishingPath!
 GOTO:EOF
 
 :publishChatterBox
 SET projectTemplates=%sdk%\windows\templates\samples\ChatterBox
-SET samplePublishingPath=%destination%\%sdk%\%sample%
+SET samplePublishingPath=%destination%\%sdk%\%sample%-Sample
 
 echo !samplePublishingPath!
 CALL:createFolder !samplePublishingPath!
@@ -113,6 +126,8 @@ call:copyFiles !projectTemplates!\ChatterBox.Background\project.json !samplePubl
 IF ERRORLEVEL 1 CALL:error 1 "Failed setting nuget version for ChatterBox"
 
 call:copyFiles !projectTemplates!\ChatterBox.Background\ChatterBox.Background.csproj !samplePublishingPath!\ChatterBox.Background
+
+CALL:publishRepo !samplePublishingPath!
 GOTO:EOF
 
 :cloneRepo
