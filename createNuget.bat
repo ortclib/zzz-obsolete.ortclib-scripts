@@ -499,7 +499,7 @@ GOTO:EOF
 
 :setNugetApiKey
 CALL:print %warning% "Setting nuget key"
-%nuget% setapikey %publishKey%
+%nuget% setApiKey %key%
 if ERRORLEVEL 1 CALL:error 0 "Failed creating the %nugetName% nuget package"
 GOTO:EOF
 
