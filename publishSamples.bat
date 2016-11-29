@@ -3,16 +3,18 @@
 SETLOCAL EnableDelayedExpansion
 
 set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
-SET supportedInputArguments=;sample;nuget;version;nugetVersion;destination;publish;help;logLevel;
+SET supportedInputArguments=;sample;nuget;version;nugetVersion;destination;publish;help;logLevel;comment;
 SET sample=""
 SET nuget=""
 SET version=1.0.0.0
 SET nugetVersion=""
-SET destination=Publish
+SET destination=..\Publish
 SET publish=0
 SET help=0
 SET logLevel=2
+SET comment="Update"
 
+SET marked=0
 SET target=""
 SET nonSdk=Ortc
 SET peerCCSourcePath=common\windows\samples\PeerCC\Client
@@ -65,7 +67,7 @@ IF /I "%sample%" == "peercc" (
 	CALL:publishPeerCC
 )
 IF /I "%sample%" == "chatterbox" (
-	SET sampleURL=%peerCCWebRtcURL%
+	SET sampleURL=%chatterBoxWebRtcURL%
 	SET sample=ChatterBox
 	CALL:publishChatterBox
 )
@@ -84,40 +86,43 @@ IF EXIST !peerCCPublishingPath! RMDIR /s /q !peerCCPublishingPath!
 CALL:createFolder %destination%\%sdk%
 CALL:cloneRepo %destination%\%sdk% !sampleURL!
 
-::attrib +r +s README.md
-::for /d %%i in ("!peerCCPublishingPath!") do if /i not "%%~nxi"=="server" del /s /q "%%i"
-::attrib -r -s README.md
+CALL:cleanRepo !peerCCPublishingPath!
 
 Xcopy  /S /I /Y %peerCCSourcePath% !peerCCPublishingPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed copying %peerCCSourcePath% to !peerCCPublishingPath!"
 
-DEL /s /q /f !peerCCPublishingPath!\Package.%nonSdk%.appxmanifest > NUL
-DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj > NUL
-DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj.user > NUL
-DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%_TemporaryKey.pfx > NUL
+IF EXIST !peerCCPublishingPath!\%nonSdk%-Required RMDIR /s /q !peerCCPublishingPath!\%nonSdk%-Required
+IF EXIST !peerCCPublishingPath!\Package.%nonSdk%.appxmanifest DEL /s /q /f !peerCCPublishingPath!\Package.%nonSdk%.appxmanifest > NUL
+IF EXIST !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj > NUL
+IF EXIST !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj.user DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%.csproj.user > NUL
+IF EXIST !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%_TemporaryKey.pfx DEL /s /q /f !peerCCPublishingPath!\PeerConnectionClient.%nonSdk%_TemporaryKey.pfx > NUL
 
 call:copyFiles !projectTemplates!\project.json !peerCCPublishingPath!
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\project.json "Nuget.Version" "%nugetVersion%" !peerCCPublishingPath!\project.json
 IF ERRORLEVEL 1 CALL:error 1 "Failed setting nuget version for PeerCC"
-
-echo !peerCCPublishingPath\!packageManifest!
 
 call:copyFiles !projectTemplates!\!packageManifest! !peerCCPublishingPath!
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !peerCCPublishingPath!\!packageManifest! "App.Version" "%version%" !peerCCPublishingPath!\!packageManifest!
 IF ERRORLEVEL 1 CALL:error 1 "Failed setting app version for PeerCC"
 
 call:copyFiles !projectTemplates!\PeerConnectionClient.%sdk%.csproj !peerCCPublishingPath!
+ 
 call:copyFiles !projectTemplates!\AssemblyInfo.cs !peerCCPublishingPath!\Properties
 
-::CALL:publishRepo !peerCCPublishingPath!
+IF %publish% EQU 1 CALL:publishRepo !peerCCPublishingPath!
 GOTO:EOF
 
 :publishChatterBox
 SET projectTemplates=%sdk%\windows\templates\samples\ChatterBox
 SET samplePublishingPath=%destination%\%sdk%\%sample%-Sample
 
-echo !samplePublishingPath!
-CALL:createFolder !samplePublishingPath!
+IF EXIST !samplePublishingPath! RMDIR /s /q !samplePublishingPath!
+
+CALL:createFolder %destination%\%sdk%
+CALL:cloneRepo %destination%\%sdk% !sampleURL!
+
+CALL:cleanRepo !samplePublishingPath!
+
 Xcopy  /S /I /Y %chatterBoxSourcePath% !samplePublishingPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed copying %chatterBoxSourcePath% to !samplePublishingPath!"
 
@@ -126,8 +131,8 @@ call:copyFiles !projectTemplates!\ChatterBox.Background\project.json !samplePubl
 IF ERRORLEVEL 1 CALL:error 1 "Failed setting nuget version for ChatterBox"
 
 call:copyFiles !projectTemplates!\ChatterBox.Background\ChatterBox.Background.csproj !samplePublishingPath!\ChatterBox.Background
-
-CALL:publishRepo !samplePublishingPath!
+pause
+IF %publish% EQU 1 CALL:publishRepo !samplePublishingPath!
 GOTO:EOF
 
 :cloneRepo
@@ -141,16 +146,48 @@ POPD
 GOTO:EOF
 
 :publishRepo
-echo push repo %1
-
+SET comment="References nuget version !nugetVersion!"
+echo push repo %1 with commit message !comment!
+pause
 PUSHD %1
 git add .
-git commit -am "References nuget version !nugetVersion!"
+git commit -am !comment!
 git push
 IF ERRORLEVEL 1 CALL:error 1 "Pushing on github has failed"
 POPD
 
 GOTO:EOF
+
+:cleanRepo
+echo clean
+IF NOT EXIST %~1\ GOTO:EOF
+echo %~1
+for /d %%i in (%~1\*.*) do (
+	set marked=0
+  CALL:isMarked %%~nxi
+	
+	IF !marked! equ 0 (
+		echo deleting %%~i
+		rd /s /q %%~i
+	)
+)
+echo %~1
+for %%i in (%~1\*.*) do (
+	set marked=0
+  CALL:isMarked %%~nxi
+	IF !marked! equ 0 (
+		echo deleting %%~i
+		DEL /s /q /f %%~i
+	)
+)
+GOTO:EOF
+
+:isMarked
+if /i "%~1"=="Server" set marked=1
+if /i "%~1"==".git" set marked=1
+if /i "%~1"=="README.md" set marked=1
+GOTO:EOF
+
 
 :createFolder
 IF NOT EXIST %1 (
@@ -185,7 +222,7 @@ IF %criticalError%==0 (
 	echo "CRITICAL ERROR: %errorMessage%"
 	ECHO.
 	ECHO.
-	echo "FAILURE: Creating nuget package has failed!"
+	echo "FAILURE: Publishing samples has failed!"
 	ECHO.
 	POPD
 	::terminate batch execution
