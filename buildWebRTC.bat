@@ -1,8 +1,9 @@
-:: Name:     buildWebRTC.bat
-:: Purpose:  Builds WebRTC lib
-:: Author:   Sergej Jovanovic
-:: Email:	 sergej@gnedo.com
-:: Revision: November 2016 - initial version
+:: Name:      buildWebRTC.bat
+:: Purpose:   Builds WebRTC lib
+:: Author:    Sergej Jovanovic
+:: Email:     sergej@gnedo.com
+:: Twitter:   @JovanovicSergej
+:: Revision:  November 2016 - initial version
 
 @ECHO off
 SETLOCAL EnableDelayedExpansion

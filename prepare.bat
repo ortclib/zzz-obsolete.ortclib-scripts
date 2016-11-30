@@ -1,8 +1,9 @@
-:: Name:     prepare.bat
-:: Purpose:  Prepare development environment for ORTC and WebRTC
-:: Author:   Sergej Jovanovic
-:: Email:	 sergej@gnedo.com
-:: Revision: September 2016 - initial version
+:: Name:      prepare.bat
+:: Purpose:   Prepare development environment for ORTC and WebRTC
+:: Author:    Sergej Jovanovic
+:: Email:     sergej@gnedo.com
+:: Twitter:   @JovanovicSergej
+:: Revision:  September 2016 - initial version
 
 @ECHO off
 
@@ -600,7 +601,7 @@ ECHO  	[93m-diagnostic[0m 		Flag for runing check if system is ready for webrt
 ECHO.
 ECHO 	[93m-help[0m 		Show script usage
 ECHO.
-ECHO 	[93m-logLevel[0m	Log level (error, info, warning, debug, trace)
+ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
 ECHO.
 ECHO		[93m-noEventing[0m 	Flag not to run eventing preparations for Ortc
 ECHO.

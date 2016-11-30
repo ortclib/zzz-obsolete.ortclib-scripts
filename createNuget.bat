@@ -1,8 +1,9 @@
-:: Name:     createNuget.bat
-:: Purpose:  Creates ORTC and WebRTC nuget packages
-:: Author:   Sergej Jovanovic
-:: Email:	 sergej@gnedo.com
-:: Revision: November 2016 - initial version
+:: Name:      createNuget.bat
+:: Purpose:   Creates ORTC and WebRTC nuget packages
+:: Author:    Sergej Jovanovic
+:: Email:     sergej@gnedo.com
+:: Twitter:   @JovanovicSergej
+:: Revision:  November 2016 - initial version
 
 @ECHO off
 
@@ -83,6 +84,8 @@ SET warning=2
 SET debug=3														
 SET trace=4	
 
+SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
+
 IF "%1"=="" SET help=1
 
 :parseInputArguments
@@ -90,22 +93,28 @@ IF "%1"=="" (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=1"
 		SET nome=""
+		
 	) ELSE (
 		GOTO:main
 	)
 )
-
 SET aux=%1
 IF "%aux:~0,1%"=="-" (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=1"
 	)
    SET nome=%aux:~1,250%
+   SET validArgument=0
+   CALL:checkIfArgumentIsValid !nome! validArgument
+   IF !validArgument!==0 CALL:error 1 %errorMessageInvalidArgument%
 ) ELSE (
-   SET "%nome%=%1"
+	IF NOT "%nome%"=="" (
+		SET "%nome%=%1"
+	) else (
+		CALL:error 1 %errorMessageInvalidArgument%
+	)
    SET nome=
 )
-
 SHIFT
 GOTO parseInputArguments
 
@@ -143,6 +152,17 @@ IF NOT "%CD%"=="%CD: =%" CALL:error 1 "Path must not contain folders with spaces
 IF EXIST ..\bin\nul (
 	CALL:error 1 "Do not run scripts from bin directory!"
 	CALL batchTerminator.bat
+)
+GOTO:EOF
+
+REM Check if entered valid input argument
+:checkIfArgumentIsValid
+IF "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
+	::it is valid
+	SET %2=1
+) ELSE (
+	::it is not valid
+	SET %2=0
 )
 GOTO:EOF
 
@@ -419,15 +439,15 @@ GOTO:EOF
 :publishSamples
 IF generate_Ortc_Nuget EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.Ortc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion!
+	CALL publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel%
 )
 
 IF generate_WebRtc_Nuget EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.WebRtc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion!
+	CALL publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
 	
 	CALL:print %debug% "Publishing ChatterBox with nuget version !nugetVersion!..."
-	CALL publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion!
+	CALL publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
 )
 GOTO:EOF
 
@@ -574,7 +594,7 @@ ECHO		publish flag -publish. This will store your API key so that you never need
 ECHO.
 ECHO 	[93m-help[0m 		Show script usage
 ECHO.
-ECHO 	[93m-logLevel[0m	Log level (error, info, warning, debug, trace)
+ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
 ECHO.
 ECHO 	[93m-publish[0m	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
 ECHO		desired to publish it locally or on some another server, it sholud be used option -destination to specify 
@@ -590,8 +610,8 @@ ECHO    [91mGenerated nuget package will be stored in ortc\windows\NugetOutput\
 ECHO.
 ECHO    [92mExamples:[0m
 ECHO.
-ECHO   [93mCreating Ortc nuget package with automated versioning and storing in ortc\windows\NugetOutput\ without publishing it.[0m
-ECHO    bin\createNuget.bat -target Ortc
+ECHO   [93mCreating Ortc nuget package with automated versioning and storing in ortc\windows\NugetOutput\ without publishing it. Log level is debug.[0m
+ECHO    bin\createNuget.bat -target Ortc -logLevel 2
 ECHO.
 ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.1-Beta[0m
 ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.1
