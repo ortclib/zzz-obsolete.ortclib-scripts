@@ -414,7 +414,7 @@ CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
 
 CALL:print %debug% "nugetSpec: !nugetSpec!"
 
-RMDIR /s /q %nugetPath%\%nugetName%\
+IF EXIST %nugetPath%\%nugetName%\NUL RMDIR /s /q %nugetPath%\%nugetName%\
 
 CALL:createFolder %nugetPath%\%nugetName%
 
