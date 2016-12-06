@@ -200,8 +200,8 @@ CALL:makeLink . chromium\src\third_party\opus ..\chromium-pruned\third_party\opu
 ::CALL:makeLink . chromium\src\third_party\colorama ..\chromium-pruned\third_party\colorama
 CALL:makeLink . chromium\src\third_party\boringssl ..\chromium-pruned\third_party\boringssl
 CALL:makeLink . chromium\src\third_party\usrsctp ..\chromium-pruned\third_party\usrsctp
-CALL:makeLink . chromium\src\third_party\libvpx_new ..\chromium-pruned\third_party\libvpx_new
-CALL:makeLink . chromium\src\third_party\libvpx_new\source\libvpx ..\libvpx
+CALL:makeLink . chromium\src\third_party\libvpx ..\chromium-pruned\third_party\libvpx
+CALL:makeLink . chromium\src\third_party\libvpx\source\libvpx ..\libvpx
 CALL:makeLink . chromium\src\testing ..\chromium-pruned\testing
 CALL:makeLink . testing chromium\src\testing
 CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
@@ -220,7 +220,7 @@ CALL:makeLink . third_party\protobuf chromium\src\third_party\protobuf
 CALL:makeLink . chromium\src\third_party\expat ..\chromium-pruned\third_party\expat
 CALL:makeLink . third_party\expat chromium\src\third_party\expat
 CALL:makeLink . third_party\libsrtp ..\libsrtp
-CALL:makeLink . third_party\libvpx_new .\chromium\src\third_party\libvpx_new
+CALL:makeLink . third_party\libvpx .\chromium\src\third_party\libvpx
 CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo

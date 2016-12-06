@@ -607,6 +607,8 @@ ECHO		[93m-noEventing[0m 	Flag not to run eventing preparations for Ortc
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
 ECHO.
+ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)
+ECHO.
 CALL bin\batchTerminator.bat
 
 GOTO:EOF
