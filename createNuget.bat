@@ -529,7 +529,7 @@ IF NOT "%key%"=="" CALL:setNugetApiKey
 IF %publish% EQU 1 (
 	IF NOT "%destination%"=="" (
 		CALL:print %debug% "Nuget package will be pushed to %destination%"
-		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -s %destination%
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -Source %destination%
 	) ELSE (
 		CALL:print %debug% "Nuget package will be pushed to default location"
 		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg
