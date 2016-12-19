@@ -118,7 +118,11 @@ IF NOT EXIST %destinationPath% (
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
-MOVE %libsSourcePath%\*.pdb %destinationPath%
+IF "%CONFIGURATION%"=="Release" (
+	FOR /R %libsSourcePath% %%f in (*.pdb) DO MOVE %%f %destinationPath%
+) ELSE (
+	MOVE %libsSourcePath%\*.pdb %destinationPath%
+)
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 GOTO:EOF
 
