@@ -32,7 +32,7 @@ SET trace=4
 
 CALL:print %info% "Webrtc build is started. It will take couple of minutes."
 CALL:print %info% "Working ..."
-echo 9999
+
 SET startTime=%time%
 
 CALL:determineVisualStudioPath

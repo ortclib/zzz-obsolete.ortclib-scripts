@@ -59,7 +59,7 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
+SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;pack;packDestination;
 SET target=""
 SET version=1.0.0
 SET key=
@@ -68,6 +68,8 @@ SET destination=
 SET publish=0
 SET help=0
 SET logLevel=2
+SET pack=0
+SET packDestination=..\
 
 ::build variables
 SET msVS_Path=""
@@ -145,6 +147,9 @@ IF %publish% EQU 1 (
 	CALL:publishSamples
 )
 
+IF %pack% EQU 1 (
+	CALL:makeZipPackage
+)
 GOTO:DONE
 
 :precheck
@@ -437,17 +442,18 @@ CALL:makeNuget
 GOTO:EOF
 
 :publishSamples
-IF generate_Ortc_Nuget EQU 1 (
+
+IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.Ortc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel%
 )
 
-IF generate_WebRtc_Nuget EQU 1 (
+IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.WebRtc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
 	
 	CALL:print %debug% "Publishing ChatterBox with nuget version !nugetVersion!..."
-	CALL publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
 )
 GOTO:EOF
 
@@ -562,6 +568,83 @@ IF %beta% EQU 1 (
 CALL:print %warning%  "New Nuget Version is !nugetVersion!"
 GOTO:EOF
 
+:makeZipPackage
+CALL:print %warning%  Archieving nuget package %nugetVersion%, pdb files and samples
+
+FOR /f "tokens=2-4 delims=/ " %%a IN ('date /t') DO (SET mydate=%%c-%%a-%%b)
+FOR /f "tokens=1-2 delims=/:" %%a IN ("%TIME%") DO (SET mytime=%%a%%b) 
+
+SET zipPackageOutputPath=%packDestination%
+SET outputFolderName=Package_%target%_nuget_%nugetVersion%_%mydate%_%mytime%
+SET packageName=!zipPackageOutputPath!!outputFolderName!
+SET packageNugetPath=!packageName!\Nuget
+
+SET packagePdbsPath=!packageName!\Pdbs
+SET packagePdbsSourceWrapperPath=!target!\windows\solutions\Build\Output\
+SET packagePdbsSourcePath=webrtc\xplatform\webrtc\WEBRTC_BUILD\!target!\Release\
+
+SET packageSamplesPath=!packageName!\Samples\
+SET peerCCPublishingPath=..\Publish\%target%\PeerCC-Sample
+SET ChatterBoxPublishingPath=..\Publish\%target%\ChatterBox-Sample
+
+IF EXIST !packageName!\NUL RMDIR /s /q !packageName!
+IF ERRORLEVEL 1 CALL:error 1 "Could not delete a directory !packageName!"
+
+CALL:createFolder !packageName!
+
+::Copy nuget
+CALL:createFolder !packageNugetPath!
+FOR /R %nugetOutputPath% %%f in (*!nugetVersion!*.nupkg) DO COPY %%f !packageNugetPath! > NUL
+
+::Copy ARM pdb files
+CALL:createFolder !packagePdbsPath!\ARM
+FOR /R %packagePdbsSourcePath%\ARM\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+FOR /R %packagePdbsSourceWrapperPath%\ARM\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+
+::Copy X64 pdb files
+CALL:createFolder !packagePdbsPath!\X64
+FOR /R %packagePdbsSourcePath%\X64\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X64 > NUL
+FOR /R %packagePdbsSourceWrapperPath%\X64\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X64 > NUL
+
+::Copy X86 pdb files
+CALL:createFolder !packagePdbsPath!\X86
+FOR /R %packagePdbsSourcePath%\X86\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X86 > NUL
+FOR /R %packagePdbsSourceWrapperPath%\X86\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X86 > NUL
+
+::Copy PeerCC sample
+IF EXIST %peerCCPublishingPath%\NUL (
+	CALL:createFolder !packageSamplesPath!PeerCC-Sample
+	XCopy  /S /I /Y %peerCCPublishingPath% !packageSamplesPath!PeerCC-Sample > NUL
+	IF ERRORLEVEL 1 CALL:error 1 "Failed copying from %peerCCPublishingPath% to !packageSamplesPath!PeerCC-Sample"
+)
+
+::Copy ChatterBox sample
+IF EXIST %ChatterBoxPublishingPath%\NUL (
+	CALL:createFolder !packageSamplesPath!ChatterBox-Sample
+	XCopy  /S /I /Y %ChatterBoxPublishingPath% !packageSamplesPath!ChatterBox-Sample > NUL
+	IF ERRORLEVEL 1 CALL:error 1 "Failed copying from %ChatterBoxPublishingPath% to !packageSamplesPath!ChatterBox-Sample"
+)
+
+PUSHD !zipPackageOutputPath!
+CALL:zipFolder %CD%\!outputFolderName!  %CD%\!outputFolderName!.zip
+POPD
+GOTO:EOF
+
+:zipFolder
+echo Set objArgs = WScript.Arguments > _zipIt.vbs
+echo InputFolder = objArgs(0) >> _zipIt.vbs
+echo ZipFile = objArgs(1) >> _zipIt.vbs
+echo CreateObject("Scripting.FileSystemObject").CreateTextFile(ZipFile, True).Write "PK" ^& Chr(5) ^& Chr(6) ^& String(18, vbNullChar) >> _zipIt.vbs
+echo Set objShell = CreateObject("Shell.Application") >> _zipIt.vbs
+echo Set source = objShell.NameSpace(InputFolder).Items >> _zipIt.vbs
+echo objShell.NameSpace(ZipFile).CopyHere(source) >> _zipIt.vbs
+@ECHO *******************************************
+@ECHO Zipping, please wait..
+echo wScript.Sleep 30000 >> _zipIt.vbs
+CScript  _zipIt.vbs  %1  %2
+del _zipIt.vbs
+GOTO:EOF
+
 :copyFiles
 IF EXIST %1 (
 	CALL:createFolder %2
@@ -643,6 +726,7 @@ IF %logLevel% GEQ  %logType% (
 GOTO:EOF
 
 :cleanup
+
 IF EXIST !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
 IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
 
@@ -708,4 +792,3 @@ CALL:print %info% "Success:  Nuget package is created."
 ECHO.
 SET endTime=%time%
 CALL:showTime
-:end
