@@ -15,7 +15,7 @@ SET sample=""
 SET sdk=""
 SET version=1.0.0.0
 SET nugetVersion=""
-SET destination=..\Publish
+SET destination=%CD%\..\Publish
 SET publish=0
 SET help=0
 SET logLevel=2
@@ -25,7 +25,7 @@ SET marked=0
 SET target=""
 SET nonSdk=Ortc
 SET peerCCSourcePath=common\windows\samples\PeerCC\Client
-SET chatterBoxSourcePath=common\windows\samples\ChatterBox
+SET chatterBoxSourcePath=%CD%\common\windows\samples\ChatterBox
 
 SET peerCCOrtcURL="https://github.com/ortclib/PeerCC-Sample.git"
 SET peerCCWebRtcURL="https://github.com/webrtc-uwp/PeerCC-Sample.git"
@@ -187,12 +187,25 @@ CALL:createFolder %destination%\%sdk%
 CALL:cloneRepo %destination%\%sdk% !sampleURL!
 CALL:cleanRepo !samplePublishingPath!
 
+PUSHD %chatterBoxSourcePath%
 CALL:print %debug% "Copying %chatterBoxSourcePath% to !samplePublishingPath! ..."
-IF %logLevel% GEQ %trace% (
-	Xcopy  /S /I /Y %chatterBoxSourcePath% !samplePublishingPath!
-) ELSE (
-	Xcopy  /S /I /Y %chatterBoxSourcePath% !samplePublishingPath! > NUL
+
+for /d %%i in (!CD!\*.*) do (
+
+	if /i not "%%~ni"==".git" (
+		CALL:print %trace% "Copying %%~nxi to !samplePublishingPath!\%%~nxi ..."
+		CALL:copyFolder %%~nxi !samplePublishingPath!\%%~nxi > NUL
+	)
 )
+
+for %%i in (.\*.*) do (
+	if /i not "%%~nxi"==".git" (
+		CALL:print %trace% "Copying %%~nxi to !samplePublishingPath! ..."
+		CALL:copyFiles %%~nxi !samplePublishingPath! > NUL
+	)
+)
+
+popd
 IF ERRORLEVEL 1 CALL:error 1 "Failed copying %chatterBoxSourcePath% to !samplePublishingPath!"
 
 CALL:copyFiles !projectTemplates!\ChatterBox.Background\project.json !samplePublishingPath!\ChatterBox.Background
@@ -275,6 +288,17 @@ if EXIST %1 (
 	CALL:createFolder %2
 	CALL:print %debug% Copying %1 to %2
 	copy %1 %2 > NUL
+	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
+) else (
+	CALL:error 1 "Could not copy a %1"
+)
+GOTO:EOF
+
+:copyFolder
+if EXIST %1 (
+	CALL:createFolder %2
+	CALL:print %debug% Copying %1 to %2
+	Xcopy  /S /I /Y %1 %2
 	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
 ) else (
 	CALL:error 1 "Could not copy a %1"

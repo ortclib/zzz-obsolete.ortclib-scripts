@@ -59,17 +59,17 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;pack;packDestination;
+SET supportedInputArguments=;target;version;key;prerelease;destination;publish;help;logLevel;pack;packDestination;
 SET target=""
 SET version=1.0.0
 SET key=
-SET beta=1
+SET prerelease=""
 SET destination=
 SET publish=0
 SET help=0
 SET logLevel=2
 SET pack=0
-SET packDestination=..\
+SET packDestination=..
 
 ::build variables
 SET msVS_Path=""
@@ -559,8 +559,8 @@ IF "%version%"=="1.0.0" (
 	)
 )
 
-IF %beta% EQU 1 (
-	SET nugetVersion=!version!-Beta
+IF NOT "%prerelease%"=="" (
+	SET nugetVersion=!version!-%prerelease%
 ) ELSE (
 	SET nugetVersion=!version!
 )
@@ -569,12 +569,12 @@ CALL:print %warning%  "New Nuget Version is !nugetVersion!"
 GOTO:EOF
 
 :makeZipPackage
-CALL:print %warning%  Archieving nuget package %nugetVersion%, pdb files and samples
+CALL:print %warning%  "Archieving nuget package %nugetVersion%, pdb files and samples"
 
 FOR /f "tokens=2-4 delims=/ " %%a IN ('date /t') DO (SET mydate=%%c-%%a-%%b)
 FOR /f "tokens=1-2 delims=/:" %%a IN ("%TIME%") DO (SET mytime=%%a%%b) 
 
-SET zipPackageOutputPath=%packDestination%
+SET zipPackageOutputPath=%packDestination%\
 SET outputFolderName=Package_%target%_nuget_%nugetVersion%_%mydate%_%mytime%
 SET packageName=!zipPackageOutputPath!!outputFolderName!
 SET packageNugetPath=!packageName!\Nuget
@@ -626,6 +626,7 @@ IF EXIST %ChatterBoxPublishingPath%\NUL (
 )
 
 PUSHD !zipPackageOutputPath!
+CALL:print %debug%  "Archieving %CD%\!outputFolderName! to %CD%\!outputFolderName!.zip"
 CALL:zipFolder %CD%\!outputFolderName!  %CD%\!outputFolderName!.zip
 POPD
 GOTO:EOF
@@ -670,7 +671,7 @@ IF %help% EQU 0 GOTO:EOF
 ECHO.
 ECHO    [92mAvailable parameters:[0m
 ECHO.
-ECHO  	[93m-beta[0m 		Flag for creating prerelase nuget package.
+ECHO 	[93m-destination[0m	Used for specifying nuget server where package will be published. Default destination is nuget.org
 ECHO.
 ECHO 	[93m-key[0m		Api key that is used for publishing nuget package on nuget.org. This is used in combination with 
 ECHO		publish flag -publish. This will store your API key so that you never need to do this step again on this machine.
@@ -679,11 +680,11 @@ ECHO 	[93m-help[0m 		Show script usage
 ECHO.
 ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
 ECHO.
+ECHO  	[93m-prelease[0m 		Version sufix if it is prerelease version (Alpha, Beta ...).
+ECHO.
 ECHO 	[93m-publish[0m	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
 ECHO		desired to publish it locally or on some another server, it sholud be used option -destination to specify 
 ECHO		destination server
-ECHO.
-ECHO 	[93m-destination[0m	Used for specifying nuget server where package will be published. Default destination is nuget.org
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to generate nuget package. Ortc or WebRtc.
 ECHO.
