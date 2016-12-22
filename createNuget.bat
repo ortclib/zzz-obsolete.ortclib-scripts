@@ -59,13 +59,14 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;prerelease;destination;publish;help;logLevel;pack;packDestination;
+SET supportedInputArguments=;target;version;key;prerelease;destination;publish;publishDestination;help;logLevel;pack;packDestination;
 SET target=""
 SET version=1.0.0
 SET key=
 SET prerelease=""
 SET destination=
 SET publish=0
+SET publishDestination=%CD%\..\Publish
 SET help=0
 SET logLevel=2
 SET pack=0
@@ -445,15 +446,15 @@ GOTO:EOF
 
 IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.Ortc with nuget version !nugetVersion!..."
-	CALL bin\publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 )
 
 IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.WebRtc with nuget version !nugetVersion!..."
-	CALL bin\publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 	
 	CALL:print %debug% "Publishing ChatterBox with nuget version !nugetVersion!..."
-	CALL bin\publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 )
 GOTO:EOF
 
