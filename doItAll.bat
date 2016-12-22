@@ -2,7 +2,7 @@
 
 SETLOCAL EnableDelayedExpansion
 
-SET supportedInputArguments=;repo;branch;destinationFolder;recursive;prepare;publish;publishDestination;nugetTarget;nugetVersion;nugetDestination;pack;packDestination;help;logLevel;
+SET supportedInputArguments=;repo;branch;destinationFolder;recursive;prepare;publish;publishDestination;nugetTarget;nugetVersion;nugetDestination;prerelease;pack;packDestination;help;logLevel;
 SET repo=https://github.com/ortclib/ortclib-sdk.git
 SET branch=master
 SET destinationFolder=""
@@ -55,12 +55,12 @@ IF "%aux:~0,1%"=="-" (
    SET nome=%aux:~1,250%
    SET validArgument=0
    CALL:checkIfArgumentIsValid !nome! validArgument
-   IF !validArgument!==0 CALL:error 1 %errorMessageInvalidArgument%
+   IF !validArgument!==0 CALL:error 1 "Invalid input argument !nome!. For the list of available arguments and usage examples, please run script with -help option."
 ) ELSE (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=%1"
 	) else (
-		CALL:error 1 %errorMessageInvalidArgument%
+		CALL:error 1 "Invalid input argument !nome!. For the list of available arguments and usage examples, please run script with -help option."
 	)
    SET nome=
 )
@@ -83,12 +83,14 @@ IF %destinationFolder%=="" CALL:error 1 "Destination folder for project cloning 
 CALL:createFolder %destinationFolder%
 
 PUSHD %destinationFolder%
+IF ERRORLEVEL 1 CALL:error 1 "Folder %destinationFolder% doesn't exist"
+
 IF %recursive% EQU 1 (
 	CALL:print %warning% "GIT: Recursively cloning branch %branch% for repo %repo%"
-	GIT CLONE -recursive %repo% %branch%
+	CALL git clone --recursive %repo% -b %branch%
 ) ELSE (
 	CALL:print %warning% "GIT: Cloning branch %branch% for repo %repo%"
-	GIT CLONE %repo% %branch%
+	CALL git clone %repo% -b %branch%
 )
 
 FOR /D %%i in (*.*) do SET clonedFolder=%%~nxi
@@ -99,7 +101,10 @@ GOTO:EOF
 
 :prepare
 
+echo %destinationFolder%
+echo %clonedFolder%
 PUSHD %destinationFolder%\%clonedFolder%
+IF ERRORLEVEL 1 CALL:error 1 "Folder %destinationFolder%\%clonedFolder% doesn't exist"
 CALL bin\prepare.bat -logLevel %logLevel%
 POPD
 
@@ -107,7 +112,10 @@ GOTO:EOF
 
 :nuget
 
+FOR /D %%i in (%destinationFolder%\*.*) do SET clonedFolder=%%~nxi
+
 PUSHD %destinationFolder%\%clonedFolder%
+IF ERRORLEVEL 1 CALL:error 1 "Folder %destinationFolder%\%clonedFolder% doesn't exist"
 
 CALL:checkOrtcAvailability
 CALL:determineNugetTarget
@@ -121,6 +129,7 @@ GOTO:EOF
 
 :makeNuget
 
+PUSHD %destinationFolder%\%clonedFolder%
 IF %publish% EQU 1 (
 	IF %pack% EQU 1 ( 
 		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination%
@@ -130,6 +139,7 @@ IF %publish% EQU 1 (
 ) ELSE (
 	CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination%
 )
+POPD
 GOTO:EOF
 
 REM Check if entered valid input argument
@@ -231,7 +241,27 @@ IF %criticalError%==0 (
 	ECHO.
 	POPD
 	::terminate batch execution
-	CALL bin\batchTerminator.bat
+	CALL:terminate
 )
 GOTO:EOF
+
+:terminate
+call :CtrlC <"%temp%\ExitBatchYes.txt" 1>nul 2>&1
+:CtrlC
+cmd /c exit -1073741510
+
+:buildYes - Establish a Yes file for the language used by the OS
+pushd "%temp%"
+set "yes="
+copy nul ExitBatchYes.txt >nul
+for /f "delims=(/ tokens=2" %%Y in (
+  '"copy /-y nul ExitBatchYes.txt <nul"'
+) do if not defined yes set "yes=%%Y"
+echo %yes%>ExitBatchYes.txt
+popd
+exit /b
+GOTO:EOF
 :DONE
+ECHO.
+CALL:print %info% "Success:  Everything is done"
+ECHO.

@@ -109,7 +109,7 @@ IF "%aux:~0,1%"=="-" (
    SET nome=%aux:~1,250%
    SET validArgument=0
    CALL:checkIfArgumentIsValid !nome! validArgument
-   IF !validArgument!==0 CALL:error 1 %errorMessageInvalidArgument%
+   IF !validArgument!==0 CALL:error "Invalid input argument !nome!. For the list of available arguments and usage examples, please run script with -help option."
 ) ELSE (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=%1"
