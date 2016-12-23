@@ -59,6 +59,7 @@ IF "%aux:~0,1%"=="-" (
 ) ELSE (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=%1"
+		CALL:print %trace% "Processing argument: !nome!"
 	) else (
 		CALL:error 1 "Invalid input argument !nome!. For the list of available arguments and usage examples, please run script with -help option."
 	)
@@ -92,6 +93,7 @@ IF %recursive% EQU 1 (
 	CALL:print %warning% "GIT: Cloning branch %branch% for repo %repo%"
 	CALL git clone %repo% -b %branch%
 )
+IF ERRORLEVEL 1 CALL:error 1 "Cloning has failed."
 
 FOR /D %%i in (*.*) do SET clonedFolder=%%~nxi
 
@@ -132,11 +134,14 @@ GOTO:EOF
 PUSHD %destinationFolder%\%clonedFolder%
 IF %publish% EQU 1 (
 	IF %pack% EQU 1 ( 
+		CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination%"
 		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination%
 	) ELSE (
+	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination%"
 		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination%
 	)
 ) ELSE (
+	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination%"
 	CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination%
 )
 POPD
