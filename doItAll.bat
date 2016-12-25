@@ -132,17 +132,21 @@ GOTO:EOF
 :makeNuget
 
 PUSHD %destinationFolder%\%clonedFolder%
+
+SET prereleaseParameter=
+IF NOT %prerelease%=="" SET prereleaseParameter=-prerelease %prerelease%
+
 IF %publish% EQU 1 (
 	IF %pack% EQU 1 ( 
-		CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination%"
-		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination%
+		CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination% !prereleaseParameter!"
+		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% -publish -publishDestination %publishDestination% -pack -packDestination %packDestination% !prereleaseParameter!
 	) ELSE (
-	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination%"
-		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination% -publish -publishDestination %publishDestination%
+	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% -publish -publishDestination %publishDestination%!prereleaseParameter!"
+		CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% -publish -publishDestination %publishDestination% !prereleaseParameter!
 	)
 ) ELSE (
-	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination%"
-	CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -prerelease %prerelease% -destination %nugetDestination%
+	CALL:print %warning% "Runing script: bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% !prereleaseParameter!"
+	CALL bin\createNuget.bat -logLevel %logLevel% -target %1 -version %nugetVersion% -destination %nugetDestination% !prereleaseParameter!
 )
 POPD
 GOTO:EOF

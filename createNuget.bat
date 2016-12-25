@@ -63,7 +63,7 @@ SET supportedInputArguments=;target;version;key;prerelease;destination;publish;p
 SET target=""
 SET version=1.0.0
 SET key=
-SET prerelease=""
+SET prerelease=
 SET destination=
 SET publish=0
 SET publishDestination=%CD%\..\Publish
@@ -535,6 +535,7 @@ IF NOT "%key%"=="" CALL:setNugetApiKey
 
 IF %publish% EQU 1 (
 	IF NOT "%destination%"=="" (
+		CALL:createFolder %destination%
 		CALL:print %debug% "Nuget package will be pushed to %destination%"
 		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -Source %destination%
 	) ELSE (
