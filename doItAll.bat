@@ -2,7 +2,7 @@
 
 SETLOCAL EnableDelayedExpansion
 
-SET supportedInputArguments=;repo;branch;destinationFolder;recursive;prepare;publish;publishDestination;nugetTarget;nugetVersion;nugetDestination;prerelease;pack;packDestination;help;logLevel;
+SET supportedInputArguments=;repo;branch;destinationFolder;recursive;prepare;publish;publishDestination;nugetTarget;nugetVersion;nugetDestination;prerelease;pack;packDestination;help;logLevel;noClone;
 SET repo=https://github.com/ortclib/ortclib-sdk.git
 SET branch=master
 SET destinationFolder=""
@@ -18,6 +18,7 @@ SET pack=0
 SET packDestination=""
 SET help=0
 SET logLevel=2
+SET noClone=0
 
 SET globalLogLevel=2											
 SET error=0														
@@ -47,7 +48,7 @@ IF "%1"=="" (
 		GOTO:main
 	)
 )
-SET aux=%1
+SET aux=%~1
 IF "%aux:~0,1%"=="-" (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=1"
@@ -70,7 +71,9 @@ GOTO parseInputArguments
 
 :main
 
-CALL:clone
+SET startTime=%time%
+
+IF %noClone% EQU 0 CALL:clone
 
 CALL:prepare
 
@@ -249,6 +252,8 @@ IF %criticalError%==0 (
 	CALL:print %error% "FAILURE: Process has failed!"
 	ECHO.
 	POPD
+	SET endTime=%time%
+	CALL:showTime
 	::terminate batch execution
 	CALL:terminate
 )
@@ -270,7 +275,37 @@ echo %yes%>ExitBatchYes.txt
 popd
 exit /b
 GOTO:EOF
+
+:showTime
+
+SET options="tokens=1-4 delims=:.,"
+FOR /f %options% %%a in ("%startTime%") do SET start_h=%%a&SET /a start_m=100%%b %% 100&SET /a start_s=100%%c %% 100&SET /a start_ms=100%%d %% 100
+FOR /f %options% %%a in ("%endTime%") do SET end_h=%%a&SET /a end_m=100%%b %% 100&SET /a end_s=100%%c %% 100&SET /a end_ms=100%%d %% 100
+
+SET /a hours=%end_h%-%start_h%
+SET /a mins=%end_m%-%start_m%
+SET /a secs=%end_s%-%start_s%
+SET /a ms=%end_ms%-%start_ms%
+IF %ms% lss 0 SET /a secs = %secs% - 1 & SET /a ms = 100%ms%
+IF %secs% lss 0 SET /a mins = %mins% - 1 & SET /a secs = 60%secs%
+IF %mins% lss 0 SET /a hours = %hours% - 1 & SET /a mins = 60%mins%
+IF %hours% lss 0 SET /a hours = 24%hours%
+
+SET /a totalsecs = %hours%*3600 + %mins%*60 + %secs% 
+
+IF 1%ms% lss 100 SET ms=0%ms%
+IF %secs% lss 10 SET secs=0%secs%
+IF %mins% lss 10 SET mins=0%mins%
+IF %hours% lss 10 SET hours=0%hours%
+
+:: mission accomplished
+ECHO [93mTotal time: %hours%:%mins%:%secs% (%totalsecs%s total)[0m
+
+GOTO:EOF
+
 :DONE
 ECHO.
 CALL:print %info% "Success:  Everything is done"
+SET endTime=%time%
+CALL:showTime
 ECHO.
