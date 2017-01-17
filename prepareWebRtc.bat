@@ -246,9 +246,9 @@ IF %platform_ARM% EQU 1 (
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %trace% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
 	SET platform_ARM_prepared=2
@@ -260,9 +260,9 @@ IF %platform_x64% EQU 1 (
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
 	SET platform_x64_prepared=2
@@ -275,9 +275,9 @@ IF %platform_x86% EQU 1 (
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
 	SET platform_x86_prepared=2
@@ -290,9 +290,9 @@ IF %platform_win32% EQU 1 (
 	SET GYP_GENERATORS=ninja,msvs-ninja
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
+		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
 	) ELSE (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
+		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
 	SET platform_win32_prepared=2
