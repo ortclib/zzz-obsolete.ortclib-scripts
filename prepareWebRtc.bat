@@ -160,7 +160,7 @@ CALL:print %trace% "Executing prepareWebRTC function"
 
 IF NOT EXIST %baseWebRTCPath% CALL:error 1 "%folderStructureError:"=% %baseWebRTCPath% does not exist!"
 
-CALL:updateSDKVersion
+
 
 PUSHD %baseWebRTCPath% > NUL
 CALL:print %trace% "Pushed %baseWebRTCPath% path"
@@ -169,9 +169,13 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
+POPD
+CALL:updateSDKVersion
+PUSHD %baseWebRTCPath% > NUL
+
 CALL:generateProjects
 
-popd
+POPD
 CALL:print %trace% "Popped %baseWebRTCPath% path"
 
 CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
