@@ -17,6 +17,7 @@ SET failure=0
 SET x86BuildCompilerOption=amd64_x86
 SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
+SET win32BuildCompilerOption=amd64_x86
 SET currentBuildCompilerOption=amd64
 
 SET startTime=0
@@ -76,6 +77,7 @@ IF /I %CPU% == x86 (
 	SET x86BuildCompilerOption=x86
 	SET x64BuildCompilerOption=x86_amd64
 	SET armBuildCompilerOption=x86_arm
+	SET win32BuildCompilerOption=x86
 )
 
 IF /I %~1==x86 (
@@ -84,7 +86,11 @@ IF /I %~1==x86 (
 	IF /I %~1==ARM (
 		SET currentBuildCompilerOption=%armBuildCompilerOption%
 	) ELSE (
-		SET currentBuildCompilerOption=%x64BuildCompilerOption%
+		IF /I %~1==win32 (
+			SET currentBuildCompilerOption=%x86BuildCompilerOption%
+		) ELSE (
+			SET currentBuildCompilerOption=%x64BuildCompilerOption%
+		)
 	)
 )
 
@@ -154,6 +160,11 @@ IF /I "%PLATFORM%"=="x86" (
 IF /I "%PLATFORM%"=="ARM" (
 	SET libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
+)
+
+IF /I "%PLATFORM%"=="win32" (
+	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
+	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 CALL:print %debug% "Source path is %libsSourcePath%"
 

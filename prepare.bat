@@ -14,6 +14,8 @@ SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
 SET ortcWebRTCTemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
 SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
+SET ortcWebRTCWin32TemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.Win32.vs2015.sln
+SET ortcWebRTCWin32DestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
@@ -364,6 +366,7 @@ GOTO:EOF
 
 :: Copy webrtc solution template
 CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
+CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
 ::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
