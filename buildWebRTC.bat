@@ -33,12 +33,17 @@ SET trace=4
 
 CALL:print %info% "Webrtc build is started. It will take couple of minutes."
 CALL:print %info% "Working ..."
-echo 9999
+
+SET currentPlatform=%PLATFORM%
+
+CALL:print %info%  "%PLATFORM%"
+CALL:print %info%  "%Platform !currentPlatform!"
+
 SET startTime=%time%
 
 CALL:determineVisualStudioPath
 
-CALL:setCompilerOption %PLATFORM%
+CALL:setCompilerOption %currentPlatform%
 
 CALL:build
 
@@ -105,7 +110,11 @@ IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
-	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
+	IF /I "%currentPlatform%"=="win32" (
+		MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False
+	) ELSE (
+		MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
+	)
 	if ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
@@ -120,12 +129,19 @@ IF NOT EXIST %destinationPath% (
 	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationPath%libs"
 )
 
-%msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib %libsSourcePath%\*.lib %libsSourcePath%\lib\*.lib
+SET webRtcLibs=
+
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO SET webRtcLibs=!webRtcLibs! %%~A
+
+PUSHD %libsSourcePath%
+IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
-MOVE %libsSourcePath%\*.pdb %destinationPath%
+
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO MOVE %%~A %destinationPath% >NUL
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
+POPD
 GOTO:EOF
 
 :moveLibs
@@ -147,28 +163,29 @@ GOTO:EOF
 :setPaths
 SET basePath=%~dp1
 
-IF /I "%PLATFORM%"=="x64" (
+IF /I "%currentPlatform%"=="x64" (
 	SET libsSourcePath=%basePath%build_win10_x64\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win10_x64\%SOFTWARE_PLATFORM%\
 )
 
-IF /I "%PLATFORM%"=="x86" (
+IF /I "%currentPlatform%"=="x86" (
 	SET libsSourcePath=%basePath%build_win10_x86\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win10_x86\%SOFTWARE_PLATFORM%\
 )
 
-IF /I "%PLATFORM%"=="ARM" (
+IF /I "%currentPlatform%"=="ARM" (
 	SET libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
 )
 
-IF /I "%PLATFORM%"=="win32" (
+IF /I "%currentPlatform%"=="win32" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 CALL:print %debug% "Source path is %libsSourcePath%"
 
-SET destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%PLATFORM%\
+::SET destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+SET destinationPath=%libsSourcePath%\..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF
@@ -207,6 +224,7 @@ IF %criticalError%==0 (
 	ECHO.
 	SET endTime=%time%
 	CALL:showTime
+	POPD
 	::terminate batch execution
 	CALL %~dp0\batchTerminator.bat
 )
