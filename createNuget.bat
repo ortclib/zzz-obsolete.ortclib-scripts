@@ -61,9 +61,9 @@ SET generate_WebRtc_Nuget=0
 ::input arguments
 SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
 SET target=""
-SET version=1.0.0
+SET version=1.0.0.0
 SET key=
-SET beta=1
+SET beta=0
 SET destination=
 SET publish=0
 SET help=0
@@ -529,7 +529,7 @@ IF NOT "%key%"=="" CALL:setNugetApiKey
 IF %publish% EQU 1 (
 	IF NOT "%destination%"=="" (
 		CALL:print %debug% "Nuget package will be pushed to %destination%"
-		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -s %destination%
+		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -Source %destination%
 	) ELSE (
 		CALL:print %debug% "Nuget package will be pushed to default location"
 		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg
@@ -540,15 +540,15 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed publishing the %nugetName% nuget package"
 GOTO:EOF
 
 :determineNugetVersion
-IF "%version%"=="1.0.0" (
+IF "%version%"=="1.0.0.0" (
 	IF EXIST %nugetPackageVersion% (
 		SET /p version=< %nugetPackageVersion%
 		
 		CALL:print %debug% "Current Nuget Version is !version!"
 		
-		FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
-			SET /a build=%%c+1
-			SET version=%%a.%%b.!build!
+		FOR /f "tokens=1-4 delims=." %%a IN ("!version!") DO (
+			SET /a build=%%d+1
+			SET version=%%a.%%b.%%c.!build!
 		)
 	)
 )
@@ -613,8 +613,8 @@ ECHO.
 ECHO   [93mCreating Ortc nuget package with automated versioning and storing in ortc\windows\NugetOutput\ without publishing it. Log level is debug.[0m
 ECHO    bin\createNuget.bat -target Ortc -logLevel 2
 ECHO.
-ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.1-Beta[0m
-ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.1
+ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.0.1-Beta[0m
+ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.0.1
 ECHO.
 ECHO   [93mCreating prerelase Ortc nuget package and publish it to locally nuget storage[0m
 ECHO    bin\createNuget.bat -target Ortc -beta -publish -destination [path to local nuget storage]

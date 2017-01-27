@@ -47,6 +47,9 @@ SET baseWebRTCPath=webrtc\xplatform\webrtc
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
+SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
+SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
+
 ECHO.
 CALL:print %info% "Running WebRTC prepare script ..."
 CALL:print %info% "================================="
@@ -165,9 +168,13 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
+POPD
+CALL:updateSDKVersion
+PUSHD %baseWebRTCPath% > NUL
+
 CALL:generateProjects
 
-popd
+POPD
 CALL:print %trace% "Popped %baseWebRTCPath% path"
 
 CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
@@ -330,6 +337,27 @@ IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %
 POPD
 
 GOTO:EOF
+
+:updateSDKVersion
+
+FOR /f "tokens=4-7 delims=[.] " %%i IN ('ver') DO (IF %%i==Version (SET v=%%j.%%k.%%l) ELSE (SET v=%%i.%%j.%%k))
+
+IF NOT "!v!"=="" (
+	CALL:print %warning% "!v! SDK version will be used"
+	SET SDKVersionString=%stringToUpdateWithSDKVersion:10.0.10240=!v!%
+	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %pythonFilePathToUpdateSDKVersion% "%stringToUpdateWithSDKVersion%" "!SDKVersionString!" %pythonFilePathToUpdateSDKVersion%
+	IF ERRORLEVEL 1 CALL:error 0 "Failed to set newer SDK version"
+)
+
+GOTO:EOF
+
+:resetSDKVersion
+IF NOT "!SDKVersionString!"=="" (
+	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %pythonFilePathToUpdateSDKVersion% "!SDKVersionString!" "%stringToUpdateWithSDKVersion%" %pythonFilePathToUpdateSDKVersion%
+	IF ERRORLEVEL 1 CALL:error 0 "Failed to reset newer SDK version"
+)
+GOTO:EOF
+
 :summary
 SET logLevel=%trace%
 CALL:print %trace% "=======   WebRTC prepare script summary   ======="
@@ -419,6 +447,7 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "FAILURE:Preparing WebRTC development environment has failed.	"
 	POPD
+	CALL:resetSDKVersion
 	CALL:summary
 	::terminate batch execution
 	CALL bin\batchTerminator.bat
@@ -428,4 +457,5 @@ GOTO:EOF
 :done
 ECHO.
 CALL:print %info% "Success: WebRTC development environment is prepared."
+CALL:resetSDKVersion
 CALL:summary 
