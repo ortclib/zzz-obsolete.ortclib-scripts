@@ -81,6 +81,7 @@ GOTO parseInputArguments
 
 :main
 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%PLATFORM%\"
+IF /I %PLATFORM%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\x86\"
 SET startTime=%time%
 
 CALL:checkPlatform
@@ -101,6 +102,8 @@ SET validInput=0
 IF /I "%platform%"=="x64" SET validInput=1
 
 IF /I "%platform%"=="x86" SET validInput=1
+
+IF /I "%platform%"=="win32" SET validInput=1
 	
 IF !validInput!==0 CALL:error 1 "Invalid platform"
 
@@ -139,10 +142,13 @@ IF /I %~1==x86 (
 	IF /I %~1==ARM (
 		SET currentBuildCompilerOption=%armBuildCompilerOption%
 	) ELSE (
-		SET currentBuildCompilerOption=%x64BuildCompilerOption%
+		IF /I %~1==win32 (
+			SET currentBuildCompilerOption=%x86BuildCompilerOption%
+		) ELSE (
+			SET currentBuildCompilerOption=%x64BuildCompilerOption%
+		)
 	)
 )
-
 CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
 
 GOTO:EOF
@@ -183,7 +189,7 @@ SET eventPath=%~dp1
 SET providerName=%~n1
 SET intermediatePath=!eventPath!%eventsIntermediatePath%\
 SET headersPath=!eventPath!%eventsIncludePath%
-SET outputPath=%eventsOutput%!providerName!
+SET outputPath=%eventsOutput%!providerName!\%platform%
 
 CALL:print %warning% "Preparing !providerName! ..."
 CALL:print %trace% eventJsonPath=!eventJsonPath!
@@ -193,6 +199,7 @@ CALL:print %trace% intermediatePath=!intermediatePath!
 CALL:print %trace% headersPath=!headersPath!
 CALL:print %trace% outputPath=!outputPath!
 CALL:print %trace% windowsKitPath=%windowsKitPath%
+
 
 ::CALL:createFolder !headersPath!
 CALL:createFolder !intermediatePath!
@@ -231,7 +238,7 @@ IF %managedBuild% EQU 1 (
 	IF %logLevel% GEQ %trace% (
 		%msVS_Path%\bin\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res
 	) ELSE (
-		%msVS_Path%\bin\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res
+		%msVS_Path%\bin\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res > NUL
 	)
 ) ELSE (
 	IF %logLevel% GEQ %trace% (

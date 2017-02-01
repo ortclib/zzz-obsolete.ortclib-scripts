@@ -406,7 +406,11 @@ GOTO:EOF
 ::Generate events providers
 :prepareEventing
 
-IF %noEventing% EQU 0 CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
+IF %noEventing% EQU 0 (
+	CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
+	CALL bin\prepareEventing.bat -platform x86 -logLevel %logLevel%
+	bin\prepareEventing.bat -platform win32 -logLevel %logLevel%
+)
 
 GOTO:EOF
 
