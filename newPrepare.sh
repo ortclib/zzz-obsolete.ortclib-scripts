@@ -1,9 +1,11 @@
 #!/bin/bash
 
+set -e
+
 target=all
 platform=iOS
 ortcAvailable=0
-logLevel=4
+logLevel=2
 #log levels
 globalLogLevel=2
 error=0
@@ -11,6 +13,12 @@ info=1
 warning=2
 debug=3
 trace=4
+
+NINJA_PATH=./bin/ninja/
+NINJA_PATH_TO_USE=""
+#NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
+NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-mac.zip"
+NINJA_ZIP_FILE="ninja-mac.zip"
 
 print()
 {
@@ -174,8 +182,37 @@ identifyPlatform()
   print $warning $messageText
 }
 
+installNinja()
+{
+	print $debug "Ninja check"
+
+	if  hash ninja 2>/dev/null; then
+		print $debug "Ninja is present in the PATH"
+		EXISTING_NINJA_PATH="$(which ninja)"
+	else
+		if [ -f "$NINJA_PATH/ninja" ]; then
+			print $debug "Ninja already installed"
+			NINJA_PATH_TO_USE="..\/..\/..\/bin\/ninja"
+			print $debug "ninja path: $NINJA_PATH_TO_USE"
+		else
+			print $warning "Downloading ninja from to $PWD"
+			mkdir -p $NINJA_PATH                        		&& \
+			pushd $NINJA_PATH                          		&& \
+			curl -L0k $NINJA_URL >  $NINJA_ZIP_FILE			&& \
+			unzip $NINJA_ZIP_FILE                       && \
+			rm $NINJA_ZIP_FILE
+			popd
+			NINJA_PATH_TO_USE="..\/..\/..\/bin\/ninja"
+			print $debug "ninja path: $NINJA_PATH_TO_USE"
+		fi
+	fi
+}
+
 prepareWebRTC()
 {
+  NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/newPrepareWebRtc.sh -p all
+
+  #sh ./bin/newPrepareWebRtc.sh -p all
   #pushd ./webrtc/xvplatform/webrtc > /dev/null
   #prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
   #CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
@@ -240,6 +277,7 @@ precheck
 checkOrtcAvailability
 identifyTarget
 identifyPlatform
+installNinja
 prepareWebRTC
 
 if [ $prepare_ORTC_Environemnt -eq 1 ];
