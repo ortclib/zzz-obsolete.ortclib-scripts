@@ -131,7 +131,7 @@ IF NOT EXIST %destinationPath% (
 
 SET webRtcLibs=
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO SET webRtcLibs=!webRtcLibs! %%~A
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use.lib=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
 PUSHD %libsSourcePath%
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
@@ -139,11 +139,15 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO MOVE %%~A %destinationPath% >NUL
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
+
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 POPD
 GOTO:EOF
 
+:appendLibPath
+if "%~1"=="%~1:protobuf_lite.dll=%" SET webRtcLibs=!webRtcLibs! %~1
+GOTO:EOF
 :moveLibs
 
 IF NOT EXIST %libsSourcePathDestianation%NUL (
