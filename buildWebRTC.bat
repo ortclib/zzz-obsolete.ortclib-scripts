@@ -131,7 +131,7 @@ IF NOT EXIST %destinationPath% (
 
 SET webRtcLibs=
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use.lib=!" SET webRtcLibs=!webRtcLibs! %%~A )
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
 PUSHD %libsSourcePath%
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
