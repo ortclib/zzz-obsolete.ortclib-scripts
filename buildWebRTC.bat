@@ -17,7 +17,9 @@ SET failure=0
 SET x86BuildCompilerOption=amd64_x86
 SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
-SET win32BuildCompilerOption=amd64_x86
+SET win32BuildCompilerOption=amd64
+SET x86Win32BuildCompilerOption=amd64_x86
+SET x64Win32BuildCompilerOption=amd64
 SET currentBuildCompilerOption=amd64
 
 SET startTime=0
@@ -83,16 +85,23 @@ IF /I %CPU% == x86 (
 	SET x64BuildCompilerOption=x86_amd64
 	SET armBuildCompilerOption=x86_arm
 	SET win32BuildCompilerOption=x86
+	
+	SET x86Win32BuildCompilerOption=x86
+    SET x64Win32BuildCompilerOption=x86_amd64
 )
-
+	
 IF /I %~1==x86 (
 	SET currentBuildCompilerOption=%x86BuildCompilerOption%
 ) ELSE (
 	IF /I %~1==ARM (
 		SET currentBuildCompilerOption=%armBuildCompilerOption%
 	) ELSE (
-		IF /I %~1==win32 (
-			SET currentBuildCompilerOption=%x86BuildCompilerOption%
+		IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+			IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
+				SET currentBuildCompilerOption=%x64Win32BuildCompilerOption%
+			) ELSE (
+				SET currentBuildCompilerOption=%x86Win32BuildCompilerOption%
+			)
 		) ELSE (
 			SET currentBuildCompilerOption=%x64BuildCompilerOption%
 		)
@@ -110,12 +119,17 @@ IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
-	IF /I "%currentPlatform%"=="win32" (
-		MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False
+::IF /I "%currentPlatform%"=="win32" (
+	IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+		IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
+			MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=x64 /t:Clean;Build /nodeReuse:False
+		) ELSE (
+			MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=win32 /t:Clean;Build /nodeReuse:False
+		)
 	) ELSE (
 		MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
 	)
-	if ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
+	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
 )
@@ -148,6 +162,7 @@ GOTO:EOF
 :appendLibPath
 if "%~1"=="%~1:protobuf_lite.dll=%" SET webRtcLibs=!webRtcLibs! %~1
 GOTO:EOF
+
 :moveLibs
 
 IF NOT EXIST %libsSourcePathDestianation%NUL (
@@ -182,10 +197,11 @@ IF /I "%currentPlatform%"=="ARM" (
 	SET libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
 )
 
-IF /I "%currentPlatform%"=="win32" (
+IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
+
 CALL:print %debug% "Source path is %libsSourcePath%"
 
 ::SET destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
