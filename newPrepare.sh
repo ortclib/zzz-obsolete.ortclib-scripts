@@ -20,6 +20,8 @@ NINJA_PATH_TO_USE=""
 NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-mac.zip"
 NINJA_ZIP_FILE="ninja-mac.zip"
 
+CURL_PATH=./ortc/xplatform/curl/
+
 print()
 {
   logType=$1
@@ -229,6 +231,10 @@ prepareORTC()
 prepareCurl()
 {
   echo prepareCurl
+
+  pushd $CURL_PATH > /dev/null
+	sh prepare.sh $TARGET
+	popd > /dev/null
 }
 
 prepareEventing()
