@@ -4,3 +4,4 @@ xcuserdata
 ninja.exe
 nuget.exe
 zsLib.Eventing.Tool.Compiler.exe
+/eventing
