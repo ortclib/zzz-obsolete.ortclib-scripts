@@ -36,6 +36,12 @@ GTEST_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/testing/gtest/
 GFLAGS_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/gflags/src/
 GMOCK_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/testing/gmock/
 
+BOGUS_EXPAT_PATH=../../../ortc/apple/templates/libs/bogus_gyps/bogus_expat.gyp
+BOGUS_CLASS_DUMP_PATH=../../../ortc/apple/templates/libs/bogus_gyps/bogus_class-dump.gyp
+
+NINJA_WRAPPER_IOS_PATH=../../../ortc/apple/templates/libs/webrtc/webrtcWrapper_ios.ninja
+NINJA_WRAPPER_MAC_PATH=../../../ortc/apple/templates/libs/webrtc/webrtcWrapper_mac.ninja
+
 SRC_FILES_PATH=./chromium/src
 SRC_FILES_DESTINATION=../webrtc/chromium/src/
 
@@ -362,10 +368,10 @@ setBogusGypFiles()
 	echo Placing bogus gyp files
 
 	make_directory "third_party/expat"
-	cp ../../../bin/bogus_expat.gyp third_party/expat/expat.gyp
+	cp $BOGUS_EXPAT_PATH third_party/expat/expat.gyp
 
 	make_directory "third_party/class-dump"
-  cp ../../../bin/bogus_class-dump.gyp third_party/class-dump/class-dump.gyp
+  cp $BOGUS_CLASS_DUMP_PATH third_party/class-dump/class-dump.gyp
 }
 
 make_ios_project()
@@ -387,12 +393,15 @@ make_ios_project()
 			sed -i -e "s/PATH=/PATH=$NINJA_PATH_TO_REPLACE_WITH:/g" all.ninja.xcodeproj/project.pbxproj
 		fi
 		print $debug "Renaming ios project"
+    if [ -d "all_ios.xcodeproj" ]; then
+      rm -rf all_ios.xcodeproj
+    fi
 		mv all.ninja.xcodeproj all_ios.xcodeproj
 
-		cp ../../../bin/webrtcWrapper_ios.ninja ./out_ios/Debug/webrtcWrapper_ios.ninja
-		cp ../../../bin/webrtcWrapper_ios.ninja ./out_ios/Debug-iphoneos/webrtcWrapper_ios.ninja
-		cp ../../../bin/webrtcWrapper_ios.ninja ./out_ios/Release/webrtcWrapper_ios.ninja
-		cp ../../../bin/webrtcWrapper_ios.ninja ./out_ios/Release-iphoneos/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Debug/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Debug-iphoneos/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Release/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Release-iphoneos/webrtcWrapper_ios.ninja
 	fi
 }
 
@@ -417,10 +426,13 @@ make_mac_project()
 			sed -i -e "s/PATH=/PATH=$NINJA_PATH_TO_REPLACE_WITH:/g" all.ninja.xcodeproj/project.pbxproj
 		fi
 		print $debug "Renaming mac project"
+    if [ -d "all_osx.xcodeproj" ]; then
+      rm -rf all_osx.xcodeproj
+    fi
 		mv all.ninja.xcodeproj all_osx.xcodeproj
 
-		cp ../../../bin/webrtcWrapper.ninja ./out_mac/Debug/webrtcWrapper.ninja
-		cp ../../../bin/webrtcWrapper.ninja ./out_mac/Release/webrtcWrapper.ninja
+		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Debug/webrtcWrapper.ninja
+		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Release/webrtcWrapper.ninja
 	fi
 }
 
