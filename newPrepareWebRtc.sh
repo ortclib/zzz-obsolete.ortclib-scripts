@@ -22,7 +22,7 @@ JSONCPP_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/jsoncpp/sourc
 LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libjpeg_turbo/
 
 LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libsrtp/
-LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libvpx/
+LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libvpx/source/libvpx/
 LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libyuv/
 OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/openmax_dl/
 OPUS_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/opus/src/
