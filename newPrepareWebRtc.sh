@@ -431,8 +431,8 @@ make_mac_project()
     fi
 		mv all.ninja.xcodeproj all_osx.xcodeproj
 
-		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Debug/webrtcWrapper.ninja
-		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Release/webrtcWrapper.ninja
+		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Debug/webrtcWrapper_mac.ninja
+		cp $NINJA_WRAPPER_MAC_PATH ./out_mac/Release/webrtcWrapper_mac.ninja
 	fi
 }
 

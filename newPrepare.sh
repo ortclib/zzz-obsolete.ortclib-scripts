@@ -240,6 +240,11 @@ prepareCurl()
 prepareEventing()
 {
   echo prepareEventing
+  echo $PWD
+  echo
+  echo
+  
+  ./bin/prepareEventing.sh
 }
 
 print $info "Running prepare script ..."
