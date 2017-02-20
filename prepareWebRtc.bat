@@ -16,6 +16,7 @@ SET platform_ARM=0
 SET platform_x86=0
 SET platform_x64=0
 SET platform_win32=0
+SET platform_win32_x64=0
 ::platforms
 SET platform_ARM_prepared=0
 SET platform_x86_prepared=0
@@ -140,6 +141,11 @@ IF /I "%platform%"=="all" (
 	
 	IF /I "%platform%"=="win32" (
 		SET platform_win32=1
+		SET validInput=1
+	)
+	
+	IF /I "%platform%"=="win32_x64" (
+		SET platform_win32_x64=1
 		SET validInput=1
 	)
 	
@@ -294,6 +300,21 @@ IF %platform_win32% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
 	SET platform_win32_prepared=1
 	SET GYP_DEFINES=component=shared_library
+	SET GYP_GENERATORS=ninja,msvs-ninja
+	::Not setting target_arch because of logic used in gyp files
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
+	) ELSE (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
+	)
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	SET platform_win32_prepared=2
+)
+
+IF %platform_win32_x64% EQU 1 (
+	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
+	SET platform_win32_prepared=1
+	SET GYP_DEFINES=component=shared_library target_arch=x64
 	SET GYP_GENERATORS=ninja,msvs-ninja
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %debug% (

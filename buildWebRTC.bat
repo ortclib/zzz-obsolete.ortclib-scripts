@@ -139,7 +139,7 @@ GOTO:EOF
 CALL:setPaths %SOLUTIONPATH%
 
 IF NOT EXIST %destinationPath% (
-	MKDIR %destinationPath%
+	CALL:makeDirectory %destinationPath%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationPath%libs"
 )
 
@@ -151,9 +151,13 @@ PUSHD %libsSourcePath%
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
+CALL:print %debug% "Moving dlls from %libsSourcePath% to %destinationPath%"
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
+
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
+CALL:makeDirectory %destinationPath%pdbs
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath%pdbs >NUL )
 
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 POPD
@@ -166,7 +170,7 @@ GOTO:EOF
 :moveLibs
 
 IF NOT EXIST %libsSourcePathDestianation%NUL (
-	MKDIR %libsSourcePathDestianation%
+	CALL:makeDirectory %libsSourcePathDestianation%
 	CALL:print %trace% "Created folder %libsSourcePathDestianation%"
 ) ELSE (
 	IF EXIST %libsSourcePathDestianation%%CONFIGURATION%\NUL RD /S /Q %libsSourcePathDestianation%%CONFIGURATION%
@@ -197,9 +201,20 @@ IF /I "%currentPlatform%"=="ARM" (
 	SET libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
 )
 
-IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+
+IF /I "%currentPlatform%"=="win32" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+)
+
+IF /I "%currentPlatform%"=="win32_x64" (
+	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
+	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+)
+
+::IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+::	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
+::	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
 CALL:print %debug% "Source path is %libsSourcePath%"
@@ -209,6 +224,15 @@ SET destinationPath=%libsSourcePath%\..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CON
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF
+
+:makeDirectory
+IF NOT EXIST %~1\NUL (
+	MKDIR %~1
+	CALL:print %trace% "Created folder %~1"
+) ELSE (
+	CALL:print %trace% "%~1 folder already exists"
+)
+GOTO:EOF
 
 REM Print logger message. First argument is log level, and second one is the message
 :print

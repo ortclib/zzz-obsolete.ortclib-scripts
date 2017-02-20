@@ -44,6 +44,7 @@ SET platform_ARM=1
 SET platform_x86=1
 SET platform_x64=1
 SET platform_win32=1
+SET platform_win32_x64=0
 
 ::log levels
 SET globalLogLevel=2											
@@ -268,6 +269,11 @@ IF /I "%platform%"=="all" (
 	
 	IF /I "%platform%"=="win32" (
 		SET platform_win32=1
+		SET validInput=1
+	)
+	
+	IF /I "%platform%"=="win32_x64" (
+		SET platform_win32_x64=1
 		SET validInput=1
 	)
 	
