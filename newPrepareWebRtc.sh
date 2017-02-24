@@ -379,9 +379,13 @@ make_ios_project()
 	print $warning "Generating ios project ..."
 
 	export GYP_CROSSCOMPILE=1
-	export GYP_DEFINES="OS=ios target_arch=arm clang_xcode=1"
-	export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 xcode_ninja_target_pattern=^audio_coding_module$|^audio_conference_mixer$|^audio_decoder_interface$|^audio_device$|^audio_encoder_interface$|^audio_processing$|^bitrate_controller$|^boringssl$|^cng$|^common_audio$|^common_audio_neon$|^common_video$|^field_trial_default$|^g711$|^g722$|^ilbc$|^isac$|^isac_fix$|^isac_neon$|^libjpeg$|^libsrtp$|^libvpx_new$|^libyuv$|^libyuv_neon$|^media_file$|^metrics_default$|^neteq$|^openmax_dl$|^opus$|^paced_sender$|^pcm16b$|^red$|^remote_bitrate_estimator$|^rtc_base_approved$|^rtp_rtcp$|^system_wrappers$|^usrsctplib$|^video_capture_module$|^video_capture_module_internal_impl$|^video_coding_utility$|^video_processing$|^video_render_module$|^video_render_module_internal_impl$|^voice_engine$|^webrtc$|^webrtc_common$|^webrtc_h264$|^webrtc_i420$|^webrtc_opus$|^webrtc_utility$|^webrtc_video_coding$|^webrtc_vp8$|^webrtc_vp9$ xcode_ninja_executable_target_pattern=^$ output_dir=out_ios"
-	export GYP_GENERATORS="ninja,xcode-ninja"
+  if [ "$1" == "armv7" ]; then
+	   export GYP_DEFINES="OS=ios target_arch=arm clang_xcode=1"
+	else
+     export GYP_DEFINES="OS=ios target_arch=arm64 clang_xcode=1"
+  fi
+  export GYP_GENERATOR_FLAGS="xcode_project_version=3.2 output_dir=out_ios_$1 xcode_ninja_target_pattern=^audio_coding_module$|^audio_conference_mixer$|^audio_decoder_interface$|^audio_device$|^audio_encoder_interface$|^audio_processing$|^bitrate_controller$|^boringssl$|^cng$|^common_audio$|^common_audio_neon$|^common_video$|^field_trial_default$|^g711$|^g722$|^ilbc$|^isac$|^isac_fix$|^isac_neon$|^libjpeg$|^libsrtp$|^libvpx_new$|^libyuv$|^libyuv_neon$|^media_file$|^metrics_default$|^neteq$|^openmax_dl$|^opus$|^paced_sender$|^pcm16b$|^red$|^remote_bitrate_estimator$|^rtc_base_approved$|^rtp_rtcp$|^system_wrappers$|^usrsctplib$|^video_capture_module$|^video_capture_module_internal_impl$|^video_coding_utility$|^video_processing$|^video_render_module$|^video_render_module_internal_impl$|^voice_engine$|^webrtc$|^webrtc_common$|^webrtc_h264$|^webrtc_i420$|^webrtc_opus$|^webrtc_utility$|^webrtc_video_coding$|^webrtc_vp8$|^webrtc_vp9$ xcode_ninja_executable_target_pattern=^$"
+  export GYP_GENERATORS="ninja,xcode-ninja"
 
 	result=$(python webrtc/build/gyp_webrtc -DGENERATOR_FLAVOR='ninja' -DOS_RUNTIME='' -Dbuild_with_libjingle=0)
 	print 3 "$result"
@@ -393,15 +397,15 @@ make_ios_project()
 			sed -i -e "s/PATH=/PATH=$NINJA_PATH_TO_REPLACE_WITH:/g" all.ninja.xcodeproj/project.pbxproj
 		fi
 		print $debug "Renaming ios project"
-    if [ -d "all_ios.xcodeproj" ]; then
-      rm -rf all_ios.xcodeproj
+    if [ -d "all_ios_$1.xcodeproj" ]; then
+      rm -rf all_ios_$1.xcodeproj
     fi
-		mv all.ninja.xcodeproj all_ios.xcodeproj
+		mv all.ninja.xcodeproj all_ios_$1.xcodeproj
 
-		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Debug/webrtcWrapper_ios.ninja
-		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Debug-iphoneos/webrtcWrapper_ios.ninja
-		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Release/webrtcWrapper_ios.ninja
-		cp $NINJA_WRAPPER_IOS_PATH ./out_ios/Release-iphoneos/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios_$1/Debug/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios_$1/Debug-iphoneos/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios_$1/Release/webrtcWrapper_ios.ninja
+		cp $NINJA_WRAPPER_IOS_PATH ./out_ios_$1/Release-iphoneos/webrtcWrapper_ios.ninja
 	fi
 }
 
@@ -510,7 +514,8 @@ makeFolderStructure
 makeLinks
 setBogusGypFiles
 updateClang
-make_ios_project
+make_ios_project armv7
+make_ios_project arm64
 make_mac_project
 setNinjaPathForWrappers
 popd
