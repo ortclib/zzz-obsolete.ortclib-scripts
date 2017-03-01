@@ -52,7 +52,7 @@ compileEvent()
   headersPath=$eventPath$eventsIncludePath
   outputPath=.$eventsOutput$providerName
 
-  make_directory $intermediatePath
+  #make_directory $intermediatePath
   #make_directory $outputPath
 
   pushd $eventPath
