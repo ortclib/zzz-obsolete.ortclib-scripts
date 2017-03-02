@@ -14,6 +14,8 @@ SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
 SET ortcWebRTCTemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
 SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
+SET ortcWebRTCWin32TemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.Win32.vs2015.sln
+SET ortcWebRTCWin32DestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
@@ -42,6 +44,7 @@ SET platform_ARM=1
 SET platform_x86=1
 SET platform_x64=1
 SET platform_win32=1
+SET platform_win32_x64=0
 
 ::log levels
 SET globalLogLevel=2											
@@ -269,6 +272,11 @@ IF /I "%platform%"=="all" (
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32_x64" (
+		SET platform_win32_x64=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
 		SET messageText=Preparing development environment for %platform% platform...
 	)
@@ -364,6 +372,7 @@ GOTO:EOF
 
 :: Copy webrtc solution template
 CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
+CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
 ::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
@@ -403,7 +412,11 @@ GOTO:EOF
 ::Generate events providers
 :prepareEventing
 
-IF %noEventing% EQU 0 CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
+IF %noEventing% EQU 0 (
+	CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
+	CALL bin\prepareEventing.bat -platform x86 -logLevel %logLevel%
+	CALL bin\prepareEventing.bat -platform win32 -logLevel %logLevel%
+)
 
 GOTO:EOF
 

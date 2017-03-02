@@ -61,7 +61,7 @@ SET generate_WebRtc_Nuget=0
 ::input arguments
 SET supportedInputArguments=;target;version;key;prerelease;destination;publish;publishDestination;help;logLevel;pack;packDestination;
 SET target=""
-SET version=1.0.0
+SET version=1.0.0.0
 SET key=
 SET prerelease=
 SET destination=
@@ -548,15 +548,15 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed publishing the %nugetName% nuget package"
 GOTO:EOF
 
 :determineNugetVersion
-IF "%version%"=="1.0.0" (
+IF "%version%"=="1.0.0.0" (
 	IF EXIST %nugetPackageVersion% (
 		SET /p version=< %nugetPackageVersion%
 		
 		CALL:print %debug% "Current Nuget Version is !version!"
 		
-		FOR /f "tokens=1-3 delims=." %%a IN ("!version!") DO (
-			SET /a build=%%c+1
-			SET version=%%a.%%b.!build!
+		FOR /f "tokens=1-4 delims=." %%a IN ("!version!") DO (
+			SET /a build=%%d+1
+			SET version=%%a.%%b.%%c.!build!
 		)
 	)
 )
@@ -699,8 +699,8 @@ ECHO.
 ECHO   [93mCreating Ortc nuget package with automated versioning and storing in ortc\windows\NugetOutput\ without publishing it. Log level is debug.[0m
 ECHO    bin\createNuget.bat -target Ortc -logLevel 2
 ECHO.
-ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.1-Beta[0m
-ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.1
+ECHO   [93mCreating WebRtc prerelase nuget package with version number 1.0.0.1-Beta[0m
+ECHO    bin\createNuget.bat -beta -target WebRtc -version 1.0.0.1
 ECHO.
 ECHO   [93mCreating prerelase Ortc nuget package and publish it to locally nuget storage[0m
 ECHO    bin\createNuget.bat -target Ortc -beta -publish -destination [path to local nuget storage]
