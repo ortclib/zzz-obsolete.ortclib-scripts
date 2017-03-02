@@ -1,11 +1,19 @@
+# Name:      prepare.bat
+# Purpose:   Prepare development environment for ORTC and WebRTC
+# Author:    Sergej Jovanovic
+# Email:     sergej@gnedo.com
+# Twitter:   @JovanovicSergej
+# Revision:  March 2017 - initial version
 #!/bin/bash
 
 set -e
 
+#input arguments
 target=all
 platform=iOS
 ortcAvailable=0
 logLevel=2
+
 #log levels
 globalLogLevel=2
 error=0
@@ -16,7 +24,6 @@ trace=4
 
 NINJA_PATH=./bin/ninja/
 NINJA_PATH_TO_USE=""
-#NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
 NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-mac.zip"
 NINJA_ZIP_FILE="ninja-mac.zip"
 
@@ -51,19 +58,21 @@ print()
 help()
 {
   echo
+  printf "\e[0;32m prepare.sh help \e[m\n"
+  echo
   printf "\e[0;32m Available parameters: \e[m\n"
   echo
-  printf "\e[0;33m-diagnostic\e[m		Flag for runing check if system is ready for webrtc development."
+  printf "\e[0;33m-h[0m 	Show script usage"
   echo
-  printf "\e[0;33m-help[0m 		Show script usage"
+  printf "\e[0;33m-l[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)"
   echo
-  printf "\e[0;33m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)"
+  printf "\e[0;33m-n[0m 	Flag not to run eventing preparations for Ortc"
   echo
-  printf "\e[0;33m-noEventing[0m 	Flag not to run eventing preparations for Ortc"
+  printf "\e[0;33m-t[0m	Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set, dev environment will be prepared for both available targets."
   echo
-  printf "\e[0;33m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets."
+  printf "\e[0;33m-p[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)"
   echo
-  printf "\e[0;33m-platform[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)"
+  echo
   echo
   exit 1
 }
@@ -85,9 +94,6 @@ error()
   	echo
   	print $error "FAILURE:Preparing environment has failed!"
   	echo
-  	#SET endTime=%time%
-  	#CALL:showTime
-  	::terminate batch execution
   	exit 1
   fi
 }
@@ -213,25 +219,20 @@ installNinja()
 prepareWebRTC()
 {
   NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/newPrepareWebRtc.sh -p all
-
-  #sh ./bin/newPrepareWebRtc.sh -p all
-  #pushd ./webrtc/xvplatform/webrtc > /dev/null
-  #prepare "libs/webrtc" "../../bin/prepare-webrtc.sh" "WebRTC"
-  #CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
-  echo prepareWebRTC
 }
 
 prepareORTC()
 {
-  echo prepareORTC
-# Copy webrtc solution template
-#CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
+  print $debug "Preparing Ortc..."
+  
+  prepareCurl
+  if [ "$noEventing" != "1" ]; then
+  	prepareEventing
+  fi
 }
 
 prepareCurl()
 {
-  echo prepareCurl
-
   pushd $CURL_PATH > /dev/null
 	sh prepare.sh $TARGET
 	popd > /dev/null
@@ -239,26 +240,10 @@ prepareCurl()
 
 prepareEventing()
 {
-  echo prepareEventing
-  echo $PWD
-  echo
-  echo
-  
   ./bin/prepareEventing.sh
 }
 
-print $info "Running prepare script ..."
-
-if [ -z "$VAR" ];
-then
-	print $warning "Running script with default parameters: "
-	print $warning "Target: all (Ortc and WebRtc)"
-	print $warning "Platform: all (Mac OS and iOS)"
-	print $warning "Log level: $logLevel (warning)"
-	defaultProperties=1
-fi
-
-#platform;target;help;logLevel;diagnostic;noEventing;
+#platform;target;help;logLevel;noEventing;
 while getopts ":p:t:hl:dn" opt; do
   case $opt in
     p)
@@ -274,14 +259,19 @@ while getopts ":p:t:hl:dn" opt; do
     l)
         logLevel=$OPTARG
         ;;
-    d)
-        diagnostic=1
-        ;;
     n)
         noEventing=1
         ;;
     esac
 done
+
+print $info "Running prepare script ..."
+
+print $warning "Running script with following parameters: "
+print $warning "Target: all (Ortc and WebRtc)"
+print $warning "Platform: all (Mac OS and iOS)"
+print $warning "Log level: $logLevel (warning)"
+
 
 #Main flow
 precheck
@@ -294,8 +284,6 @@ prepareWebRTC
 if [ $prepare_ORTC_Environemnt -eq 1 ];
 then
   prepareORTC
-  prepareCurl
-  prepareEventing
 fi
 
 finished
