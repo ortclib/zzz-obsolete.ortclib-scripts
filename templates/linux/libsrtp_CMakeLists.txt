@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0.2)
 
 # required for unit testing using CMake's ctest command
 # include(CTest)
@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.0)
 
 
 project(libsrtp)
+
+add_definitions(-DPACKAGE_STRING="libsrtp2 2.0.0-pre" -DPACKAGE_VERSION="2.0.0-pre")
 
 set(USE_SRTP_BORINGSSL TRUE)
 
@@ -144,155 +146,158 @@ if (USE_SRTP_BORINGSSL)
   target_link_libraries(libsrtp boringssl)
 endif ()
 
-add_custom_target(srtp_tests)
 
+if (FALSE)
+  add_custom_target(srtp_tests)
+  
+  
+  add_executable(
+    rdbx_driver
+  
+    srtp/include/getopt_s.h
+    srtp/test/getopt_s.c
+    srtp/test/rdbx_driver.c
+  )
+  
+  target_link_libraries(rdbx_driver libsrtp)
+  add_dependencies(srtp_tests rdbx_driver)
+  
+  add_executable(
+    srtp_driver
+  
+    srtp/include/getopt_s.h
+    srtp/include/srtp_priv.h
+    srtp/test/getopt_s.c
+    srtp/test/srtp_driver.c
+  )
+  
+  target_link_libraries(srtp_driver libsrtp)
+  add_dependencies(srtp_tests srtp_driver)
+  
+  add_executable(
+    roc_driver
+  
+    srtp/crypto/include/rdbx.h
+    srtp/include/ut_sim.h
+    srtp/test/roc_driver.c
+  )
+  
+  target_link_libraries(roc_driver libsrtp)
+  add_dependencies(srtp_tests roc_driver)
+  
+  add_executable(
+    replay_driver
+  
+    srtp/crypto/include/rdbx.h
+    srtp/include/ut_sim.h
+    srtp/test/replay_driver.c
+  )
+  
+  target_link_libraries(replay_driver libsrtp)
+  add_dependencies(srtp_tests replay_driver)
+  
+  add_executable(
+    rtpw
+  
+    srtp/crypto/include/datatypes.h
+    srtp/include/getopt_s.h
+    srtp/include/rtp.h
+    srtp/include/srtp.h
+    srtp/test/getopt_s.c
+    srtp/test/rtp.c
+    srtp/test/rtpw.c
+  )
+  
+  target_link_libraries(rtpw libsrtp)
+  add_dependencies(srtp_tests rtpw)
+  
+  add_executable( # if statements are missing from this test
+    srtp_test_cipher_driver
+  
+    srtp/crypto/test/cipher_driver.c
+    srtp/include/getopt_s.h
+    srtp/test/getopt_s.c
+  )
+  
+  target_link_libraries(srtp_test_cipher_driver libsrtp)
+  add_dependencies(srtp_tests srtp_test_cipher_driver)
+  
+  add_executable(
+    srtp_test_datatypes_driver
+  
+    srtp/crypto/test/datatypes_driver.c
+  )
+  
+  target_link_libraries(srtp_test_datatypes_driver libsrtp)
+  add_dependencies(srtp_tests srtp_test_datatypes_driver)
+  
+  add_executable(
+    srtp_test_stat_driver
+  
+    srtp/crypto/test/stat_driver.c
+  )
+  
+  target_link_libraries(srtp_test_stat_driver libsrtp)
+  add_dependencies(srtp_tests srtp_test_stat_driver)
+  
+  add_executable(
+    srtp_test_sha1_driver
+  
+    srtp/crypto/test/sha1_driver.c
+  )
+  
+  target_link_libraries(srtp_test_sha1_driver libsrtp)
+  add_dependencies(srtp_tests srtp_test_sha1_driver)
+  
+  add_executable(
+    srtp_test_kernel_driver
+  
+    srtp/crypto/test/kernel_driver.c
+    srtp/include/getopt_s.h
+    srtp/test/getopt_s.c
+  )
+  
+  target_link_libraries(srtp_test_kernel_driver libsrtp)
+  add_dependencies(srtp_tests srtp_test_kernel_driver)
+  
+  add_executable(
+    srtp_test_aes_calc
+  
+    srtp/crypto/test/aes_calc.c
+  )
+  
+  target_link_libraries(srtp_test_aes_calc libsrtp)
+  add_dependencies(srtp_tests srtp_test_aes_calc)
+  
+  add_executable(
+    srtp_test_rand_gen
+  
+    srtp/crypto/test/rand_gen.c
+    srtp/include/getopt_s.h
+    srtp/test/getopt_s.c
+  )
+  
+  target_link_libraries(srtp_test_rand_gen libsrtp)
+  add_dependencies(srtp_tests srtp_test_rand_gen)
+  
+  add_executable(
+    srtp_test_rand_gen_soak
+  
+    srtp/crypto/test/rand_gen_soak.c
+    srtp/include/getopt_s.h
+    srtp/test/getopt_s.c
+  )
+  
+  target_link_libraries(srtp_test_rand_gen_soak libsrtp)
+  add_dependencies(srtp_tests srtp_test_rand_gen_soak)
+  
+  add_executable(
+    srtp_test_env
+  
+    srtp/crypto/test/env.c
+  )
+  
+  target_link_libraries(srtp_test_env libsrtp)
+  add_dependencies(srtp_tests srtp_test_env)
 
-add_executable(
-  rdbx_driver
-
-  srtp/include/getopt_s.h
-  srtp/test/getopt_s.c
-  srtp/test/rdbx_driver.c
-)
-
-target_link_libraries(rdbx_driver libsrtp)
-add_dependencies(srtp_tests rdbx_driver)
-
-add_executable(
-  srtp_driver
-
-  srtp/include/getopt_s.h
-  srtp/include/srtp_priv.h
-  srtp/test/getopt_s.c
-  srtp/test/srtp_driver.c
-)
-
-target_link_libraries(srtp_driver libsrtp)
-add_dependencies(srtp_tests srtp_driver)
-
-add_executable(
-  roc_driver
-
-  srtp/crypto/include/rdbx.h
-  srtp/include/ut_sim.h
-  srtp/test/roc_driver.c
-)
-
-target_link_libraries(roc_driver libsrtp)
-add_dependencies(srtp_tests roc_driver)
-
-add_executable(
-  replay_driver
-
-  srtp/crypto/include/rdbx.h
-  srtp/include/ut_sim.h
-  srtp/test/replay_driver.c
-)
-
-target_link_libraries(replay_driver libsrtp)
-add_dependencies(srtp_tests replay_driver)
-
-add_executable(
-  rtpw
-
-  srtp/crypto/include/datatypes.h
-  srtp/include/getopt_s.h
-  srtp/include/rtp.h
-  srtp/include/srtp.h
-  srtp/test/getopt_s.c
-  srtp/test/rtp.c
-  srtp/test/rtpw.c
-)
-
-target_link_libraries(rtpw libsrtp)
-add_dependencies(srtp_tests rtpw)
-
-add_executable( # if statements are missing from this test
-  srtp_test_cipher_driver
-
-  srtp/crypto/test/cipher_driver.c
-  srtp/include/getopt_s.h
-  srtp/test/getopt_s.c
-)
-
-target_link_libraries(srtp_test_cipher_driver libsrtp)
-add_dependencies(srtp_tests srtp_test_cipher_driver)
-
-add_executable(
-  srtp_test_datatypes_driver
-
-  srtp/crypto/test/datatypes_driver.c
-)
-
-target_link_libraries(srtp_test_datatypes_driver libsrtp)
-add_dependencies(srtp_tests srtp_test_datatypes_driver)
-
-add_executable(
-  srtp_test_stat_driver
-
-  srtp/crypto/test/stat_driver.c
-)
-
-target_link_libraries(srtp_test_stat_driver libsrtp)
-add_dependencies(srtp_tests srtp_test_stat_driver)
-
-add_executable(
-  srtp_test_sha1_driver
-
-  srtp/crypto/test/sha1_driver.c
-)
-
-target_link_libraries(srtp_test_sha1_driver libsrtp)
-add_dependencies(srtp_tests srtp_test_sha1_driver)
-
-add_executable(
-  srtp_test_kernel_driver
-
-  srtp/crypto/test/kernel_driver.c
-  srtp/include/getopt_s.h
-  srtp/test/getopt_s.c
-)
-
-target_link_libraries(srtp_test_kernel_driver libsrtp)
-add_dependencies(srtp_tests srtp_test_kernel_driver)
-
-add_executable(
-  srtp_test_aes_calc
-
-  srtp/crypto/test/aes_calc.c
-)
-
-target_link_libraries(srtp_test_aes_calc libsrtp)
-add_dependencies(srtp_tests srtp_test_aes_calc)
-
-add_executable(
-  srtp_test_rand_gen
-
-  srtp/crypto/test/rand_gen.c
-  srtp/include/getopt_s.h
-  srtp/test/getopt_s.c
-)
-
-target_link_libraries(srtp_test_rand_gen libsrtp)
-add_dependencies(srtp_tests srtp_test_rand_gen)
-
-add_executable(
-  srtp_test_rand_gen_soak
-
-  srtp/crypto/test/rand_gen_soak.c
-  srtp/include/getopt_s.h
-  srtp/test/getopt_s.c
-)
-
-target_link_libraries(srtp_test_rand_gen_soak libsrtp)
-add_dependencies(srtp_tests srtp_test_rand_gen_soak)
-
-add_executable(
-  srtp_test_env
-
-  srtp/crypto/test/env.c
-)
-
-target_link_libraries(srtp_test_env libsrtp)
-add_dependencies(srtp_tests srtp_test_env)
-
+endif()
