@@ -372,7 +372,7 @@ make_directory()
 
 updateClang()
 {
-	print $warning "Runing clang update"
+	print $warning "Running clang update ..."
 
   pushd "./chromium/src"  > /dev/null
 	result=$(python tools/clang/scripts/update.py 2>&1)

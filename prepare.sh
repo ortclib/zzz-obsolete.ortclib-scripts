@@ -215,7 +215,7 @@ installNinja()
 
 prepareWebRTC()
 {
-  NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/newPrepareWebRtc.sh -p $platform -l $logLevel
+  NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/prepareWebRtc.sh -p $platform -l $logLevel
 }
 
 prepareORTC()
@@ -231,7 +231,7 @@ prepareORTC()
 prepareCurl()
 {
   pushd $CURL_PATH > /dev/null
-  sh prepare.sh $TARGET
+  sh prepareCurl.sh $TARGET
   popd > /dev/null
 }
 

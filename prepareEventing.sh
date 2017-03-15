@@ -73,19 +73,24 @@ make_directory()
 
 buildEventCompiler()
 {
-  print $warning "Build event compiler"
+  print $warning "Building event compiler ..."
 
   if [ -f $compilerPath ];
   then
     return
   fi
 
-  pushd ortc/xplatform/zsLib-eventing/projects/xcode
-  xcodebuild -workspace zsLib-Eventing.xcworkspace -scheme "zsLib.Eventing.Compiler.Tool" -configuration "Release" -derivedDataPath "./zsLib.Eventing.Compiler.Tool-osx.Tool/output/"
-
+  pushd ortc/xplatform/zsLib-eventing/projects/xcode > /dev/null
+  if [ $logLevel -gt $debug ];
+  then
+  	xcodebuild -workspace zsLib-Eventing.xcworkspace -scheme "zsLib.Eventing.Compiler.Tool" -configuration "Release" -derivedDataPath "./zsLib.Eventing.Compiler.Tool-osx.Tool/output/"
+	else
+		xcodebuild -workspace zsLib-Eventing.xcworkspace -scheme "zsLib.Eventing.Compiler.Tool" -configuration "Release" -derivedDataPath "./zsLib.Eventing.Compiler.Tool-osx.Tool/output/" > /dev/null
+	fi
   if (( $? )); then
-    echo "zsLib.Eventing.Compiler.Tool compilation has failed" >&2
-    exit 1
+    error 1 "zsLib.Eventing.Compiler.Tool compilation has failed"
+  else
+    print $warning "Event compiler is built successfully"
   fi
 
   make_directory ../../../../../bin/eventing/
@@ -96,7 +101,7 @@ buildEventCompiler()
     cp ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/libcryptopp-osx.a ../../../../../bin/eventing/libcryptopp-osx.a
   fi
 
-  popd
+  popd > /dev/null
 }
 
 compileEvent()
