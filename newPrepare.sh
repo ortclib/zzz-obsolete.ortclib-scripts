@@ -10,12 +10,11 @@ set -e
 
 #input arguments
 target=all
-platform=iOS
+platform=all
 ortcAvailable=0
 logLevel=2
 
 #log levels
-globalLogLevel=2
 error=0
 info=1
 warning=2
@@ -160,9 +159,7 @@ identifyTarget()
     error 1 "Invalid target"
   fi
 
-  printf $messageText
-
-  print $warning $messageText
+  print $warning "$messageText"
 }
 
 identifyPlatform()
@@ -174,7 +171,7 @@ identifyPlatform()
 	  platform_iOS=1
 	  platform_macOS=1
 	  validInput=1
-	  messageText=Preparing development environment for iOS and macOS platforms ...
+	  messageText="Preparing development environment for iOS and macOS platforms ..."
   elif [ "$platform" == "iOS" ]; then
 	  platform_iOS=1
 		validInput=1
@@ -218,7 +215,7 @@ installNinja()
 
 prepareWebRTC()
 {
-  NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/newPrepareWebRtc.sh -p all
+  NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE ./bin/newPrepareWebRtc.sh -p $platform -l $logLevel
 }
 
 prepareORTC()
@@ -234,13 +231,13 @@ prepareORTC()
 prepareCurl()
 {
   pushd $CURL_PATH > /dev/null
-	sh prepare.sh $TARGET
-	popd > /dev/null
+  sh prepare.sh $TARGET
+  popd > /dev/null
 }
 
 prepareEventing()
 {
-  ./bin/prepareEventing.sh
+  ./bin/prepareEventing.sh -l $logLevel
 }
 
 #platform;target;help;logLevel;noEventing;
@@ -275,10 +272,14 @@ print $warning "Log level: $logLevel (warning)"
 
 #Main flow
 precheck
+
 checkOrtcAvailability
+
 identifyTarget
-identifyPlatform
+
+#identifyPlatform
 installNinja
+
 prepareWebRTC
 
 if [ $prepare_ORTC_Environemnt -eq 1 ];

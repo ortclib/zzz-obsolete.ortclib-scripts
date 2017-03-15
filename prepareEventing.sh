@@ -2,22 +2,79 @@
 
 set -e
 
+#log levels
+error=0
+info=1
+warning=2
+debug=3
+trace=4
+
 eventsIncludePath=../Internal
 eventsIntermediatePath=IntermediateTemp
 eventsOutput=$PWD/ortc/Apple/workspace/eventing/
 compilerPath=$PWD/bin/eventing/zsLib.Eventing.Compiler.Tool
 
 
+print()
+{
+  logType=$1
+  logMessage=$2
+
+  if [ $logLevel -eq  $logType ] || [ $logLevel -gt  $logType ]
+  then
+  	if [ $logType -eq 0 ]
+    then
+      printf "\e[0;31m $logMessage \e[m\n"
+    fi
+    if [ $logType -eq 1 ]
+    then
+      printf "\e[0;32m $logMessage \e[m\n"
+    fi
+    if [ $logType -eq 2 ]
+    then
+      printf "\e[0;33m $logMessage \e[m\n"
+    fi
+    if [ $logType -gt 2 ]
+    then
+      echo $logMessage
+    fi
+  fi
+}
+
+error()
+{
+  criticalError=$1
+  errorMessage=$2
+
+  if [ $criticalError -eq 0 ]
+  then
+  	echo
+  	print $warning "WARNING: $errorMessage"
+  	echo
+  else
+  	echo
+    print $error "CRITICAL ERROR: $errorMessage"
+  	echo
+  	echo
+  	print $error "FAILURE:Preparing WebRtc environment has failed!"
+  	echo
+    popd > /dev/null
+  	exit 1
+  fi
+}
+
 make_directory()
 {
 	if [ ! -d "$1" ]; then
-		#print $trace "Creating directory \"$1\"..."
+		print $trace "Creating directory \"$1\"..."
 		mkdir -p $1
 	fi
 }
 
 buildEventCompiler()
 {
+  print $warning "Build event compiler"
+
   if [ -f $compilerPath ];
   then
     return
@@ -44,6 +101,8 @@ buildEventCompiler()
 
 compileEvent()
 {
+  print $warning "Compiling event provider $1"
+
   eventJsonPath=$1
   eventPath=$(dirname "${eventJsonPath}")
   filename=$(basename "${eventJsonPath}")
@@ -55,25 +114,36 @@ compileEvent()
   #make_directory $intermediatePath
   #make_directory $outputPath
 
-  pushd $eventPath
-  $compilerPath -c ./$filename -o $eventsIncludePath/$providerName
-  popd
+  pushd $eventPath > /dev/null
+  $compilerPath -c ./$filename -o $eventsIncludePath/$providerName  > /dev/null
+  popd > /dev/null
   if (( $? )); then
-    echo "$providerName event compilation has failed"
-    exit 1
+    error 1 "$providerName event compilation has failed"
   fi
 }
 
 finished()
 {
   echo
-  echo "Success: Eventing preparations is finished successfully."
+  print $info "Success: Eventing preparations is finished successfully."
   echo
 }
 
+#;logLevel;
+while getopts ":p:l:" opt; do
+  case $opt in
+    l)
+        logLevel=$OPTARG
+        ;;
+    esac
+done
+
+echo
+print $info "Running prepare eventing script ..."
+
+#Main flow
 buildEventCompiler
 
-#for f in /ortc/*.events.json ortc/**/*.events.json ; do
 for f in $(find ./ortc -name '*.events.json'); do
   compileEvent "$f"
 done

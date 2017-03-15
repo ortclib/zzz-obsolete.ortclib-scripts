@@ -5,9 +5,10 @@ set -e
 target=all
 platform=all
 logLevel=4
+platform_iOS=0
+platform_macOS=0
 
 #log levels
-globalLogLevel=2
 error=0
 info=1
 warning=2
@@ -100,10 +101,7 @@ error()
   	echo
   	print $error "FAILURE:Preparing WebRtc environment has failed!"
   	echo
-  	#SET endTime=%time%
-  	#CALL:showTime
     popd > /dev/null
-  	::terminate batch execution
   	exit 1
   fi
 }
@@ -123,13 +121,36 @@ precheck()
  fi
 }
 
+identifyPlatform()
+{
+  validInput=0
+
+  if [ "$platform" == "all" ];
+  then
+	  platform_iOS=1
+	  platform_macOS=1
+	  validInput=1
+	  messageText="Preparing development environment for iOS and macOS platforms ..."
+  elif [ "$platform" == "iOS" ]; then
+	  platform_iOS=1
+		validInput=1
+    messageText="Preparing development environment for $platform platform..."
+  elif [ "$platform" == "macOS" ]; then
+    platform_macOS=1
+    validInput=1
+    messageText="Preparing development environment for $platform platform..."
+  else
+    error 1 "Invalid platform"
+  fi
+
+  print $warning "$messageText"
+}
+
 copyFolder()
 {
 	SOURCE=$1
 	TARGET=$2
-  echo $PWD
-  echo $SOURCE
-  echo $TARGET
+	
 	if [[ -n $SOURCE && -n $TARGET ]]; then
 		if [ -d $SOURCE ]; then
 			print $debug "Copying $SOURCE to $TARGET"
@@ -144,6 +165,7 @@ copyFolder()
 
 makeFolderStructure()
 {
+
 	print $debug Creating folder structure
 
 	#copyFolder ../build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
@@ -167,7 +189,7 @@ makeFolderStructure()
 	copyFolder ../googlemock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
 	copyFolder ../chromium-pruned/ $SRC_FILES_DESTINATION
 
-	echo Finished creating folder structure
+	print $warning "Finished creating folder structure"
 }
 
 removeFolder()
@@ -287,7 +309,7 @@ setNinja()
 
 preparelink()
 {
-  print $warning "Preparing webrtc paths symbolic links"
+  print $debug "Preparing webrtc paths symbolic links for $3"
 	if [ ! -d "$1" ]; then
 		error 1 "Path to link does not exist \"$1\" !"
 	fi
@@ -312,7 +334,7 @@ preparelink()
 
 makeLinks()
 {
-	echo Creating links
+	print $warning "Creating soft links"
 
 	preparelink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
 	#preparelink "chromium" "src" $CHROMIUM_FOLDER_DESTINATION
@@ -352,10 +374,10 @@ updateClang()
 {
 	print $warning "Runing clang update"
 
-  pushd "./chromium/src"
+  pushd "./chromium/src"  > /dev/null
 	result=$(python tools/clang/scripts/update.py 2>&1)
   make_directory "third_party/llvm"
-  popd
+  popd  > /dev/null
 	print $debug "$result"
 
 	#preparelink "third_party" "llvm" "../chromium/src/third_party/llvm"
@@ -365,7 +387,7 @@ updateClang()
 
 setBogusGypFiles()
 {
-	echo Placing bogus gyp files
+	print $warning "Placing bogus gyp files"
 
 	make_directory "third_party/expat"
 	cp $BOGUS_EXPAT_PATH third_party/expat/expat.gyp
@@ -376,7 +398,7 @@ setBogusGypFiles()
 
 make_ios_project()
 {
-	print $warning "Generating ios project ..."
+	print $warning "Generating ios project for $1 platform ..."
 
 	export GYP_CROSSCOMPILE=1
   if [ "$1" == "armv7" ]; then
@@ -478,20 +500,19 @@ finished()
 {
   echo
   print $info "Success: WebRtc development environment is set."
-  echo
+  	
 }
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-print $info "Running prepare script ..."
 
-if [ -z "$VAR" ];
-then
-	print $warning "Running script with default parameters: "
-	print $warning "Target: all (Ortc and WebRtc)"
-	print $warning "Platform: all (Mac OS and iOS)"
-	print $warning "Log level: $logLevel (warning)"
-	defaultProperties=1
-fi
+#if [ -z "$VAR" ];
+#then
+#	print $warning "Running script with default parameters: "
+#	print $warning "Target: all (Ortc and WebRtc)"
+#	print $warning "Platform: all (Mac OS and iOS)"
+#	print $warning "Log level: $logLevel (warning)"
+#	defaultProperties=1
+#fi
 
 #;platform;logLevel;
 while getopts ":p:l:" opt; do
@@ -505,18 +526,32 @@ while getopts ":p:l:" opt; do
     esac
 done
 
+echo
+print $info "Running WebRtc prepare script ..."
+
 #Main flow
-pushd ./webrtc/xplatform/webrtc
+pushd ./webrtc/xplatform/webrtc > /dev/null
+
 precheck
 makeFolderStructure
+identifyPlatform
 #cleanPreviousResults
 #setNinja
 makeLinks
 setBogusGypFiles
 updateClang
-make_ios_project armv7
-make_ios_project arm64
-make_mac_project
+
+if [ $platform_iOS -eq  1 ]; 
+then
+  	make_ios_project armv7
+  	make_ios_project arm64
+fi
+
+if [ $platform_macOS -eq  1 ]; 
+then
+	make_mac_project
+fi
+	
 setNinjaPathForWrappers
-popd
+popd > /dev/null
 finished
