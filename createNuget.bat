@@ -341,7 +341,7 @@ IF /I "%~1"=="ortc" (
 	SET libSourceBasePath=webrtc\windows\solutions\Build\Output
 )
 
-SET nugetTargetPath=%nugetBasePath%\%projectName%.targets
+SET nugetTargetPath=%nugetBasePath%\%nugetName%.targets
 SET nugetSpecPath=%nugetBasePath%\%projectName%.nuspec
 SET nugetPackageVersion=%nugetBasePath%\%projectName%.version
 SET nugetPath=%nugetBasePath%\package
@@ -369,16 +369,22 @@ SET sourcex86Path=%libSourceBasePath%\x86\Release\%projectName%
 SET sourcex86DllPath=%sourcex86Path%\%projectNameForNuget%.dll
 SET sourcex86WinmdPath=%sourcex86Path%\%projectNameForNuget%.winmd
 SET sourcex86PdbPath=%sourcex86Path%\%projectNameForNuget%.pdb
+SET sourcex86PriPath=%sourcex86Path%\%projectNameForNuget%.pri
+
+SET sourcex86XmlPath=%sourcex86Path%\%projectNameForNuget%.xml
 
 SET sourcex64Path=%libSourceBasePath%\x64\Release\%projectName%
 SET sourcex64DllPath=%sourcex64Path%\%projectNameForNuget%.dll
 SET sourcex64WinmdPath=%sourcex64Path%\%projectNameForNuget%.winmd
 SET sourcex64PdbPath=%sourcex64Path%\%projectNameForNuget%.pdb
+SET sourcex64PriPath=%sourcex64Path%\%projectNameForNuget%.pri
 
 SET sourcexARMPath=%libSourceBasePath%\ARM\Release\%projectName%
 SET sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
 SET sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
 SET sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
+SET sourcexARMPriPath=%sourcexARMPath%\%projectNameForNuget%.pri
+
 SET nugetSpec=%nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
 
 CALL:print %debug% "nugetTargetPath: !nugetTargetPath!"
@@ -405,16 +411,19 @@ CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
 
 CALL:print %debug% "sourcex86Path: !sourcex86Path!"
 CALL:print %debug% "sourcex86DllPath: !sourcex86DllPath!"
+CALL:print %debug% "sourcex86PriPath: !sourcex86PriPath!"
 CALL:print %debug% "sourcex86WinmdPath: !sourcex86WinmdPath!"
 CALL:print %debug% "sourcex86PdbPath: !sourcex86PdbPath!"
 
 CALL:print %debug% "sourcex64Path: !sourcex64Path!"
 CALL:print %debug% "sourcex64DllPath: !sourcex64DllPath!"
+CALL:print %debug% "sourcex64PriPath: !sourcex64PriPath!"
 CALL:print %debug% "sourcex64WinmdPath: !sourcex64WinmdPath!"
 CALL:print %debug% "sourcex64PdbPath: !sourcex64PdbPath!"
 
 CALL:print %debug% "sourcexARMPath: !sourcexARMPath!"
 CALL:print %debug% "sourcexARMDllPath: !sourcexARMDllPath!"
+CALL:print %debug% "sourcexARMPriPath: !sourcexARMPriPath!"
 CALL:print %debug% "sourcexARMWinmdPath: !sourcexARMWinmdPath!"
 CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
 
@@ -424,13 +433,17 @@ IF EXIST %nugetPath%\%nugetName%\NUL RMDIR /s /q %nugetPath%\%nugetName%\
 
 CALL:createFolder %nugetPath%\%nugetName%
 
+CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
+CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
+
 CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
+CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
 
 CALL::copyFiles %sourcex64DllPath% %nugetRuntimesx64Path%
+CALL::copyFiles %sourcex64PriPath% %nugetRuntimesx64Path%
 
 CALL::copyFiles %sourcex86DllPath% %nugetRuntimesx86Path%
-
-CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
+CALL::copyFiles %sourcex86PriPath% %nugetRuntimesx86Path%
 
 CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%
 
