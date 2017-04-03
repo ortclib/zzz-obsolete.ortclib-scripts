@@ -148,6 +148,11 @@ IF /I "%platform%"=="all" (
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32_rx64" (
+		SET platform_win32_x64=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
 		SET messageText=Preparing WebRTC development environment for %platform% platform ...
 	)

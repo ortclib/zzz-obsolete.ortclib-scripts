@@ -31,6 +31,7 @@ SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVer
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
+SET ortcrx64Available=0
 SET startTime=%time%
 SET endingTime=0
 SET defaultProperties=0
@@ -150,7 +151,8 @@ CALL:pythonSetup
 CALL:prepareWebRTC
 
 ::Install ninja if missing
-IF %platform_win32% EQU 1 CALL:installNinja
+::IF NOT "%platform_win32%"=="%platform_win32:win32:=%" EQU 1 CALL:installNinja
+IF NOT "%platform:win32=%"=="%platform%" CALL:installNinja
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
@@ -277,6 +279,11 @@ IF /I "%platform%"=="all" (
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32_rx64" (
+		SET platform_win32_x64=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
 		SET messageText=Preparing development environment for %platform% platform...
 	)
@@ -377,6 +384,9 @@ CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
+IF !ortcrx64Available! EQU 1 (
+CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat 
+)
 GOTO:EOF
 
 ::Generate WebRTC projects
@@ -558,6 +568,11 @@ GOTO:EOF
 
 :checkOrtcAvailability
 IF EXIST ortc\NUL SET ortcAvailable=1
+CALL:checkOrtc_rx64_Availability
+GOTO:EOF
+
+:checkOrtc_rx64_Availability
+IF EXIST ortc_winapi_rx64\NUL SET ortcrx64Available=1
 GOTO:EOF
 
 :installNinja
