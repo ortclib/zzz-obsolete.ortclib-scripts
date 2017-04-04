@@ -147,6 +147,9 @@ CALL:perlCheck
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
+IF !ortcrx64Available! EQU 1 (
+	CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat -step 0  -logLevel %logLevel%
+)
 ::Generate WebRTC VS2015 projects from gyp files
 CALL:prepareWebRTC
 
@@ -384,7 +387,7 @@ CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
 IF !ortcrx64Available! EQU 1 (
-CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat 
+CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat -step 1 -logLevel %logLevel%
 )
 GOTO:EOF
 
