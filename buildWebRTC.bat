@@ -158,8 +158,8 @@ IF EXIST *.dll (
 
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
-::CALL:makeDirectory %destinationPath%pdbs
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
+
 
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 POPD
@@ -214,6 +214,10 @@ IF /I "%currentPlatform%"=="win32_x64" (
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
+IF /I "%currentPlatform%"=="win32_rx64" (
+	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
+	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+)
 ::IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
 ::	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
 ::	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
