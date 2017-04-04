@@ -151,8 +151,7 @@ CALL:pythonSetup
 CALL:prepareWebRTC
 
 ::Install ninja if missing
-::IF NOT "%platform_win32%"=="%platform_win32:win32:=%" EQU 1 CALL:installNinja
-IF NOT "%platform:win32=%"=="%platform%" CALL:installNinja
+CALL:installNinja
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
