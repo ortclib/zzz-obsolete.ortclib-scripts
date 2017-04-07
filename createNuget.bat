@@ -59,15 +59,18 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;beta;destination;publish;help;logLevel;
+SET supportedInputArguments=;target;version;key;prerelease;destination;publish;publishDestination;help;logLevel;pack;packDestination;
 SET target=""
 SET version=1.0.0.0
 SET key=
-SET beta=0
+SET prerelease=
 SET destination=
 SET publish=0
+SET publishDestination=%CD%\..\Publish
 SET help=0
 SET logLevel=2
+SET pack=0
+SET packDestination=..
 
 ::build variables
 SET msVS_Path=""
@@ -106,7 +109,7 @@ IF "%aux:~0,1%"=="-" (
    SET nome=%aux:~1,250%
    SET validArgument=0
    CALL:checkIfArgumentIsValid !nome! validArgument
-   IF !validArgument!==0 CALL:error 1 %errorMessageInvalidArgument%
+   IF !validArgument!==0 CALL:error "Invalid input argument !nome!. For the list of available arguments and usage examples, please run script with -help option."
 ) ELSE (
 	IF NOT "%nome%"=="" (
 		SET "%nome%=%1"
@@ -145,6 +148,9 @@ IF %publish% EQU 1 (
 	CALL:publishSamples
 )
 
+IF %pack% EQU 1 (
+	CALL:makeZipPackage
+)
 GOTO:DONE
 
 :precheck
@@ -335,7 +341,7 @@ IF /I "%~1"=="ortc" (
 	SET libSourceBasePath=webrtc\windows\solutions\Build\Output
 )
 
-SET nugetTargetPath=%nugetBasePath%\%projectName%.targets
+SET nugetTargetPath=%nugetBasePath%\%nugetName%.targets
 SET nugetSpecPath=%nugetBasePath%\%projectName%.nuspec
 SET nugetPackageVersion=%nugetBasePath%\%projectName%.version
 SET nugetPath=%nugetBasePath%\package
@@ -363,16 +369,22 @@ SET sourcex86Path=%libSourceBasePath%\x86\Release\%projectName%
 SET sourcex86DllPath=%sourcex86Path%\%projectNameForNuget%.dll
 SET sourcex86WinmdPath=%sourcex86Path%\%projectNameForNuget%.winmd
 SET sourcex86PdbPath=%sourcex86Path%\%projectNameForNuget%.pdb
+SET sourcex86PriPath=%sourcex86Path%\%projectNameForNuget%.pri
+
+SET sourcex86XmlPath=%sourcex86Path%\%projectNameForNuget%.xml
 
 SET sourcex64Path=%libSourceBasePath%\x64\Release\%projectName%
 SET sourcex64DllPath=%sourcex64Path%\%projectNameForNuget%.dll
 SET sourcex64WinmdPath=%sourcex64Path%\%projectNameForNuget%.winmd
 SET sourcex64PdbPath=%sourcex64Path%\%projectNameForNuget%.pdb
+SET sourcex64PriPath=%sourcex64Path%\%projectNameForNuget%.pri
 
 SET sourcexARMPath=%libSourceBasePath%\ARM\Release\%projectName%
 SET sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
 SET sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
 SET sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
+SET sourcexARMPriPath=%sourcexARMPath%\%projectNameForNuget%.pri
+
 SET nugetSpec=%nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
 
 CALL:print %debug% "nugetTargetPath: !nugetTargetPath!"
@@ -399,16 +411,19 @@ CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
 
 CALL:print %debug% "sourcex86Path: !sourcex86Path!"
 CALL:print %debug% "sourcex86DllPath: !sourcex86DllPath!"
+CALL:print %debug% "sourcex86PriPath: !sourcex86PriPath!"
 CALL:print %debug% "sourcex86WinmdPath: !sourcex86WinmdPath!"
 CALL:print %debug% "sourcex86PdbPath: !sourcex86PdbPath!"
 
 CALL:print %debug% "sourcex64Path: !sourcex64Path!"
 CALL:print %debug% "sourcex64DllPath: !sourcex64DllPath!"
+CALL:print %debug% "sourcex64PriPath: !sourcex64PriPath!"
 CALL:print %debug% "sourcex64WinmdPath: !sourcex64WinmdPath!"
 CALL:print %debug% "sourcex64PdbPath: !sourcex64PdbPath!"
 
 CALL:print %debug% "sourcexARMPath: !sourcexARMPath!"
 CALL:print %debug% "sourcexARMDllPath: !sourcexARMDllPath!"
+CALL:print %debug% "sourcexARMPriPath: !sourcexARMPriPath!"
 CALL:print %debug% "sourcexARMWinmdPath: !sourcexARMWinmdPath!"
 CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
 
@@ -418,13 +433,17 @@ IF EXIST %nugetPath%\%nugetName%\NUL RMDIR /s /q %nugetPath%\%nugetName%\
 
 CALL:createFolder %nugetPath%\%nugetName%
 
+CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
+CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
+
 CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
+CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
 
 CALL::copyFiles %sourcex64DllPath% %nugetRuntimesx64Path%
+CALL::copyFiles %sourcex64PriPath% %nugetRuntimesx64Path%
 
 CALL::copyFiles %sourcex86DllPath% %nugetRuntimesx86Path%
-
-CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
+CALL::copyFiles %sourcex86PriPath% %nugetRuntimesx86Path%
 
 CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%
 
@@ -437,17 +456,18 @@ CALL:makeNuget
 GOTO:EOF
 
 :publishSamples
-IF generate_Ortc_Nuget EQU 1 (
+
+IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.Ortc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk ortc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 )
 
-IF generate_WebRtc_Nuget EQU 1 (
+IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %debug% "Publishing PeerCC.WebRtc with nuget version !nugetVersion!..."
-	CALL publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample peercc -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 	
 	CALL:print %debug% "Publishing ChatterBox with nuget version !nugetVersion!..."
-	CALL publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel%
+	CALL bin\publishSamples -sample chatterbox -sdk webrtc -nugetVersion !nugetVersion! -logLevel %logLevel% -destination %publishDestination%
 )
 GOTO:EOF
 
@@ -528,6 +548,7 @@ IF NOT "%key%"=="" CALL:setNugetApiKey
 
 IF %publish% EQU 1 (
 	IF NOT "%destination%"=="" (
+		CALL:createFolder %destination%
 		CALL:print %debug% "Nuget package will be pushed to %destination%"
 		%nuget% push %nugetOutputPath%\%nugetName%.%nugetVersion%.nupkg -Source %destination%
 	) ELSE (
@@ -553,13 +574,91 @@ IF "%version%"=="1.0.0.0" (
 	)
 )
 
-IF %beta% EQU 1 (
-	SET nugetVersion=!version!-Beta
+IF NOT "%prerelease%"=="" (
+	SET nugetVersion=!version!-%prerelease%
 ) ELSE (
 	SET nugetVersion=!version!
 )
 
 CALL:print %warning%  "New Nuget Version is !nugetVersion!"
+GOTO:EOF
+
+:makeZipPackage
+CALL:print %warning%  "Archieving nuget package %nugetVersion%, pdb files and samples"
+
+FOR /f "tokens=2-4 delims=/ " %%a IN ('date /t') DO (SET mydate=%%c-%%a-%%b)
+FOR /f "tokens=1-2 delims=/:" %%a IN ("%TIME%") DO (SET mytime=%%a%%b) 
+
+SET zipPackageOutputPath=%packDestination%\
+SET outputFolderName=Package_%target%_nuget_%nugetVersion%_%mydate%_%mytime%
+SET packageName=!zipPackageOutputPath!!outputFolderName!
+SET packageNugetPath=!packageName!\Nuget
+
+SET packagePdbsPath=!packageName!\Pdbs
+SET packagePdbsSourceWrapperPath=!target!\windows\solutions\Build\Output\
+SET packagePdbsSourcePath=webrtc\xplatform\webrtc\WEBRTC_BUILD\!target!\Release\
+
+SET packageSamplesPath=!packageName!\Samples\
+SET peerCCPublishingPath=..\Publish\%target%\PeerCC-Sample
+SET ChatterBoxPublishingPath=..\Publish\%target%\ChatterBox-Sample
+
+IF EXIST !packageName!\NUL RMDIR /s /q !packageName!
+IF ERRORLEVEL 1 CALL:error 1 "Could not delete a directory !packageName!"
+
+CALL:createFolder !packageName!
+
+::Copy nuget
+CALL:createFolder !packageNugetPath!
+FOR /R %nugetOutputPath% %%f in (*!nugetVersion!*.nupkg) DO COPY %%f !packageNugetPath! > NUL
+
+::Copy ARM pdb files
+CALL:createFolder !packagePdbsPath!\ARM
+FOR /R %packagePdbsSourcePath%\ARM\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+FOR /R %packagePdbsSourceWrapperPath%\ARM\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+
+::Copy X64 pdb files
+CALL:createFolder !packagePdbsPath!\X64
+FOR /R %packagePdbsSourcePath%\X64\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X64 > NUL
+FOR /R %packagePdbsSourceWrapperPath%\X64\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X64 > NUL
+
+::Copy X86 pdb files
+CALL:createFolder !packagePdbsPath!\X86
+FOR /R %packagePdbsSourcePath%\X86\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X86 > NUL
+FOR /R %packagePdbsSourceWrapperPath%\X86\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\X86 > NUL
+
+::Copy PeerCC sample
+IF EXIST %peerCCPublishingPath%\NUL (
+	CALL:createFolder !packageSamplesPath!PeerCC-Sample
+	XCopy  /S /I /Y %peerCCPublishingPath% !packageSamplesPath!PeerCC-Sample > NUL
+	IF ERRORLEVEL 1 CALL:error 1 "Failed copying from %peerCCPublishingPath% to !packageSamplesPath!PeerCC-Sample"
+)
+
+::Copy ChatterBox sample
+IF EXIST %ChatterBoxPublishingPath%\NUL (
+	CALL:createFolder !packageSamplesPath!ChatterBox-Sample
+	XCopy  /S /I /Y %ChatterBoxPublishingPath% !packageSamplesPath!ChatterBox-Sample > NUL
+	IF ERRORLEVEL 1 CALL:error 1 "Failed copying from %ChatterBoxPublishingPath% to !packageSamplesPath!ChatterBox-Sample"
+)
+
+PUSHD !zipPackageOutputPath!
+CALL:print %debug%  "Archieving %CD%\!outputFolderName! to %CD%\!outputFolderName!.zip"
+CALL:zipFolder %CD%\!outputFolderName!  %CD%\!outputFolderName!.zip
+POPD
+GOTO:EOF
+
+:zipFolder
+echo Set objArgs = WScript.Arguments > _zipIt.vbs
+echo InputFolder = objArgs(0) >> _zipIt.vbs
+echo ZipFile = objArgs(1) >> _zipIt.vbs
+echo CreateObject("Scripting.FileSystemObject").CreateTextFile(ZipFile, True).Write "PK" ^& Chr(5) ^& Chr(6) ^& String(18, vbNullChar) >> _zipIt.vbs
+echo Set objShell = CreateObject("Shell.Application") >> _zipIt.vbs
+echo Set source = objShell.NameSpace(InputFolder).Items >> _zipIt.vbs
+echo objShell.NameSpace(ZipFile).CopyHere(source) >> _zipIt.vbs
+@ECHO *******************************************
+@ECHO Zipping, please wait..
+echo wScript.Sleep 30000 >> _zipIt.vbs
+CScript  _zipIt.vbs  %1  %2
+del _zipIt.vbs
 GOTO:EOF
 
 :copyFiles
@@ -587,7 +686,7 @@ IF %help% EQU 0 GOTO:EOF
 ECHO.
 ECHO    [92mAvailable parameters:[0m
 ECHO.
-ECHO  	[93m-beta[0m 		Flag for creating prerelase nuget package.
+ECHO 	[93m-destination[0m	Used for specifying nuget server where package will be published. Default destination is nuget.org
 ECHO.
 ECHO 	[93m-key[0m		Api key that is used for publishing nuget package on nuget.org. This is used in combination with 
 ECHO		publish flag -publish. This will store your API key so that you never need to do this step again on this machine.
@@ -596,11 +695,11 @@ ECHO 	[93m-help[0m 		Show script usage
 ECHO.
 ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
 ECHO.
+ECHO  	[93m-prelease[0m 		Version sufix if it is prerelease version (Alpha, Beta ...).
+ECHO.
 ECHO 	[93m-publish[0m	Publish created nuget package. By default it will be uploaded on nuget.org server. If it is 
 ECHO		desired to publish it locally or on some another server, it sholud be used option -destination to specify 
 ECHO		destination server
-ECHO.
-ECHO 	[93m-destination[0m	Used for specifying nuget server where package will be published. Default destination is nuget.org
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to generate nuget package. Ortc or WebRtc.
 ECHO.
@@ -643,6 +742,7 @@ IF %logLevel% GEQ  %logType% (
 GOTO:EOF
 
 :cleanup
+
 IF EXIST !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
 IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
 
@@ -708,4 +808,3 @@ CALL:print %info% "Success:  Nuget package is created."
 ECHO.
 SET endTime=%time%
 CALL:showTime
-:end

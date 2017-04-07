@@ -16,6 +16,7 @@ SET platform_ARM=0
 SET platform_x86=0
 SET platform_x64=0
 SET platform_win32=0
+SET platform_win32_x64=0
 ::platforms
 SET platform_ARM_prepared=0
 SET platform_x86_prepared=0
@@ -49,7 +50,6 @@ SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
 SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
-
 ECHO.
 CALL:print %info% "Running WebRTC prepare script ..."
 CALL:print %info% "================================="
@@ -143,6 +143,11 @@ IF /I "%platform%"=="all" (
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32_x64" (
+		SET platform_win32_x64=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
 		SET messageText=Preparing WebRTC development environment for %platform% platform ...
 	)
@@ -160,6 +165,8 @@ GOTO:EOF
 CALL:print %trace% "Executing prepareWebRTC function"
 
 IF NOT EXIST %baseWebRTCPath% CALL:error 1 "%folderStructureError:"=% %baseWebRTCPath% does not exist!"
+
+
 
 PUSHD %baseWebRTCPath% > NUL
 CALL:print %trace% "Pushed %baseWebRTCPath% path"
@@ -207,8 +214,8 @@ CALL:makeLink . chromium\src\third_party\opus ..\chromium-pruned\third_party\opu
 ::CALL:makeLink . chromium\src\third_party\colorama ..\chromium-pruned\third_party\colorama
 CALL:makeLink . chromium\src\third_party\boringssl ..\chromium-pruned\third_party\boringssl
 CALL:makeLink . chromium\src\third_party\usrsctp ..\chromium-pruned\third_party\usrsctp
-CALL:makeLink . chromium\src\third_party\libvpx_new ..\chromium-pruned\third_party\libvpx_new
-CALL:makeLink . chromium\src\third_party\libvpx_new\source\libvpx ..\libvpx
+CALL:makeLink . chromium\src\third_party\libvpx ..\chromium-pruned\third_party\libvpx
+CALL:makeLink . chromium\src\third_party\libvpx\source\libvpx ..\libvpx
 CALL:makeLink . chromium\src\testing ..\chromium-pruned\testing
 CALL:makeLink . testing chromium\src\testing
 CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
@@ -227,7 +234,7 @@ CALL:makeLink . third_party\protobuf chromium\src\third_party\protobuf
 CALL:makeLink . chromium\src\third_party\expat ..\chromium-pruned\third_party\expat
 CALL:makeLink . third_party\expat chromium\src\third_party\expat
 CALL:makeLink . third_party\libsrtp ..\libsrtp
-CALL:makeLink . third_party\libvpx_new .\chromium\src\third_party\libvpx_new
+CALL:makeLink . third_party\libvpx .\chromium\src\third_party\libvpx
 CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
@@ -253,9 +260,9 @@ IF %platform_ARM% EQU 1 (
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %trace% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
 	SET platform_ARM_prepared=2
@@ -267,9 +274,9 @@ IF %platform_x64% EQU 1 (
 	SET GYP_DEFINES=
 	SET GYP_GENERATORS=msvs-winrt
 	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
 	SET platform_x64_prepared=2
@@ -282,9 +289,9 @@ IF %platform_x86% EQU 1 (
 	SET GYP_GENERATORS=msvs-winrt
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
 	) ELSE (
-		PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
+		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
 	)
 	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
 	SET platform_x86_prepared=2
@@ -294,6 +301,36 @@ IF %platform_win32% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
 	SET platform_win32_prepared=1
 	SET GYP_DEFINES=component=shared_library
+	SET GYP_GENERATORS=ninja,msvs-ninja
+	::Not setting target_arch because of logic used in gyp files
+	IF %logLevel% GEQ %debug% (
+		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
+	) ELSE (
+		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
+	)
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	SET platform_win32_prepared=2
+)
+
+IF %platform_win32_x64% EQU 1 (
+	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
+	SET platform_win32_prepared=1
+	SET GYP_DEFINES=component=shared_library target_arch=x64
+	SET GYP_GENERATORS=ninja,msvs-ninja
+	::Not setting target_arch because of logic used in gyp files
+	IF %logLevel% GEQ %debug% (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
+	) ELSE (
+		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
+	)
+	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	SET platform_win32_prepared=2
+)
+
+IF %platform_win32_x64% EQU 1 (
+	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
+	SET platform_win32_prepared=1
+	SET GYP_DEFINES=component=shared_library target_arch=x64
 	SET GYP_GENERATORS=ninja,msvs-ninja
 	::Not setting target_arch because of logic used in gyp files
 	IF %logLevel% GEQ %debug% (
