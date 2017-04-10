@@ -56,14 +56,14 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;recreateEventing;					
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-
+SET recreateEventing=0
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
@@ -423,7 +423,10 @@ GOTO:EOF
 
 ::Generate events providers
 :prepareEventing
-
+SET eventsOutput=%cd%\ortc\windows\solutions\Eventing\
+IF EXIST !eventsOutput! (
+	IF %recreateEventing% EQU 0 GOTO:end
+)
 IF %noEventing% EQU 0 (
 	CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
 	CALL bin\prepareEventing.bat -platform x86 -logLevel %logLevel%
@@ -639,6 +642,8 @@ ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or W
 ECHO.
 ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)
 ECHO.
+ECHO.	[93m-recreateEventing[0m 	Force events recreation
+ECHO.
 CALL bin\batchTerminator.bat
 
 GOTO:EOF
@@ -714,3 +719,4 @@ CALL:print %info% "Success: Development environment is set."
 SET endTime=%time%
 CALL:showTime
 ECHO. 
+:end
