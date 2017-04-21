@@ -27,7 +27,8 @@ SET ninjaDestinationPath=.\bin\ninja-win.zip
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
 SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
-
+SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
+SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\BindingOrtcLib\BindingOrtcLib\libOrtc.dylib
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
@@ -55,14 +56,14 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;				
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-
+SET getBinaries=1
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
@@ -160,6 +161,8 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 	CALL:prepareCurl
 	
 	CALL:prepareEventing
+	
+	CALL:getBinaries
 )
 
 ::Finish script execution
@@ -403,7 +406,7 @@ CALL prepareCurl.bat -logLevel %globalLogLevel%
 ::	CALL prepare.bat curl  >NUL
 ::)
 
-if !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
 
 POPD > NUL
 
@@ -420,6 +423,23 @@ IF %noEventing% EQU 0 (
 
 GOTO:EOF
 
+:getBinaries
+
+IF %getBinaries% EQU 1 (
+	ECHO.
+	CALL:print %info% "Donwloading binaries"
+	IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+	
+	PUSHD ..\
+	CALL git clone %binariesGitPath% > NUL
+	IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed cloning binaries."
+	POPD
+	
+	CALL:copyTemplates ..\ortc-binaries\Release\libOrtc.dylib %ortcBinariesDestinationPath%
+	
+	IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+)
+GOTO:EOF
 REM Download file (first argument) to desired destination (second argument)
 :download
 IF EXIST %~2 GOTO:EOF
