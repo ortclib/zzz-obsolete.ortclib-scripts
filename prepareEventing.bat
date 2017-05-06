@@ -23,6 +23,8 @@ SET eventsIncludePath=..\Internal
 SET eventsIntermediatePath=IntermediateTemp
 SET eventsOutput=%cd%\ortc\windows\solutions\Eventing\
 SET idlOutput=%cd%\ortc\xplatform\ortclib-cpp\ortc\idl\
+SET idlGeneratedCTemplatesPath=%cd%\ortc\windows\templates\wrappers\c\
+SET idlGeneratedCPath=%cd%\ortc\xplatform\ortclib-cpp\ortc\idl\wrapper\generated\c\
 
 SET startTime=0
 SET endingTime=0
@@ -99,6 +101,8 @@ CALL:buildEventingToolCompiler
 CALL:prepareEvents
 
 CALL:prepareIdl
+
+CALL:copyTemplates
 
 GOTO:done
 
@@ -342,6 +346,12 @@ POPD
 
 IF ERRORLEVEL 1 CALL:error 1 "Running events tool has failed"
 
+GOTO:EOF
+
+:copyTemplates
+CALL:print %warning% "Copying templates..."
+COPY %idlGeneratedCTemplatesPath%*.* %idlGeneratedCPath% > NUL
+IF ERRORLEVEL 1 CALL:error 0 "Failed preparing templates"
 GOTO:EOF
 
 :copyFiles
