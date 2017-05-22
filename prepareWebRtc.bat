@@ -361,8 +361,8 @@ GOTO:EOF
 
 :updateSDKVersion
 
-FOR /f "tokens=4-7 delims=[.] " %%i IN ('ver') DO (IF %%i==Version (SET v=%%j.%%k.%%l) ELSE (SET v=%%i.%%j.%%k))
-
+::FOR /f "tokens=4-7 delims=[.] " %%i IN ('ver') DO (IF %%i==Version (SET v=%%j.%%k.%%l) ELSE (SET v=%%i.%%j.%%k))
+SET v=10.0.14393
 IF NOT "!v!"=="" (
 	CALL:print %warning% "!v! SDK version will be used"
 	SET SDKVersionString=%stringToUpdateWithSDKVersion:10.0.10240=!v!%
