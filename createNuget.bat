@@ -434,7 +434,7 @@ IF EXIST %nugetPath%\%nugetName%\NUL RMDIR /s /q %nugetPath%\%nugetName%\
 CALL:createFolder %nugetPath%\%nugetName%
 
 CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
-CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
+IF EXIST %sourcex86XmlPath% CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
 
 CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
 CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
