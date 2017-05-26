@@ -407,14 +407,20 @@ GOTO setVersion
 :determineVersion
 IF EXIST !windowsSDKFullPath! (
 	PUSHD !windowsSDKFullPath!
-	FOR /F "delims=" %%a in ('dir /ad /b /on') do set windowsSDKVersion=%%a
+	FOR /F "delims=" %%a in ('dir /ad /b /on') do (
+		IF NOT %%a==10.0.15063.0 SET windowsSDKVersion=%%a
+	)
 	POPD
 ) ELSE (
 	CALL:ERROR 1 "Invalid Windows SDK path"
 )
 
 :setVersion
-FOR /f "tokens=1-3 delims=[.] " %%i IN ("!windowsSDKVersion!") DO (SET v=%%i.%%j.%%k)
+IF NOT "!windowsSDKVersion!"=="" (
+	FOR /f "tokens=1-3 delims=[.] " %%i IN ("!windowsSDKVersion!") DO (SET v=%%i.%%j.%%k)
+) ELSE (
+	CALL:ERROR 1 "Supported Windows SDK is not present. Latest supported Win SDK is 10.0.14393.0"
+)
 GOTO:EOF
 
 :updateSDKVersion
