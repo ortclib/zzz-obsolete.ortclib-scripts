@@ -359,17 +359,40 @@ POPD
 
 GOTO:EOF
 
+:determineWindowsSDK
+SET windowsSDKPath="Program Files (x86)\Windows Kits\10\Lib\"
+
+IF DEFINED USE_WIN_SDK_FULL_PATH SET windowsSDKFullPath=!USE_WIN_SDK_FULL_PATH! && GOTO parseSDKPath
+IF DEFINED USE_WIN_SDK SET windowsSDKVersion=!USE_WIN_SDK! && GOTO setVersion
+FOR %%p IN (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z) DO (
+	IF EXIST %%p:\!windowsSDKPath! (
+		SET windowsSDKFullPath=%%p:\!windowsSDKPath!
+		GOTO determineVersion
+	)
+)
+:parseSDKPath
+FOR %%A IN ("!windowsSDKFullPath!") DO (
+	SET windowsSDKVersion=%%~nxA
+)
+GOTO setVersion
+:determineVersion
+PUSHD !windowsSDKFullPath!
+FOR /F "delims=" %%a in ('dir /ad /b /on') do set windowsSDKVersion=%%a
+POPD
+
+:setVersion
+FOR /f "tokens=1-3 delims=[.] " %%i IN ("!windowsSDKVersion!") DO (SET v=%%i.%%j.%%k)
+GOTO:EOF
+
 :updateSDKVersion
 
-::FOR /f "tokens=4-7 delims=[.] " %%i IN ('ver') DO (IF %%i==Version (SET v=%%j.%%k.%%l) ELSE (SET v=%%i.%%j.%%k))
-SET v=10.0.14393
+CALL:determineWindowsSDK
 IF NOT "!v!"=="" (
 	CALL:print %warning% "!v! SDK version will be used"
 	SET SDKVersionString=%stringToUpdateWithSDKVersion:10.0.10240=!v!%
 	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %pythonFilePathToUpdateSDKVersion% "%stringToUpdateWithSDKVersion%" "!SDKVersionString!" %pythonFilePathToUpdateSDKVersion%
 	IF ERRORLEVEL 1 CALL:error 0 "Failed to set newer SDK version"
 )
-
 GOTO:EOF
 
 :resetSDKVersion
