@@ -361,6 +361,7 @@ GOTO:EOF
 
 :determineWindowsSDK
 SET windowsSDKPath="Program Files (x86)\Windows Kits\10\Lib\"
+SET windowsSDKFullPath=C:\!windowsSDKPath!
 
 IF DEFINED USE_WIN_SDK_FULL_PATH SET windowsSDKFullPath=!USE_WIN_SDK_FULL_PATH! && GOTO parseSDKPath
 IF DEFINED USE_WIN_SDK SET windowsSDKVersion=!USE_WIN_SDK! && GOTO setVersion
@@ -370,15 +371,25 @@ FOR %%p IN (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z) DO (
 		GOTO determineVersion
 	)
 )
+
 :parseSDKPath
-FOR %%A IN ("!windowsSDKFullPath!") DO (
-	SET windowsSDKVersion=%%~nxA
+IF EXIST !windowsSDKFullPath! (
+	FOR %%A IN ("!windowsSDKFullPath!") DO (
+		SET windowsSDKVersion=%%~nxA
+	)
+) ELSE (
+	CALL:ERROR 1 "Invalid Windows SDK path"
 )
 GOTO setVersion
+
 :determineVersion
-PUSHD !windowsSDKFullPath!
-FOR /F "delims=" %%a in ('dir /ad /b /on') do set windowsSDKVersion=%%a
-POPD
+IF EXIST !windowsSDKFullPath! (
+	PUSHD !windowsSDKFullPath!
+	FOR /F "delims=" %%a in ('dir /ad /b /on') do set windowsSDKVersion=%%a
+	POPD
+) ELSE (
+	CALL:ERROR 1 "Invalid Windows SDK path"
+)
 
 :setVersion
 FOR /f "tokens=1-3 delims=[.] " %%i IN ("!windowsSDKVersion!") DO (SET v=%%i.%%j.%%k)
@@ -387,6 +398,7 @@ GOTO:EOF
 :updateSDKVersion
 
 CALL:determineWindowsSDK
+
 IF NOT "!v!"=="" (
 	CALL:print %warning% "!v! SDK version will be used"
 	SET SDKVersionString=%stringToUpdateWithSDKVersion:10.0.10240=!v!%
