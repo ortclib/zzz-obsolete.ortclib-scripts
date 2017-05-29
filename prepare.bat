@@ -18,17 +18,21 @@ SET ortcWebRTCWin32TemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc
 SET ortcWebRTCWin32DestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+SET ortciOSBinariesDestinationFolder=ortc\apple\libs\
+SET ortciOSBinariesDestinationPath=ortc\apple\libs\libOrtc.dylib
 
 ::downloads
 SET pythonVersion=2.7.6
 SET ninjaVersion=v1.6.0
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ninjaDestinationPath=.\bin\ninja-win.zip
+SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\BindingOrtcLib\BindingOrtcLib\libOrtc.dylib
+ 
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
 SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
 SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
-SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\BindingOrtcLib\BindingOrtcLib\libOrtc.dylib
+
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
@@ -124,6 +128,8 @@ ECHO.
 CALL:print %info% "Running prepare script ..."
 ECHO.
 
+IF EXIST bin\Config.bat CALL bin\Config.bat
+
 IF %defaultProperties% EQU 0 (
 	CALL:print %warning% "Running script parameters:"
 	CALL:print %warning% "Target: %target%"
@@ -162,6 +168,7 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 	
 	CALL:prepareEventing
 
+	CALL:getBinaries
 )
 
 ::Finish script execution
@@ -422,23 +429,46 @@ IF %noEventing% EQU 0 (
 
 GOTO:EOF
 
+
+:downloadBinariesFromRepo
+ECHO.
+CALL:print %info% "Donwloading binaries from repo !BINARIES_DOWNLOAD_REPO_URL!"
+IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+	
+PUSHD ..\
+CALL git clone !BINARIES_DOWNLOAD_REPO_URL! -b !BINARIES_DOWNLOAD_REPO_BRANCH! > NUL
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed cloning binaries."
+POPD
+	
+CALL:makeDirectory %ortciOSBinariesDestinationFolder%
+CALL:copyTemplates ..\ortc-binaries\Release\libOrtc.dylib %ortciOSBinariesDestinationPath%
+	
+IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+GOTO:EOF
+
+:downloadBinariesFromURL
+ECHO.
+CALL:print %info% "Donwloading binaries from URL !BINARIES_DOWNLOAD_URL!"
+
+CALL:makeDirectory %ortciOSBinariesDestinationFolder%
+CALL:download !BINARIES_DOWNLOAD_URL! %ortciOSBinariesDestinationPath%
+IF !taskFailed! EQU 1 CALL:ERROR 1 "Failed downloading binaries from !BINARIES_DOWNLOAD_URL!"
+
+GOTO:EOF
+
 :getBinaries
 
 IF %getBinaries% EQU 1 (
-	ECHO.
-	CALL:print %info% "Donwloading binaries"
-	IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
-	
-	PUSHD ..\
-	CALL git clone %binariesGitPath% > NUL
-	IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed cloning binaries."
-	POPD
-	
-	CALL:copyTemplates ..\ortc-binaries\Release\libOrtc.dylib %ortcBinariesDestinationPath%
-	
-	IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+	IF DEFINED BINARIES_DOWNLOAD_REPO_URL (
+		CALL:downloadBinariesFromRepo
+	) ELSE (
+		IF DEFINED BINARIES_DOWNLOAD_URL CALL:downloadBinariesFromURL
+	)
 )
+
 GOTO:EOF
+
+
 REM Download file (first argument) to desired destination (second argument)
 :download
 IF EXIST %~2 GOTO:EOF
