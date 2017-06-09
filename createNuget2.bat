@@ -285,7 +285,8 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	
 	::this will build Org.Ortc.Xamarin.iOS as well
 	CALL:build !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin win32
-	CALL:build !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin x64
+	CALL bin\prepare.bat
+	CALL:build !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin win32_x64
 	
 	CALL:preparePackage Ortc.Xamarin
 )
