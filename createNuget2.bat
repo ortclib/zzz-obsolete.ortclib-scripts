@@ -320,10 +320,13 @@ CALL:print %debug% "Project: %~2"
 CALL:print %debug% "Compiler option: %~3"
 CALL:print %debug% "CONFIGURATION: %CONFIGURATION%"
 
+SET realplatform=%~3
+IF '%~3'=='win32_x64' SET realplatform=x64
+
 IF %logLevel% GEQ %trace% (
-	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False
+	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=!realplatform! /nodeReuse:False
 ) ELSE (
-	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /nodeReuse:False >NUL
+	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=!realplatform! /nodeReuse:False >NUL
 )
 
 ::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
@@ -474,14 +477,14 @@ IF !xamarinNuget! NEQ  1 (
 	CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
 ) ELSE (
 	SET sourceLibOrtcx86Path=%libSourceBasePath%\x86\Release\ortclib-c
-	SET sourceLibOrtcx86DllPath=%sourcex86Path%\libOrtc.dll
-	SET sourceLibOrtcx86PdbPath=%sourcex86Path%\libOrtc.pdb
-	SET sourceLibOrtcx86PriPath=%sourcex86Path%\libOrtc.pri
+	SET sourceLibOrtcx86DllPath=!sourceLibOrtcx86Path!\libOrtc.dll
+	SET sourceLibOrtcx86PdbPath=!sourceLibOrtcx86Path!\libOrtc.pdb
+	SET sourceLibOrtcx86PriPath=!sourceLibOrtcx86Path!\libOrtc.pri
 	
 	SET sourceLibOrtcx64Path=%libSourceBasePath%\x64\Release\ortclib-c
-	SET sourceLibOrtcx64DllPath=%sourcex86Path%\libOrtc.dll
-	SET sourceLibOrtcx64PdbPath=%sourcex86Path%\libOrtc.pdb
-	SET sourceLibOrtcx64PriPath=%sourcex86Path%\libOrtc.pri
+	SET sourceLibOrtcx64DllPath=!sourceLibOrtcx64Path!\libOrtc.dll
+	SET sourceLibOrtcx64PdbPath=!sourceLibOrtcx64Path!\libOrtc.pdb
+	SET sourceLibOrtcx64PriPath=!sourceLibOrtcx64Path!\libOrtc.pri
 
 	SET sourceOrgOrtcXamarinPath=%libSourceBasePath%%\AnyCPU\Release\Org.Ortc.Xamarin
 	SET sourceOrgOrtcXamarinDllPath=!sourceOrgOrtcXamarinPath!\Org.Ortc.dll
@@ -543,14 +546,14 @@ IF !xamarinNuget! NEQ  1 (
 	CALL::copyFiles %sourceOrgOrtcXamariniOSDllPath% %nugetLibXamariniOSPath%
 	IF EXIST !sourceOrgOrtcXamariniOSXmlPath! CALL::copyFiles %sourcex86XmlPath% %nugetLibXamariniOSPath%
 	
-	CALL::copyFiles %sourceLibOrtcx86DllPath% %nugetRuntimesx86Path%
-	CALL::copyFiles %sourceLibOrtcx86PriPath% %nugetRuntimesx86Path%
+	CALL::copyFiles !sourceLibOrtcx86DllPath! %nugetRuntimesx86Path%
+::CALL::copyFiles !sourceLibOrtcx86PriPath! %nugetRuntimesx86Path%
 	CALL::copyFiles !sourceWebRtcBoringSSLx86Path! %nugetRuntimesx86Path%
 	CALL::copyFiles !sourceWebRtcProtoBufLitex86Path! %nugetRuntimesx86Path%
 
-	CALL::copyFiles %sourceLibOrtcx64DllPath% %nugetRuntimesx64Path%
-	CALL::copyFiles %sourceLibOrtcx86PriPath% %nugetRuntimesx64Path%
-	CALL::copyFiles !sourceWebRtcBoringSSLx64Path! %nugetRuntimesx64Path%
+	CALL::copyFiles !sourceLibOrtcx64DllPath! %nugetRuntimesx64Path%
+::CALL::copyFiles !sourceLibOrtcx86PriPath! %nugetRuntimesx64Path%
+	CALL::copyFiles !sourceWebRsourceLibOrtcx64DllPathtcBoringSSLx64Path! %nugetRuntimesx64Path%
 	CALL::copyFiles !sourceWebRtcProtoBufLitex64Path! %nugetRuntimesx64Path%
 	
 	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%\Org.Ortc.targets
