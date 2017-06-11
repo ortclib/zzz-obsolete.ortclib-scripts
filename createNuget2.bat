@@ -323,6 +323,10 @@ CALL:print %debug% "CONFIGURATION: %CONFIGURATION%"
 SET realplatform=%~3
 IF '%~3'=='win32_x64' SET realplatform=x64
 
+CALL:print %trace% "Restoring nuget packages for %~1"
+bin\nuget.exe restore %~1
+IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
+pause
 IF %logLevel% GEQ %trace% (
 	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=!realplatform! /nodeReuse:False
 ) ELSE (
@@ -553,7 +557,7 @@ IF !xamarinNuget! NEQ  1 (
 
 	CALL::copyFiles !sourceLibOrtcx64DllPath! %nugetRuntimesx64Path%
 ::CALL::copyFiles !sourceLibOrtcx86PriPath! %nugetRuntimesx64Path%
-	CALL::copyFiles !sourceWebRsourceLibOrtcx64DllPathtcBoringSSLx64Path! %nugetRuntimesx64Path%
+	CALL::copyFiles !sourceWebRtcBoringSSLx64Path! %nugetRuntimesx64Path%
 	CALL::copyFiles !sourceWebRtcProtoBufLitex64Path! %nugetRuntimesx64Path%
 	
 	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%\Org.Ortc.targets
