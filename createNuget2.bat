@@ -45,6 +45,7 @@ SET nugetPackageVersion=""
 SET nugetName=""
 SET nugetOrtcTemplateProjectPath=%nugetOrtcBasePath%\templates\Ortc.Nuget.sln
 SET nugetOrtcXamarinTemplateProjectPath=%nugetOrtcBasePath%\templates\Ortc.Xamarin.Nuget.sln
+SET nugetOrtcCoreXamarinTemplateProjectPath=%nugetOrtcBasePath%\templates\Ortc.Core.Xamarin.Nuget.sln
 SET nugetOrtcTemplateProjectDestinationPath=ortc\windows\solutions\
 SET nugetWebRtcTemplateProjectPath=%nugetWebRtcBasePath%\templates\WebRtc.Nuget.sln
 SET nugetWebRtcTemplateProjectDestinationPath=webrtc\windows\solutions\
@@ -279,15 +280,27 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	
 	CALL:prepareTemplates ortc.xamarin
 	
+	SET SolutionPathCoreOrtc=!nugetOrtcTemplateProjectDestinationPath!Ortc.Core.Xamarin.Nuget.sln
 	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln
 	SET WebRtcSolutionPath=%OrtcWebRtcWin32SolutionPath%
 	SET nugetName=%nugetOrtcName%
 	
 	::this will build Org.Ortc.Xamarin.iOS as well
-	CALL:build !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin win32
+	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32
 	CALL bin\prepare.bat
-	CALL:build !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin win32_x64
+	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32_x64
 	
+	CALL:print %trace% "Restoring nuget packages for %~1"
+	bin\nuget.exe restore %~1
+	IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
+
+	IF %logLevel% GEQ %trace% (
+		MSBuild !SolutionPathOrtc! /property:Configuration=Release /property:Platform="Any CPU" /nodeReuse:False
+	) ELSE (
+		MSBuild !SolutionPathOrtc! /property:Configuration=Release /property:Platform="Any CPU" /nodeReuse:False >NUL
+	)
+	IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+
 	CALL:preparePackage Ortc.Xamarin
 )
 
@@ -323,17 +336,11 @@ CALL:print %debug% "CONFIGURATION: %CONFIGURATION%"
 SET realplatform=%~3
 IF '%~3'=='win32_x64' SET realplatform=x64
 
-CALL:print %trace% "Restoring nuget packages for %~1"
-bin\nuget.exe restore %~1
-IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
-pause
 IF %logLevel% GEQ %trace% (
 	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=!realplatform! /nodeReuse:False
 ) ELSE (
 	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=!realplatform! /nodeReuse:False >NUL
 )
-
-::MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%~3 /m
 
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
 GOTO:EOF
@@ -350,6 +357,7 @@ IF /I "%~1"=="webrtc" (
 	) ELSE (
 		SET nugetTemplateProjectPath=%nugetOrtcXamarinTemplateProjectPath%
 		SET nugetTemplateProjectDestinationPath=%nugetOrtcTemplateProjectDestinationPath%
+		CALL:copyFiles !nugetOrtcCoreXamarinTemplateProjectPath! !nugetTemplateProjectDestinationPath!
 	)
 )
 
