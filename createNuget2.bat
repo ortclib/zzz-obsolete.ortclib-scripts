@@ -27,6 +27,7 @@ SET SolutionPathOrtc=ortc\windows\solutions\Ortc.sln
 SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.sln
 SET nugetOrtcBasePath=ortc\windows\nuget
 SET nugetWebRtcBasePath=webrtc\windows\nuget
+SET iOSOrtcLibSourcePath=ortc\apple\libs\libORtc.dylib
 SET OrtcWebRtcOutputPath=webrtc\xplatform\webrtc\WEBRTC_BUILD\ortc\Release
 SET OrtcWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
 SET OrtcWebRtcWin32SolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
@@ -286,20 +287,25 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	SET nugetName=%nugetOrtcName%
 	
 	::this will build Org.Ortc.Xamarin.iOS as well
-	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32
-	CALL bin\prepare.bat
-	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32_x64
+	::CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32
+	::CALL bin\prepare.bat
+	::CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32_x64
 	
 	CALL:print %trace% "Restoring nuget packages for %~1"
-	bin\nuget.exe restore %~1
+	bin\nuget.exe restore !SolutionPathOrtc!
 	IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
+
+	CALL:setCompilerOption x64
+
+	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
+	IF !ERRORLEVEL! EQU 1 CALL:error 1 "Could not setup %~2 compiler"
 
 	IF %logLevel% GEQ %trace% (
 		MSBuild !SolutionPathOrtc! /property:Configuration=Release /property:Platform="Any CPU" /nodeReuse:False
 	) ELSE (
 		MSBuild !SolutionPathOrtc! /property:Configuration=Release /property:Platform="Any CPU" /nodeReuse:False >NUL
 	)
-	IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
+	IF ERRORLEVEL 1 CALL:error 1 "Building !SolutionPathOrtc! project for %"Any CPU" Release has failed"
 
 	CALL:preparePackage Ortc.Xamarin
 )
@@ -423,6 +429,7 @@ SET nugetRuntimesPath=%nugetPath%\%nugetName%\runtimes
 SET nugetRuntimesx86Path=%nugetRuntimesPath%\win10-x86\native
 SET nugetRuntimesx64Path=%nugetRuntimesPath%\win10-x64\native
 SET nugetRuntimesARMPath=%nugetRuntimesPath%\win10-arm\native
+SET nugetRuntimesiOSPath=%nugetRuntimesPath%\iOS\native
 
 CALL:print %debug% "nugetTargetPath: !nugetTargetPath!"
 CALL:print %debug% "nugetSpecPath: !nugetSpecPath!"
@@ -517,7 +524,8 @@ IF !xamarinNuget! NEQ  1 (
 	SET sourceWebRtcProtoBufLitex86Path=!sourceWebRtcx86Path!\protobuf_lite.dll
 	
 	SET nugetTargetPath=%nugetBasePath%\Org.Ortc.Xamarin.targets
-	SET nugetSpec=%nugetPath%\%nugetName%\Org.Ortc.Xamarin.nuspec
+	SET nugetSpecPath=%nugetBasePath%\Org.Ortc.Xamarin.nuspec
+	SET nugetSpec=%nugetPath%\%nugetName%\Org.Ortc.nuspec
 	
 	CALL:print %debug% "sourceLibOrtcx86Path: !sourceLibOrtcx86Path!"
 	CALL:print %debug% "sourceLibOrtcx86DllPath: !sourceLibOrtcx86DllPath!"
@@ -568,8 +576,12 @@ IF !xamarinNuget! NEQ  1 (
 	CALL::copyFiles !sourceWebRtcBoringSSLx64Path! %nugetRuntimesx64Path%
 	CALL::copyFiles !sourceWebRtcProtoBufLitex64Path! %nugetRuntimesx64Path%
 	
-	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%\Org.Ortc.targets
-	CALL:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%\Org.Ortc.nuspec
+	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%
+	CALL:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
+	CALL:copyFiles !iOSOrtcLibSourcePath! !nugetRuntimesiOSPath!
+	CALL:renameFile %nugetBuildNativePath%\Org.Ortc.Xamarin.targets Org.Ortc.targets
+	CALL:renameFile %nugetPath%\%nugetName%\Org.Ortc.Xamarin.nuspec Org.Ortc.nuspec
+	
 )
 
 CALL:setNugetVersion %nugetSpec%
@@ -784,6 +796,16 @@ CScript  _zipIt.vbs  %1  %2
 del _zipIt.vbs
 GOTO:EOF
 
+:simpleCopyFiles
+IF EXIST %1 (
+	CALL:print %debug% "Copying %1 to %2"
+	COPY %1 %2
+	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
+) ELSE (
+	CALL:error 1 "Could not copy a %1"
+)
+GOTO:EOF
+
 :copyFiles
 IF EXIST %1 (
 	CALL:createFolder %2
@@ -792,6 +814,16 @@ IF EXIST %1 (
 	IF ERRORLEVEL 1 CALL:error 1 "Could not copy a %1"
 ) ELSE (
 	CALL:error 1 "Could not copy a %1"
+)
+GOTO:EOF
+
+:renameFile
+IF EXIST %1 (
+	CALL:print %debug% "Renaming %1 to %2"
+	REN  %1 %2
+	IF ERRORLEVEL 1 CALL:error 1 "Could not rename a %1"
+) ELSE (
+	CALL:error 1 "Could not rename a %1"
 )
 GOTO:EOF
 
