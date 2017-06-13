@@ -119,16 +119,7 @@ IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
-::IF /I "%currentPlatform%"=="win32" (
-	IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
-		IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
-			MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=x64 /t:Clean;Build /nodeReuse:False
-		) ELSE (
-			MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=win32 /t:Clean;Build /nodeReuse:False
-		)
-	) ELSE (
-		MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False /m
-	)
+	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False
 	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
@@ -212,11 +203,6 @@ IF /I "%currentPlatform%"=="win32" (
 IF /I "%currentPlatform%"=="win32_x64" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
-)
-
-::IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
-::	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
-::	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
 CALL:print %debug% "Source path is %libsSourcePath%"
