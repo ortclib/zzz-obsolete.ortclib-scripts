@@ -65,7 +65,7 @@ SET generate_Ortc_Nuget=0
 SET generate_WebRtc_Nuget=0
 
 ::input arguments
-SET supportedInputArguments=;target;version;key;prerelease;destination;publish;publishDestination;help;logLevel;pack;packDestination;
+SET supportedInputArguments=;target;version;key;prerelease;destination;publish;publishDestination;help;logLevel;pack;packDestination;xamarin;
 SET target=""
 SET version=1.0.0.0
 SET key=
@@ -77,6 +77,7 @@ SET help=0
 SET logLevel=2
 SET pack=0
 SET packDestination=..
+SET xamarin=1
 
 ::build variables
 SET msVS_Path=""
@@ -147,8 +148,11 @@ CALL:identifyTarget
 
 CALL:downloadNuget
 
-::CALL:generateNugetPackages
-CALL:generateXamarinNugetPackages
+IF %xamarin% NEQ 1 (
+	CALL:generateNugetPackages
+) ELSE (
+	CALL:generateXamarinNugetPackages
+)
 
 IF %publish% EQU 1 (
 	CALL:publishNuget
@@ -287,9 +291,9 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	SET nugetName=%nugetOrtcName%
 	
 	::this will build Org.Ortc.Xamarin.iOS as well
-	::CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32
-	::CALL bin\prepare.bat
-	::CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32_x64
+	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32
+	CALL bin\prepare.bat
+	CALL:build !SolutionPathCoreOrtc! wrappers\Org_Ortc_Xamarin win32_x64
 	
 	CALL:print %trace% "Restoring nuget packages for %~1"
 	bin\nuget.exe restore !SolutionPathOrtc!
@@ -900,7 +904,8 @@ GOTO:EOF
 
 IF EXIST !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
 IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
-
+IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Core.Xamarin.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Core.Xamarin.Nuget.sln > NUL
+IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln > NUL
 GOTO:EOF
 
 REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message
