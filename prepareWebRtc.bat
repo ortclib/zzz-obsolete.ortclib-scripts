@@ -45,7 +45,8 @@ SET errorMessageInvalidPlatform="Invalid platform name. For the list of availabl
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
-SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
+SET webRtcx64TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x64.sln
+SET webRtcx86TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x86.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
@@ -289,7 +290,7 @@ CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platfrom %~1"
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_cpu-" "%2" !webRTCGnArgsDestinationPath!
-IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~1"
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
 
 IF %logLevel% GEQ %trace% (
 	CALL GN gen !outputPath! --ide="vs2015"
@@ -298,7 +299,7 @@ IF %logLevel% GEQ %trace% (
 )
 IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
 
-
+IF EXIST %baseWebRTCPath%\WebRtc.%~2.sln CALL:copyTemplates  %baseWebRTCPath%WebRtc.%~2.sln !outputPath!
 GOTO:EOF
 
 
