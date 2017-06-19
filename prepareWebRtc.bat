@@ -45,9 +45,10 @@ SET errorMessageInvalidPlatform="Invalid platform name. For the list of availabl
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
+SET webRtcLibsTemplatePath=webrtc\windows\templates\libs\webrtc
 SET webRtcx64TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x64.sln
 SET webRtcx86TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x86.sln
-SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+rem SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
 
@@ -180,6 +181,8 @@ CALL:makeJunctionLinks
 
 CALL:updateFolders
 
+CALL:setupDepotTools
+
 CALL:downloadGnBinaries
 POPD
 CALL:updateSDKVersion
@@ -190,7 +193,7 @@ CALL:generateProjects
 POPD
 CALL:print %trace% "Popped %baseWebRTCPath% path"
 
-CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
+rem CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 CALL:done
 
@@ -270,20 +273,44 @@ COPY ..\chromium-pruned\third_party\OWNERS third_party\OWNERS
 COPY ..\chromium-pruned\third_party\PRESUBMIT.py third_party\PRESUBMIT.py 
 GOTO:EOF
 
+:setupDepotTools
+
+set CHECKSEMIPATH=%path:~-1%
+
+WHERE gn.bat > NUL 2>&1
+IF !ERRORLEVEL! EQU 1 (
+    IF "%CHECKSEMIPATH%"==";" (
+		set "PATH=%PATH%%~dp0depot_tools"
+    ) ELSE (
+		set "PATH=%PATH%;%~dp0depot_tools"
+    )
+)
+
+GOTO:EOF
+
 :downloadGnBinaries
 
-IF NOT EXIST gn.exe CALL python c:\depot_tools\download_from_google_storage.py -b chromium-gn -s buildtools\win\gn.exe.sha1
+IF NOT EXIST gn.exe CALL python ..\..\..\bin\depot_tools\download_from_google_storage.py -b chromium-gn -s buildtools\win\gn.exe.sha1
 IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading gn.exe"
 
-IF NOT EXIST clang-format.exe CALL python c:\depot_tools\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
+IF NOT EXIST clang-format.exe CALL python ..\..\..\bin\depot_tools\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
 IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading clang-format.exe"
 GOTO:EOF
 
 :generateProjectsForPlatform
 
-SET outputPath=out\%~1_%~2
+set IsDebugTarget=true
+IF "%~3"=="release" (
+	set IsDebugTarget=false
+)
+IF "%~3"=="debug" (
+	set IsDebugTarget=true
+)
+
+SET outputPath=out\%~1_%~2_%~3
 SET webRTCGnArgsDestinationPath=!outputPath!\args.gn
 CALL:makeDirectory !outputPath!
+echo CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_os-" "%~1" !webRTCGnArgsDestinationPath!
@@ -292,6 +319,9 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platfrom %~1"
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_cpu-" "%2" !webRTCGnArgsDestinationPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
 
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-is_debug-" "%IsDebugTarget%" !webRTCGnArgsDestinationPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for debug/release %IsDebugTarget%"
+
 IF %logLevel% GEQ %trace% (
 	CALL GN gen !outputPath! --ide="vs2015"
 ) ELSE (
@@ -299,7 +329,7 @@ IF %logLevel% GEQ %trace% (
 )
 IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
 
-IF EXIST %baseWebRTCPath%\WebRtc.%~2.sln CALL:copyTemplates  %baseWebRTCPath%WebRtc.%~2.sln !outputPath!
+IF EXIST ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln CALL:copyTemplates ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln !outputPath!\WebRtc.sln
 GOTO:EOF
 
 
@@ -311,35 +341,40 @@ SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 IF %platform_ARM% EQU 0 (
 	CALL:print %warning% "Generating WebRTC projects for arm platform ..."
 	SET platform_ARM_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 arm
+	CALL:generateProjectsForPlatform winrt_10 arm debug
+	CALL:generateProjectsForPlatform winrt_10 arm release
 	SET platform_ARM_prepared=2
 )
 
 IF %platform_x64% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for x64 platform ..."
 	SET platform_x64_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 x64
+	CALL:generateProjectsForPlatform winrt_10 x64 debug
+	CALL:generateProjectsForPlatform winrt_10 x64 release
 	SET platform_x64_prepared=2
 )
 
 IF %platform_x86% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for x86 platform ..."
 	SET platform_x86_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 x86
+	CALL:generateProjectsForPlatform winrt_10 x86 debug
+	CALL:generateProjectsForPlatform winrt_10 x86 release
 	SET platform_x86_prepared=2
 )
 
 IF %platform_win32% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
 	SET platform_win32_prepared=1
-	CALL:generateProjectsForPlatform win x86
+	CALL:generateProjectsForPlatform win x86 debug
+	CALL:generateProjectsForPlatform win x86 release
 	SET platform_win32_prepared=2
 )
 
 IF %platform_win32_x64% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for win32 x64 platform ..."
 	SET platform_win32_prepared=1
-	CALL:generateProjectsForPlatform win x64
+	CALL:generateProjectsForPlatform win x64 debug
+	CALL:generateProjectsForPlatform win x64 release
 	SET platform_win32_prepared=2
 )
 
@@ -476,7 +511,7 @@ COPY %~1 %~2 >NUL
 
 CALL:print %trace% Copied file %~1 to %~2
 
-IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC template solution file"
 
 GOTO:EOF
 
