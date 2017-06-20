@@ -252,6 +252,7 @@ CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
+CALL:makeLink . third_party\h264_winrt ..\..\windows\third_party\h264_winrt
 CALL:makeLink . third_party\gflags ..\gflags-build
 CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
