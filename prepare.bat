@@ -22,14 +22,11 @@ SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 ::downloads
 SET pythonVersion=2.7.6
 SET ninjaVersion=v1.6.0
-SET depotToolsBranch=master-uwp
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ninjaDestinationPath=.\bin\ninja-win.zip
-SET depotToolsPath=.\bin\depot-tools.zip
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
 SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
-SET depotToolsDownloadUrl=https://github.com/webrtc-uwp/depot_tools/archive/%depotToolsBranch%.zip
 
 ::helper flags
 SET taskFailed=0
@@ -148,9 +145,6 @@ CALL:perlCheck
 
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
-
-::Install depot_tools if missing
-CALL:installDepotTools
 
 ::Install ninja if missing
 ::CALL:installNinja
@@ -564,39 +558,6 @@ GOTO:EOF
 
 :checkOrtcAvailability
 IF EXIST ortc\NUL SET ortcAvailable=1
-GOTO:EOF
-
-:installDepotTools
-
-set CHECKSEMIPATH=%path:~-1%
-
-WHERE gn.bat > NUL 2>&1
-IF !ERRORLEVEL! EQU 1 (
-    IF "%CHECKSEMIPATH%"==";" (
-		set "PATH=%PATH%%~dp0depot_tools"
-    ) ELSE (
-		set "PATH=%PATH%;%~dp0depot_tools"
-    )
-)
-
-WHERE gn.bat > NUL 2>&1
-IF !ERRORLEVEL! EQU 1 (
-	CALL:print %trace% "depot_tools is not in the path"
-
-	IF NOT EXIST .\bin\depot_tools\gn.bat (
-		call:print %trace% "Downloading depot_tools ..."
-		call:download %depotToolsDownloadUrl% %depotToolsPath%
-
-		if EXIST %depotToolsPath% (
-			call:print %trace% "Unarchiving %depotToolsPath% ..."
-			call:unzipFile "%~dp0" "%~dp0depot-tools.zip"
-			MOVE ".\bin\depot_tools-%depotToolsBranch%" ".\bin\depot_tools"
-		) ELSE (
-			CALL:error 0 "depot_tools is not installed. Projects won't be buildable."
-		)
-    )
-)
-
 GOTO:EOF
 
 :installNinja

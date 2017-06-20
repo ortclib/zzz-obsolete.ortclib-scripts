@@ -275,14 +275,18 @@ GOTO:EOF
 
 :setupDepotTools
 
+PUSHD ..\depot_tools > NUL
+set DepotToolsPath=%cd%
+POPD > NUL
+
 set CHECKSEMIPATH=%path:~-1%
 
 WHERE gn.bat > NUL 2>&1
 IF !ERRORLEVEL! EQU 1 (
     IF "%CHECKSEMIPATH%"==";" (
-		set "PATH=%PATH%%~dp0depot_tools"
+		set "PATH=%PATH%%DepotToolsPath%"
     ) ELSE (
-		set "PATH=%PATH%;%~dp0depot_tools"
+		set "PATH=%PATH%;%DepotToolsPath%"
     )
 )
 
@@ -290,10 +294,10 @@ GOTO:EOF
 
 :downloadGnBinaries
 
-IF NOT EXIST gn.exe CALL python ..\..\..\bin\depot_tools\download_from_google_storage.py -b chromium-gn -s buildtools\win\gn.exe.sha1
+IF NOT EXIST gn.exe CALL python %DepotToolsPath%\download_from_google_storage.py -b chromium-gn -s buildtools\win\gn.exe.sha1
 IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading gn.exe"
 
-IF NOT EXIST clang-format.exe CALL python ..\..\..\bin\depot_tools\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
+IF NOT EXIST clang-format.exe CALL python %DepotToolsPath%\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
 IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading clang-format.exe"
 GOTO:EOF
 
@@ -310,11 +314,11 @@ IF "%~3"=="debug" (
 SET outputPath=out\%~1_%~2_%~3
 SET webRTCGnArgsDestinationPath=!outputPath!\args.gn
 CALL:makeDirectory !outputPath!
-echo CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_os-" "%~1" !webRTCGnArgsDestinationPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platfrom %~1"
+
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_cpu-" "%2" !webRTCGnArgsDestinationPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
@@ -329,7 +333,7 @@ IF %logLevel% GEQ %trace% (
 )
 IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
 
-%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\RecurseReplaceInFiles.ps1 !outputPath! *.vcxproj "call ninja.exe" "call %~dp0depot_tools\ninja.exe"
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\RecurseReplaceInFiles.ps1 !outputPath! *.vcxproj "call ninja.exe" "call %DepotToolsPath%\ninja.exe"
 
 IF EXIST ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln CALL:copyTemplates ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln !outputPath!\WebRtc.sln
 GOTO:EOF
