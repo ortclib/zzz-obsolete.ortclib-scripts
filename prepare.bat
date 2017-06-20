@@ -153,7 +153,7 @@ CALL:pythonSetup
 CALL:installDepotTools
 
 ::Install ninja if missing
-CALL:installNinja
+::CALL:installNinja
 
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
