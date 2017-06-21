@@ -188,6 +188,7 @@ POPD
 CALL:updateSDKVersion
 PUSHD %baseWebRTCPath% > NUL
 
+CALL:gflagsPatchBuild
 CALL:generateProjects
 
 POPD
@@ -252,7 +253,8 @@ CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
-CALL:makeLink . third_party\h264_winrt ..\..\windows\third_party\h264_winrt
+CALL:makeLink . third_party\winrt_compat ..\..\windows\third_party\winrt_compat
+CALL:makeLink . third_party\winrt_h264 ..\..\windows\third_party\winrt_h264
 CALL:makeLink . third_party\gflags ..\gflags-build
 CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
@@ -300,6 +302,33 @@ IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading gn.exe"
 
 IF NOT EXIST clang-format.exe CALL python %DepotToolsPath%\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
 IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading clang-format.exe"
+GOTO:EOF
+
+:gflagsPatchBuild
+
+echo PATCHING GFLAGS...
+
+set gflagsWindowsFolder=..\..\windows\third_party\winrt_compat\gflags
+set gflagsIgnore=.gitignore
+set gflagsPatchFileName=patch_892576179b45861b53e04a112996a738309cf364.diff
+set gflagsPatchFileNameApplied=%gflagsPatchFileName%.applied
+
+IF NOT EXIST third_party\gflags\%gflagsIgnore% COPY %gflagsWindowsFolder%\%gflagsIgnore% third_party\gflags
+IF NOT EXIST third_party\gflags\%gflagsPatchFileName% COPY %gflagsWindowsFolder%\%gflagsPatchFileName% third_party\gflags
+
+IF NOT EXIST ..\gflags-build\%gflagsPatchFileNameApplied% (
+	PUSHD ..\gflags-build > NUL
+	git apply %gflagsPatchFileName%
+	IF !ERRORLEVEL! NEQ 0 (
+		set FailureGitApply=1
+    )
+	POPD > NUL
+    IF !FailureGitApply! EQU 1 (
+    	CALL:error 1 "Could not generate apply patch to webrtc\third_party\gflags using %gflagsWindowsFolder%\%gflagsPatchFileName%"
+    )
+)
+IF NOT EXIST third_party\gflags\%gflagsPatchFileNameApplied% COPY %gflagsWindowsFolder%\%gflagsPatchFileName% third_party\gflags\%gflagsPatchFileNameApplied%
+
 GOTO:EOF
 
 :generateProjectsForPlatform
