@@ -188,7 +188,7 @@ POPD
 CALL:updateSDKVersion
 PUSHD %baseWebRTCPath% > NUL
 
-CALL:gflagsPatchBuild
+::CALL:gflagsPatchBuild
 CALL:generateProjects
 
 POPD
