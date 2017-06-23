@@ -221,7 +221,7 @@ CALL:makeLink . buildtools ..\buildtools
 CALL:makeLink . build ..\chromium-pruned\build
 CALL:makeLink . chromium\src\third_party\jsoncpp ..\chromium-pruned\third_party\jsoncpp
 CALL:makeLink . chromium\src\third_party\jsoncpp\source ..\jsoncpp
-::CALL:makeLink . chromium\src\tools\protoc_wrapper ..\chromium-pruned\tools\protoc_wrapper
+CALL:makeLink . chromium\src\tools\protoc_wrapper ..\chromium-pruned\tools\protoc_wrapper
 CALL:makeLink . chromium\src\third_party\protobuf ..\chromium-pruned\third_party\protobuf
 CALL:makeLink . chromium\src\third_party\yasm ..\chromium-pruned\third_party\yasm
 CALL:makeLink . chromium\src\third_party\opus ..\chromium-pruned\third_party\opus
@@ -232,7 +232,7 @@ CALL:makeLink . chromium\src\third_party\libvpx ..\chromium-pruned\third_party\l
 CALL:makeLink . chromium\src\third_party\libvpx\source\libvpx ..\libvpx
 CALL:makeLink . chromium\src\testing ..\chromium-pruned\testing
 CALL:makeLink . testing chromium\src\testing
-::CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
+CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
 CALL:makeLink . third_party\yasm chromium\src\third_party\yasm
 CALL:makeLink . third_party\yasm\binaries ..\yasm\binaries
 CALL:makeLink . third_party\yasm\source\patched-yasm ..\yasm\patched-yasm
