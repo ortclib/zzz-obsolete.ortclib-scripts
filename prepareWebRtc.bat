@@ -208,6 +208,7 @@ CALL:makeDirectory chromium\src\tools
 CALL:makeDirectory chromium\src\third_party
 CALL:makeDirectory chromium\src\third_party\winsdk_samples
 CALL:makeDirectory chromium\src\third_party\libjingle\source\talk\media\testdata\
+CALL:makeDirectory third_party
 ::CALL:makeDirectory third_party\gflags
 ::CALL:makeDirectory third_party\winsdk_samples
 CALL:makeDirectory tools
