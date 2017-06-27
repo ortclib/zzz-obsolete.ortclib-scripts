@@ -253,8 +253,8 @@ CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
-CALL:makeLink . third_party\winrt_compat ..\..\windows\third_party\winrt_compat
-CALL:makeLink . third_party\winrt_h264 ..\..\windows\third_party\winrt_h264
+CALL:makeLink . third_party\winuwp_compat ..\..\windows\third_party\winuwp_compat
+CALL:makeLink . third_party\winuwp_h264 ..\..\windows\third_party\winuwp_h264
 CALL:makeLink . third_party\gflags ..\gflags-build
 CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
@@ -308,7 +308,7 @@ GOTO:EOF
 
 echo PATCHING GFLAGS...
 
-set gflagsWindowsFolder=..\..\windows\third_party\winrt_compat\gflags
+set gflagsWindowsFolder=..\..\windows\third_party\winuwp_compat\gflags
 set gflagsIgnore=.gitignore
 set gflagsPatchFileName=patch_892576179b45861b53e04a112996a738309cf364.diff
 set gflagsPatchFileNameApplied=%gflagsPatchFileName%.applied
@@ -374,27 +374,27 @@ CALL:print %trace% "Executing generateProjects function"
 
 SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
-IF %platform_ARM% EQU 0 (
+IF %platform_ARM% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for arm platform ..."
 	SET platform_ARM_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 arm debug
-	CALL:generateProjectsForPlatform winrt_10 arm release
+	CALL:generateProjectsForPlatform winuwp_10 arm debug
+	CALL:generateProjectsForPlatform winuwp_10 arm release
 	SET platform_ARM_prepared=2
 )
 
 IF %platform_x64% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for x64 platform ..."
 	SET platform_x64_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 x64 debug
-	CALL:generateProjectsForPlatform winrt_10 x64 release
+	CALL:generateProjectsForPlatform winuwp_10 x64 debug
+	CALL:generateProjectsForPlatform winuwp_10 x64 release
 	SET platform_x64_prepared=2
 )
 
 IF %platform_x86% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for x86 platform ..."
 	SET platform_x86_prepared=1
-	CALL:generateProjectsForPlatform winrt_10 x86 debug
-	CALL:generateProjectsForPlatform winrt_10 x86 release
+	CALL:generateProjectsForPlatform winuwp_10 x86 debug
+	CALL:generateProjectsForPlatform winuwp_10 x86 release
 	SET platform_x86_prepared=2
 )
 
