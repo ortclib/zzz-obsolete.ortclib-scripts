@@ -28,7 +28,7 @@ SET ninjaDestinationPath=.\bin\ninja-win.zip
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
 SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
 SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
-SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\BindingOrtcLib\BindingOrtcLib\libOrtc.dylib
+SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
@@ -568,11 +568,13 @@ REM Copy all ORTC template required to set developer environment
 
 IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
 
+echo COPY %~1 %~2
 COPY %~1 %~2 >NUL
 
+echo CALL print %trace% Copied file %~1 to %~2
 CALL:print %trace% Copied file %~1 to %~2
 
-IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC template solution file"
 
 GOTO:EOF
 
