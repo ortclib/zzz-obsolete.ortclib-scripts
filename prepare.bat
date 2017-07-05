@@ -31,6 +31,7 @@ SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVer
 ::helper flags
 SET taskFailed=0
 SET ortcAvailable=0
+SET ortcrx64Available=0
 SET startTime=%time%
 SET endingTime=0
 SET defaultProperties=0
@@ -55,14 +56,14 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;recreateEventing;					
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-
+SET recreateEventing=0
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
@@ -146,11 +147,14 @@ CALL:perlCheck
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
+IF !ortcrx64Available! EQU 1 (
+	CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat -step 0  -logLevel %logLevel%
+)
 ::Generate WebRTC VS2015 projects from gyp files
 CALL:prepareWebRTC
 
 ::Install ninja if missing
-IF %platform_win32% EQU 1 CALL:installNinja
+CALL:installNinja
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
@@ -277,6 +281,11 @@ IF /I "%platform%"=="all" (
 		SET validInput=1
 	)
 	
+	IF /I "%platform%"=="win32_rx64" (
+		SET platform_win32_x64=1
+		SET validInput=1
+	)
+	
 	IF !validInput!==1 (
 		SET messageText=Preparing development environment for %platform% platform...
 	)
@@ -377,6 +386,9 @@ CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath
 
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
+IF !ortcrx64Available! EQU 1 (
+CALL ortc_winapi_rx64\bin\prepareWinApirx64.bat -step 1 -logLevel %logLevel%
+)
 GOTO:EOF
 
 ::Generate WebRTC projects
@@ -411,7 +423,10 @@ GOTO:EOF
 
 ::Generate events providers
 :prepareEventing
-
+SET eventsOutput=%cd%\ortc\windows\solutions\Eventing\
+IF EXIST !eventsOutput! (
+	IF %recreateEventing% EQU 0 GOTO:end
+)
 IF %noEventing% EQU 0 (
 	CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
 	CALL bin\prepareEventing.bat -platform x86 -logLevel %logLevel%
@@ -558,6 +573,11 @@ GOTO:EOF
 
 :checkOrtcAvailability
 IF EXIST ortc\NUL SET ortcAvailable=1
+CALL:checkOrtc_rx64_Availability
+GOTO:EOF
+
+:checkOrtc_rx64_Availability
+IF EXIST ortc_winapi_rx64\NUL SET ortcrx64Available=1
 GOTO:EOF
 
 :installNinja
@@ -621,6 +641,8 @@ ECHO.
 ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
 ECHO.
 ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)
+ECHO.
+ECHO.	[93m-recreateEventing[0m 	Force events recreation
 ECHO.
 CALL bin\batchTerminator.bat
 
@@ -697,3 +719,4 @@ CALL:print %info% "Success: Development environment is set."
 SET endTime=%time%
 CALL:showTime
 ECHO. 
+:end

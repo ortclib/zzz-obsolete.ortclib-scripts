@@ -214,6 +214,10 @@ IF /I "%currentPlatform%"=="win32_x64" (
 	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
+IF /I "%currentPlatform%"=="win32_rx64" (
+	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
+	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+)
 ::IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
 ::	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
 ::	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
