@@ -9,4 +9,4 @@ $replace=$args[1]
 $replaceWith=$args[2]
 $output=$args[3]
 
-(Get-Content $input) | ForEach-Object { $_ -replace $replace, $replaceWith } | Set-Content $output
+(Get-Content $input) | ForEach-Object { $_ -replace [regex]::Escape($replace), $replaceWith } | Set-Content $output
