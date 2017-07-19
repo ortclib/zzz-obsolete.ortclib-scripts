@@ -60,6 +60,7 @@ PROJECT_IOS_FILE=all_ios.xcodeproj
 #OUTPUT_ANDROID=out_android
 #OUTPUT_LINUX=out_linux
 
+TARGET_CPU_arm=0
 TARGET_CPU_armv7=0
 TARGET_CPU_arm64=0
 TARGET_CPU_x86=0
@@ -439,6 +440,7 @@ makeLinks()
 
   makeLink "." "buildtools" "../buildtools"
   makeLink "." "build" "../chromium-pruned/build"
+  makeLink "." "base" "../chromium-pruned/base"
   makeLink "." "chromium/src/third_party/jsoncpp" "../chromium-pruned/third_party/jsoncpp"
   makeLink "." "chromium/src/third_party/jsoncpp/source" "../jsoncpp"
 
@@ -531,6 +533,15 @@ updateFolders()
   cpNewest ../chromium-pruned/third_party/DEPS third_party/DEPS
   cpNewest ../chromium-pruned/third_party/OWNERS third_party/OWNERS
   cpNewest ../chromium-pruned/third_party/PRESUBMIT.py third_party/PRESUBMIT.py
+  cpNewest ../../linux/templates/build/linux/sysroot_scripts/install-sysroot-alt.py build/linux/sysroot_scripts/install-sysroot-alt.py
+}
+
+installSysRoot()
+{
+  if [ "$HOST_SYSTEM" == "linux" ]; then
+    result=$(python build/linux/sysroot_scripts/install-sysroot-alt.py --arch=amd64)
+    print $debug "$result"
+  fi
 }
 
 setupDepotTools()
@@ -706,6 +717,8 @@ generateProjectsForPlatform()
     IsDebugTarget=true
   fi
 
+  print $info "Generating for $1 $2 $3 ..."
+
   outputPath=out/$1_$2_$3
   webRTCGnArgsDestinationPath=$outputPath/args.gn
   webRTCGnArgsSourcePath=templates/gns/args.gn
@@ -739,6 +752,12 @@ generateProjectsForPlatform()
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
   fi
 
+  pushd "$outputPath/obj" 2> /dev/null
+
+  $DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
+
+  popd > /dev/null
+
 }
 
 generateProjects()
@@ -746,87 +765,88 @@ generateProjects()
   print $debug "Executing generateProjects function"
 
   if [ $platform_iOS -eq 1 ]; then
+    if [ $TARGET_CPU_arm -eq 1 ]; then
+      generateProjectsForPlatform ios arm debug
+      generateProjectsForPlatform ios arm release
+    fi
     if [ $TARGET_CPU_armv7 -eq 1 ]; then
-      print $info "Generating for iOS arm..."
       generateProjectsForPlatform ios armv7 debug
       generateProjectsForPlatform ios armv7 release
     fi
     if [ $TARGET_CPU_arm64 -eq 1 ]; then
-      print $info "Generating for iOS arm64..."
       generateProjectsForPlatform ios arm64 debug
       generateProjectsForPlatform ios arm64 release
     fi
     if [ $TARGET_CPU_x86 -eq 1 ]; then
-      print $info "Generating for iOS x86..."
       generateProjectsForPlatform ios x86 debug
       generateProjectsForPlatform ios x86 release
     fi
     if [ $TARGET_CPU_x64 -eq 1 ]; then
-      print $info "Generating for iOS x64..."
       generateProjectsForPlatform ios x64 debug
       generateProjectsForPlatform ios x64 release
     fi
   fi
 
   if [ $platform_macOS -eq 1 ]; then
+    if [ $TARGET_CPU_arm -eq 1 ]; then
+      generateProjectsForPlatform mac arm debug
+      generateProjectsForPlatform mac arm release
+    fi
     if [ $TARGET_CPU_armv7 -eq 1 ]; then
-      print $info "Generating for macOS armv7..."
       generateProjectsForPlatform mac armv7 debug
       generateProjectsForPlatform mac armv7 release
     fi
     if [ $TARGET_CPU_arm64 -eq 1 ]; then
-      print $info "Generating for macOS arm64..."
       generateProjectsForPlatform mac arm64 debug
       generateProjectsForPlatform mac arm64 release
     fi
     if [ $TARGET_CPU_x86 -eq 1 ]; then
-      print $info "Generating for macOS x86..."
       generateProjectsForPlatform mac x86 debug
       generateProjectsForPlatform mac x86 release
     fi
     if [ $TARGET_CPU_x64 -eq 1 ]; then
-      print $info "Generating for macOS x64..."
       generateProjectsForPlatform mac x64 debug
       generateProjectsForPlatform mac x64 release
     fi
   fi
 
   if [ $platform_linux -eq 1 ]; then
+    if [ $TARGET_CPU_arm -eq 1 ]; then
+      generateProjectsForPlatform linux arm debug
+      generateProjectsForPlatform linux arm release
+    fi
     if [ $TARGET_CPU_armv7 -eq 1 ]; then
-      print $info "Generating for linux armv7..."
       generateProjectsForPlatform linux armv7 debug
       generateProjectsForPlatform linux armv7 release
     fi
     if [ $TARGET_CPU_arm64 -eq 1 ]; then
-      print $info "Generating for linux arm64..."
       generateProjectsForPlatform linux arm64 debug
       generateProjectsForPlatform linux arm64 release
     fi
     if [ $TARGET_CPU_x86 -eq 1 ]; then
-      print $info "Generating for linux x86..."
       generateProjectsForPlatform linux x86 debug
       generateProjectsForPlatform linux x86 release
     fi
     if [ $TARGET_CPU_x64 -eq 1 ]; then
-      print $info "Generating for linux x64..."
       generateProjectsForPlatform linux x64 debug
       generateProjectsForPlatform linux x64 release
     fi
   fi
 
   if [ $platform_android -eq 1 ]; then
+    if [ $TARGET_CPU_arm -eq 1 ]; then
+      generateProjectsForPlatform android arm debug
+      generateProjectsForPlatform android arm release
+    fi
     if [ $TARGET_CPU_armv7 -eq 1 ]; then
-      print $info "Generating for android armv7..."
       generateProjectsForPlatform android armv7 debug
       generateProjectsForPlatform android armv7 release
     fi
     if [ $TARGET_CPU_x86 -eq 1 ]; then
-      print $info "Generating for android x86..."
       generateProjectsForPlatform android x86 debug
       generateProjectsForPlatform android x86 release
     fi
     if [ $TARGET_CPU_x64 -eq 1 ]; then
-      print $info "Generating for android x64..."
       generateProjectsForPlatform android x64 debug
       generateProjectsForPlatform android x64 release
     fi
@@ -920,6 +940,7 @@ makeFolderStructure
 
 makeLinks
 updateFolders
+installSysRoot
 #setBogusGypFiles
 updateClang
 setupDepotTools
