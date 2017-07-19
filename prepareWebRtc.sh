@@ -733,7 +733,7 @@ generateProjectsForPlatform()
   if [ $logLevel -ge $trace ]; then
     gn gen $outputPath
   else
-    gn gen $outputPath >NUL
+    gn gen $outputPath > /dev/null
   fi
   if [ $? -ne 0 ]; then
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
