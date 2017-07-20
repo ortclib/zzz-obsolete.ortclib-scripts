@@ -140,6 +140,12 @@ CALL:identifyTarget
 ::Determine targeted platforms
 CALL:identifyPlatform
 
+::Check for VS 2015
+CALL:ckeckVisualStudioPath 
+
+::Check for VC++ Tools
+CALL:ckeckVisualStudioBuildTools
+	
 ::Check is perl installed
 CALL:perlCheck
 
@@ -298,6 +304,32 @@ IF "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
 	::it is not valid
 	SET %2=0
 )
+GOTO:EOF
+
+REM Check if Visual Studio 2015 is installed
+:ckeckVisualStudioPath
+
+SET progfiles=%ProgramFiles%
+
+IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
+
+SET msVS_Path="%progfiles%\Microsoft Visual Studio 14.0"
+
+IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 is not installed"
+
+GOTO:EOF
+
+REM Fix for Exception: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat is missing - make sure VC++ tools are installed.
+:ckeckVisualStudioBuildTools
+
+SET progfiles=%ProgramFiles%
+
+IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
+
+REM Check if VC++ tools are installed for VS 2015 (VS 14.0 <=> VS 2015)
+SET vcToolsPath=%msVS_Path%\VC\vcvarsall.bat
+IF NOT EXIST %vcToolsPath% CALL:error 1 "VC++ tools are not installed for Visual Studio 2015."
+
 GOTO:EOF
 
 REM check if perl is installed

@@ -327,20 +327,6 @@ IF %platform_win32_x64% EQU 1 (
 	SET platform_win32_prepared=2
 )
 
-IF %platform_win32_x64% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
-	SET platform_win32_prepared=1
-	SET GYP_DEFINES=component=shared_library target_arch=x64
-	SET GYP_GENERATORS=ninja,msvs-ninja
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
-	) ELSE (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
-	SET platform_win32_prepared=2
-)
 
 GOTO:EOF
 
@@ -376,6 +362,11 @@ POPD
 GOTO:EOF
 
 :determineWindowsSDK
+
+IF NOT EXIST "C:\Program Files (x86)\Windows Kits\10" (
+CALL:ERROR 1 "Windows 10 SDK is not present, please install version 10.0.14393.x. from https://developer.microsoft.com/en-us/windows/downloads/sdk-archive"
+) 
+
 SET windowsSDKPath="Program Files (x86)\Windows Kits\10\Lib\"
 SET windowsSDKFullPath=C:\!windowsSDKPath!
 
