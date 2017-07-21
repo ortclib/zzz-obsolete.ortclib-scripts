@@ -393,8 +393,9 @@ GOTO setVersion
 IF EXIST !windowsSDKFullPath! (
 	PUSHD !windowsSDKFullPath!
 	FOR /F "delims=" %%a in ('dir /ad /b /on') do (
-		IF NOT %%a==10.0.15063.0 SET windowsSDKVersion=%%a
-	)
+		FOR /f "tokens=1-3 delims=[.] " %%i IN ("%%a") DO (SET v1=%%k)
+		IF !v1! LSS 15063 SET windowsSDKVersion=%%a
+	)	
 	POPD
 ) ELSE (
 	CALL:ERROR 1 "Invalid Windows SDK path"
