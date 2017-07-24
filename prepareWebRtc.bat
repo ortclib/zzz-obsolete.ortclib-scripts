@@ -333,6 +333,7 @@ IF %platform_win32_x64% EQU 1 (
 	SET platform_win32_prepared=2
 )
 
+
 GOTO:EOF
 
 :makeDirectory
@@ -367,6 +368,11 @@ POPD
 GOTO:EOF
 
 :determineWindowsSDK
+
+IF NOT EXIST "C:\Program Files (x86)\Windows Kits\10" (
+CALL:ERROR 1 "Windows 10 SDK is not present, please install version 10.0.14393.x. from https://developer.microsoft.com/en-us/windows/downloads/sdk-archive"
+) 
+
 SET windowsSDKPath="Program Files (x86)\Windows Kits\10\Lib\"
 SET windowsSDKFullPath=C:\!windowsSDKPath!
 
@@ -393,8 +399,9 @@ GOTO setVersion
 IF EXIST !windowsSDKFullPath! (
 	PUSHD !windowsSDKFullPath!
 	FOR /F "delims=" %%a in ('dir /ad /b /on') do (
-		IF NOT %%a==10.0.15063.0 SET windowsSDKVersion=%%a
-	)
+		FOR /f "tokens=1-3 delims=[.] " %%i IN ("%%a") DO (SET v1=%%k)
+		IF !v1! LSS 15063 SET windowsSDKVersion=%%a
+	)	
 	POPD
 ) ELSE (
 	CALL:ERROR 1 "Invalid Windows SDK path"
