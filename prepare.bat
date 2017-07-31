@@ -144,14 +144,17 @@ CALL:identifyPlatform
 ::Check is perl installed
 CALL:perlCheck
 
+::Check if git installed
+CALL:gitCheck
+
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
-::Generate WebRTC VS2015 projects from gyp files
-CALL:prepareWebRTC
-
 ::Install ninja if missing
-IF %platform_win32% EQU 1 CALL:installNinja
+::CALL:installNinja
+
+::Generate WebRTC VS2015 projects from gn files
+CALL:prepareWebRTC
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
@@ -197,6 +200,14 @@ IF %ERRORLEVEL% EQU 1 (
 ) else (
 	CALL:print 1 "Python				    installed"
 )
+
+WHERE git > NUL 2>&1
+IF %ERRORLEVEL% EQU 1 (
+	CALL:print 0 "Git   				not installed"
+) else (
+	CALL:print 1 "Git   				    installed"
+)
+
 ECHO.
 CALL:print 2  "================================================================================"
 ECHO.
@@ -324,6 +335,28 @@ IF %ERRORLEVEL% EQU 1 (
 	ECHO.
 	
 	CALL:error 1 "Perl has to be installed before running prepare script!"
+	ECHO.	
+)
+GOTO:EOF
+
+REM check if git is installed
+:gitCheck
+WHERE git > NUL 2>&1
+IF %ERRORLEVEL% EQU 1 (
+	ECHO.
+	CALL:print 2  "================================================================================"
+	ECHO.
+	CALL:print 2  "Warning! Warning! Warning! Warning! Warning! Warning! Warning!"
+	ECHO.
+	CALL:print 2  "Git is missing."
+	CALL:print 2  "You need to have installed git to build projects properly."
+	ECHO.
+	CALL:print 2  "================================================================================"
+	ECHO.
+	CALL:print 2  "NOTE: Please restart your command shell after installing git and re-run this script..."	
+	ECHO.
+	
+	CALL:error 1 "git has to be installed before running prepare script!"
 	ECHO.	
 )
 GOTO:EOF
@@ -595,7 +628,7 @@ IF !ERRORLEVEL! EQU 1 (
 			CALL::print %trace% "Unarchiving ninja-win.zip ..."
 			CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
 		) ELSE (
-			CALL:error 0 "Ninja is not installed. Win32 projects cwon't be buildable."
+			CALL:error 0 "Ninja is not installed. Projects won't be buildable."
 		)
 	)
 	

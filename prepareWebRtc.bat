@@ -45,8 +45,12 @@ SET errorMessageInvalidPlatform="Invalid platform name. For the list of availabl
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
-SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
-SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+SET webRtcLibsTemplatePath=webrtc\windows\templates\libs\webrtc
+SET webRtcx64TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x64.sln
+SET webRtcx86TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x86.sln
+rem SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+
+SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
 SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
@@ -175,16 +179,22 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
+CALL:updateFolders
+
+CALL:setupDepotTools
+
+CALL:downloadGnBinaries
 POPD
 CALL:updateSDKVersion
 PUSHD %baseWebRTCPath% > NUL
 
+::CALL:gflagsPatchBuild
 CALL:generateProjects
 
 POPD
 CALL:print %trace% "Popped %baseWebRTCPath% path"
 
-CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
+rem CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
 CALL:done
 
@@ -198,12 +208,17 @@ CALL:makeDirectory chromium\src\tools
 CALL:makeDirectory chromium\src\third_party
 CALL:makeDirectory chromium\src\third_party\winsdk_samples
 CALL:makeDirectory chromium\src\third_party\libjingle\source\talk\media\testdata\
+CALL:makeDirectory third_party
+::CALL:makeDirectory third_party\gflags
+::CALL:makeDirectory third_party\winsdk_samples
+CALL:makeDirectory tools
 
 GOTO:EOF
 
 :makeJunctionLinks
 CALL:print %trace% "Executing makeJunctionLinks function"
 
+CALL:makeLink . buildtools ..\buildtools
 CALL:makeLink . build ..\chromium-pruned\build
 CALL:makeLink . chromium\src\third_party\jsoncpp ..\chromium-pruned\third_party\jsoncpp
 CALL:makeLink . chromium\src\third_party\jsoncpp\source ..\jsoncpp
@@ -239,14 +254,121 @@ CALL:makeLink . third_party\libyuv ..\libyuv
 CALL:makeLink . third_party\openmax_dl ..\openmax
 CALL:makeLink . third_party\libjpeg_turbo ..\libjpeg_turbo
 CALL:makeLink . third_party\jsoncpp chromium\src\third_party\jsoncpp
+CALL:makeLink . third_party\winuwp_compat ..\..\windows\third_party\winuwp_compat
+CALL:makeLink . third_party\winuwp_h264 ..\..\windows\third_party\winuwp_h264
+CALL:makeLink . third_party\gflags ..\gflags-build
 CALL:makeLink . third_party\gflags\src ..\gflags
-CALL:makeLink . third_party\winsdk_samples\src ..\winsdk_samples_v71
+CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium-pruned\tools\clang
 CALL:makeLink . testing\gtest ..\googletest
 CALL:makeLink . testing\gmock ..\googlemock
 
 GOTO:EOF
+
+:updateFolders
+
+::XCopy  /S /I /Y ..\gflags-build third_party\gflags > NUL
+::IF !errorlevel! NEQ 0 CALL:error 1 "Missing gn files for gflags"
+
+COPY ..\chromium-pruned\third_party\BUILD.gn third_party\BUILD.gn 
+COPY ..\chromium-pruned\third_party\DEPS third_party\DEPS 
+COPY ..\chromium-pruned\third_party\OWNERS third_party\OWNERS 
+COPY ..\chromium-pruned\third_party\PRESUBMIT.py third_party\PRESUBMIT.py 
+GOTO:EOF
+
+:setupDepotTools
+
+PUSHD ..\depot_tools > NUL
+set DepotToolsPath=%cd%
+POPD > NUL
+
+set CHECKSEMIPATH=%path:~-1%
+
+WHERE gn.bat > NUL 2>&1
+IF !ERRORLEVEL! EQU 1 (
+    IF "%CHECKSEMIPATH%"==";" (
+		set "PATH=%PATH%%DepotToolsPath%"
+    ) ELSE (
+		set "PATH=%PATH%;%DepotToolsPath%"
+    )
+)
+
+GOTO:EOF
+
+:downloadGnBinaries
+
+IF NOT EXIST gn.exe CALL python %DepotToolsPath%\download_from_google_storage.py -b chromium-gn -s buildtools\win\gn.exe.sha1
+IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading gn.exe"
+
+IF NOT EXIST clang-format.exe CALL python %DepotToolsPath%\download_from_google_storage.py -b chromium-clang-format -s buildtools\win\clang-format.exe.sha1
+IF !errorlevel! NEQ 0 CALL:error 1 "Failed downloading clang-format.exe"
+GOTO:EOF
+
+:gflagsPatchBuild
+
+echo PATCHING GFLAGS...
+
+set gflagsWindowsFolder=..\..\windows\third_party\winuwp_compat\gflags
+set gflagsIgnore=.gitignore
+set gflagsPatchFileName=patch_892576179b45861b53e04a112996a738309cf364.diff
+set gflagsPatchFileNameApplied=%gflagsPatchFileName%.applied
+
+IF NOT EXIST third_party\gflags\%gflagsIgnore% COPY %gflagsWindowsFolder%\%gflagsIgnore% third_party\gflags
+IF NOT EXIST third_party\gflags\%gflagsPatchFileName% COPY %gflagsWindowsFolder%\%gflagsPatchFileName% third_party\gflags
+
+IF NOT EXIST ..\gflags-build\%gflagsPatchFileNameApplied% (
+	PUSHD ..\gflags-build > NUL
+	git apply %gflagsPatchFileName%
+	IF !ERRORLEVEL! NEQ 0 (
+		set FailureGitApply=1
+    )
+	POPD > NUL
+    IF !FailureGitApply! EQU 1 (
+    	CALL:error 1 "Could not generate apply patch to webrtc\third_party\gflags using %gflagsWindowsFolder%\%gflagsPatchFileName%"
+    )
+)
+IF NOT EXIST third_party\gflags\%gflagsPatchFileNameApplied% COPY %gflagsWindowsFolder%\%gflagsPatchFileName% third_party\gflags\%gflagsPatchFileNameApplied%
+
+GOTO:EOF
+
+:generateProjectsForPlatform
+
+set IsDebugTarget=true
+IF "%~3"=="release" (
+	set IsDebugTarget=false
+)
+IF "%~3"=="debug" (
+	set IsDebugTarget=true
+)
+
+SET outputPath=out\%~1_%~2_%~3
+SET webRTCGnArgsDestinationPath=!outputPath!\args.gn
+CALL:makeDirectory !outputPath!
+CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
+
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_os-" "%~1" !webRTCGnArgsDestinationPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platfrom %~1"
+
+
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_cpu-" "%2" !webRTCGnArgsDestinationPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
+
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-is_debug-" "%IsDebugTarget%" !webRTCGnArgsDestinationPath!
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for debug/release %IsDebugTarget%"
+
+IF %logLevel% GEQ %trace% (
+	CALL GN gen !outputPath! --ide="vs2015"
+) ELSE (
+	CALL GN gen !outputPath! --ide="vs2015" >NUL
+)
+IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
+
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\RecurseReplaceInFiles.ps1 !outputPath! *.vcxproj "call ninja.exe" "call %DepotToolsPath%\ninja.exe"
+
+IF EXIST ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln CALL:copyTemplates ..\..\..\%webRtcLibsTemplatePath%\WebRtc.%~2.sln !outputPath!\WebRtc.sln
+GOTO:EOF
+
 
 :generateProjects
 CALL:print %trace% "Executing generateProjects function"
@@ -256,89 +378,40 @@ SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 IF %platform_ARM% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for arm platform ..."
 	SET platform_ARM_prepared=1
-	SET GYP_DEFINES=
-	SET GYP_GENERATORS=msvs-winrt
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %trace% (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm
-	) ELSE (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10_arm >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for arm platform"
+	CALL:generateProjectsForPlatform winuwp_10 arm debug
+	CALL:generateProjectsForPlatform winuwp_10 arm release
 	SET platform_ARM_prepared=2
 )
 
 IF %platform_x64% EQU 1 (
-	SET platform_x64_prepared=1
 	CALL:print %warning% "Generating WebRTC projects for x64 platform ..."
-	SET GYP_DEFINES=
-	SET GYP_GENERATORS=msvs-winrt
-	IF %logLevel% GEQ %debug% (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64
-	) ELSE (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 -Dtarget_arch=x64 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x64 platform"
+	SET platform_x64_prepared=1
+	CALL:generateProjectsForPlatform winuwp_10 x64 debug
+	CALL:generateProjectsForPlatform winuwp_10 x64 release
 	SET platform_x64_prepared=2
 )
 
 IF %platform_x86% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for x86 platform ..."
 	SET platform_x86_prepared=1
-	SET GYP_DEFINES=
-	SET GYP_GENERATORS=msvs-winrt
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10
-	) ELSE (
-		CALL PYTHON webrtc\build\gyp_webrtc -Dwinrt_platform=win10 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for x86 platform"
+	CALL:generateProjectsForPlatform winuwp_10 x86 debug
+	CALL:generateProjectsForPlatform winuwp_10 x86 release
 	SET platform_x86_prepared=2
 )
 
 IF %platform_win32% EQU 1 (
 	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
 	SET platform_win32_prepared=1
-	SET GYP_DEFINES=component=shared_library
-	SET GYP_GENERATORS=ninja,msvs-ninja
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
-		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
-	) ELSE (
-		CALL PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	CALL:generateProjectsForPlatform win x86 debug
+	CALL:generateProjectsForPlatform win x86 release
 	SET platform_win32_prepared=2
 )
 
 IF %platform_win32_x64% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
+	CALL:print %warning% "Generating WebRTC projects for win32 x64 platform ..."
 	SET platform_win32_prepared=1
-	SET GYP_DEFINES=component=shared_library target_arch=x64
-	SET GYP_GENERATORS=ninja,msvs-ninja
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
-	) ELSE (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
-	SET platform_win32_prepared=2
-)
-
-IF %platform_win32_x64% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
-	SET platform_win32_prepared=1
-	SET GYP_DEFINES=component=shared_library target_arch=x64
-	SET GYP_GENERATORS=ninja,msvs-ninja
-	::Not setting target_arch because of logic used in gyp files
-	IF %logLevel% GEQ %debug% (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015
-	) ELSE (
-		PYTHON webrtc/build/gyp_webrtc -Goutput_dir=build_win32 -G msvs_version=2015 >NUL
-	)
-	IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for win32 platform"
+	CALL:generateProjectsForPlatform win x64 debug
+	CALL:generateProjectsForPlatform win x64 release
 	SET platform_win32_prepared=2
 )
 
@@ -417,6 +490,29 @@ IF NOT "!windowsSDKVersion!"=="" (
 )
 GOTO:EOF
 
+:makeFileLink
+IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
+
+echo %cd%
+PUSHD %~1
+IF EXIST .\%~2 GOTO:alreadyexists
+IF NOT EXIST %~3 CALL:error 1 "%folderStructureError:"=% %~3 does not exist!"
+
+IF %logLevel% GEQ %trace% (
+	MKLINK /J %~2 %~3
+) ELSE (
+	MKLINK /J %~2 %~3  >NUL
+)
+
+CALL:print %trace% In path "%~1" creating symbolic link for "%~2" to "%~3"
+
+IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %~3"
+
+:alreadyexists
+POPD
+
+GOTO:EOF
+
 :updateSDKVersion
 
 CALL:determineWindowsSDK
@@ -493,7 +589,7 @@ COPY %~1 %~2 >NUL
 
 CALL:print %trace% Copied file %~1 to %~2
 
-IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC template solution file"
 
 GOTO:EOF
 
