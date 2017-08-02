@@ -22,6 +22,9 @@ SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
 SET eventsIncludePath=..\Internal
 SET eventsIntermediatePath=IntermediateTemp
 SET eventsOutput=%cd%\ortc\windows\solutions\Eventing\
+SET idlOutput=%cd%\ortc\xplatform\ortclib-cpp\ortc\idl\
+SET idlGeneratedCTemplatesPath=%cd%\ortc\windows\templates\wrappers\c\
+SET idlGeneratedCPath=%cd%\ortc\xplatform\ortclib-cpp\ortc\idl\wrapper\generated\c\
 
 SET startTime=0
 SET endingTime=0
@@ -96,6 +99,10 @@ CALL:setCompilerOption %eventingToolCompilerPlatform%
 CALL:buildEventingToolCompiler
 
 CALL:prepareEvents
+
+CALL:prepareIdl
+
+CALL:copyTemplates
 
 GOTO:done
 
@@ -321,6 +328,30 @@ GOTO:EOF
 
 FOR /r . %%g IN (*.events.json) DO CALL:compileEvent %%g
 
+GOTO:EOF
+
+:prepareIdl
+
+CALL:print %warning% "Preparing IDL wrappers [cx/c/dotnet/json] ..."
+
+PUSHD %idlOutput%
+
+IF %logLevel% GEQ %trace% (
+	CALL %compilerPath% -idl cx c dotnet json wrapper -c config.json -s winuwp.json -o .
+) ELSE (
+	CALL %compilerPath% -idl cx c dotnet json wrapper -c config.json -s winuwp.json -o . > NUL
+)
+
+POPD
+
+IF ERRORLEVEL 1 CALL:error 1 "Running events tool has failed"
+
+GOTO:EOF
+
+:copyTemplates
+CALL:print %warning% "Copying templates..."
+COPY %idlGeneratedCTemplatesPath%*.* %idlGeneratedCPath% > NUL
+IF ERRORLEVEL 1 CALL:error 0 "Failed preparing templates"
 GOTO:EOF
 
 :copyFiles

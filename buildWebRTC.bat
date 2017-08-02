@@ -119,7 +119,8 @@ IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
-	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Clean;Build /nodeReuse:False
+rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Build /nodeReuse:False
+	MSBuild %SOLUTIONPATH% /property:Configuration=GN /property:Platform=%PLATFORM% /t:Build /nodeReuse:False
 	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
@@ -162,17 +163,17 @@ GOTO:EOF
 
 :moveLibs
 
-IF NOT EXIST %libsSourcePathDestianation%NUL (
-	CALL:makeDirectory %libsSourcePathDestianation%
-	CALL:print %trace% "Created folder %libsSourcePathDestianation%"
+IF NOT EXIST %libsSourceBackupPath%NUL (
+	CALL:makeDirectory %libsSourceBackupPath%
+	CALL:print %trace% "Created folder %libsSourceBackupPath%"
 ) ELSE (
-	IF EXIST %libsSourcePathDestianation%%CONFIGURATION%\NUL RD /S /Q %libsSourcePathDestianation%%CONFIGURATION%
+	IF EXIST %libsSourceBackupPath%%CONFIGURATION%\NUL RD /S /Q %libsSourceBackupPath%%CONFIGURATION%
 )
 
 
-CALL:print %debug% "Moving %libsSourcePath% to %libsSourcePathDestianation%"
-MOVE %libsSourcePath% %libsSourcePathDestianation%
-if ERRORLEVEL 1 CALL:error 0 "Failed moving %libsSourcePath% to %libsSourcePathDestianation%"
+CALL:print %debug% "Moving %libsSourcePath% to %libsSourceBackupPath%"
+MOVE %libsSourcePath% %libsSourceBackupPath%
+if ERRORLEVEL 1 CALL:error 0 "Failed moving %libsSourcePath% to %libsSourceBackupPath%"
 
 GOTO:EOF
 
@@ -180,35 +181,35 @@ GOTO:EOF
 SET basePath=%~dp1
 
 IF /I "%currentPlatform%"=="x64" (
-	SET libsSourcePath=%basePath%build_win10_x64\%CONFIGURATION%
-	SET libsSourcePathDestianation=%basePath%build_win10_x64\%SOFTWARE_PLATFORM%\
+	SET libsSourcePath=%basePath%obj\webrtc
+	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 )
 
 IF /I "%currentPlatform%"=="x86" (
-	SET libsSourcePath=%basePath%build_win10_x86\%CONFIGURATION%
-	SET libsSourcePathDestianation=%basePath%build_win10_x86\%SOFTWARE_PLATFORM%\
+	SET libsSourcePath=%basePath%obj\webrtc
+	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 )
 
 IF /I "%currentPlatform%"=="ARM" (
-	SET libsSourcePath=%basePath%build_win10_arm\%CONFIGURATION%
-	SET libsSourcePathDestianation=%basePath%build_win10_arm\%SOFTWARE_PLATFORM%\
+	SET libsSourcePath=%basePath%obj\webrtc
+	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 )
 
 
 IF /I "%currentPlatform%"=="win32" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
-	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+	SET libsSourceBackupPath=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
 IF /I "%currentPlatform%"=="win32_x64" (
 	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
-	SET libsSourcePathDestianation=%basePath%build_win32\%SOFTWARE_PLATFORM%\
+	SET libsSourceBackupPath=%basePath%build_win32\%SOFTWARE_PLATFORM%\
 )
 
 CALL:print %debug% "Source path is %libsSourcePath%"
 
 ::SET destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-SET destinationPath=%libsSourcePath%\..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+SET destinationPath=%libsSourcePath%\..\..\..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF

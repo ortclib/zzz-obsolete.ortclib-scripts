@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.0)
+
+project(sfu VERSION 0.1 LANGUAGES CXX)
+
+set(BUILD_SHARED_LIBS true)
+
+add_subdirectory(boringssl)
+add_subdirectory(libsrtp)
+
+find_package(GTest)
+if (GTEST_FOUND)
+    enable_testing()
+    add_custom_target(all_tests ${CMAKE_CTEST_COMMAND} -v)
+endif()

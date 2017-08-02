@@ -18,15 +18,20 @@ SET ortcWebRTCWin32TemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc
 SET ortcWebRTCWin32DestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
+SET ortciOSBinariesDestinationFolder=ortc\apple\libs\
+SET ortciOSBinariesDestinationPath=ortc\apple\libs\libOrtc.dylib
 
 ::downloads
 SET pythonVersion=2.7.6
 SET ninjaVersion=v1.6.0
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ninjaDestinationPath=.\bin\ninja-win.zip
+SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
+ 
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
 SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
+SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
 
 ::helper flags
 SET taskFailed=0
@@ -55,14 +60,14 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;					
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;				
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-
+SET getBinaries=1
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
@@ -123,6 +128,8 @@ ECHO.
 CALL:print %info% "Running prepare script ..."
 ECHO.
 
+IF EXIST bin\Config.bat CALL bin\Config.bat
+
 IF %defaultProperties% EQU 0 (
 	CALL:print %warning% "Running script parameters:"
 	CALL:print %warning% "Target: %target%"
@@ -163,6 +170,8 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 	CALL:prepareCurl
 	
 	CALL:prepareEventing
+
+	CALL:getBinaries
 )
 
 ::Finish script execution
@@ -436,7 +445,7 @@ CALL prepareCurl.bat -logLevel %globalLogLevel%
 ::	CALL prepare.bat curl  >NUL
 ::)
 
-if !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Curl preparation has failed."
 
 POPD > NUL
 
@@ -452,6 +461,46 @@ IF %noEventing% EQU 0 (
 )
 
 GOTO:EOF
+
+
+:downloadBinariesFromRepo
+ECHO.
+CALL:print %info% "Donwloading binaries from repo !BINARIES_DOWNLOAD_REPO_URL!"
+IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+	
+PUSHD ..\
+CALL git clone !BINARIES_DOWNLOAD_REPO_URL! -b !BINARIES_DOWNLOAD_REPO_BRANCH! > NUL
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed cloning binaries."
+POPD
+	
+CALL:makeDirectory %ortciOSBinariesDestinationFolder%
+CALL:copyTemplates ..\ortc-binaries\Release\libOrtc.dylib %ortciOSBinariesDestinationPath%
+	
+IF EXIST ..\ortc-binaries\NUL RMDIR /q /s ..\ortc-binaries\
+GOTO:EOF
+
+:downloadBinariesFromURL
+ECHO.
+CALL:print %info% "Donwloading binaries from URL !BINARIES_DOWNLOAD_URL!"
+
+CALL:makeDirectory %ortciOSBinariesDestinationFolder%
+CALL:download !BINARIES_DOWNLOAD_URL! %ortciOSBinariesDestinationPath%
+IF !taskFailed! EQU 1 CALL:ERROR 1 "Failed downloading binaries from !BINARIES_DOWNLOAD_URL!"
+
+GOTO:EOF
+
+:getBinaries
+
+IF %getBinaries% EQU 1 (
+	IF DEFINED BINARIES_DOWNLOAD_REPO_URL (
+		CALL:downloadBinariesFromRepo
+	) ELSE (
+		IF DEFINED BINARIES_DOWNLOAD_URL CALL:downloadBinariesFromURL
+	)
+)
+
+GOTO:EOF
+
 
 REM Download file (first argument) to desired destination (second argument)
 :download
@@ -581,11 +630,13 @@ REM Copy all ORTC template required to set developer environment
 
 IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
 
+echo COPY %~1 %~2
 COPY %~1 %~2 >NUL
 
+echo CALL print %trace% Copied file %~1 to %~2
 CALL:print %trace% Copied file %~1 to %~2
 
-IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC temaple solution file"
+IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC template solution file"
 
 GOTO:EOF
 

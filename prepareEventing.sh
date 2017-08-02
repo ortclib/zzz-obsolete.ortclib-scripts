@@ -104,6 +104,21 @@ buildEventCompiler()
   popd > /dev/null
 }
 
+compileIdl()
+{
+  print $warning "Compiling IDL files..."
+
+  eventPath=./ortc/xplatform/ortclib-cpp/ortc/idl
+
+  pushd $eventPath > /dev/null
+  $compilerPath -idl cx c dotnet json wrapper -c config.json -o . > /dev/null
+  if (( $? )); then
+    popd > /dev/null
+    error 1 "$providerName event compilation has failed"
+  fi
+  popd > /dev/null
+}
+
 compileEvent()
 {
   print $warning "Compiling event provider $1"
@@ -121,10 +136,11 @@ compileEvent()
 
   pushd $eventPath > /dev/null
   $compilerPath -c ./$filename -o $eventsIncludePath/$providerName  > /dev/null
-  popd > /dev/null
   if (( $? )); then
+    popd > /dev/null
     error 1 "$providerName event compilation has failed"
   fi
+  popd > /dev/null
 }
 
 finished()
@@ -152,5 +168,7 @@ buildEventCompiler
 for f in $(find ./ortc -name '*.events.json'); do
   compileEvent "$f"
 done
+
+compileIdl
 
 finished
