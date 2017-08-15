@@ -42,6 +42,7 @@ SET diagnostic=0
 SET folderStructureError="WebRTC invalid folder structure."
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageMissingDebuggerTools="Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version. You can download installer from this link https://developer.microsoft.com/de-de/windows/downloads/sdk-archive"
 
 ::path constants
 SET baseWebRTCPath=webrtc\xplatform\webrtc
@@ -489,8 +490,8 @@ IF NOT "!windowsSDKVersion!"=="" (
 	CALL:ERROR 1 "Supported Windows SDK is not present. Latest supported Win SDK is 10.0.14393.0"
 )
 
-IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x64\cdb.exe CALL:ERROR 1 "Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version."
-IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x86\cdb.exe CALL:ERROR 1 "Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version."
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x64\cdb.exe CALL:ERROR 1 %errorMessageMissingDebuggerTools%
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x86\cdb.exe CALL:ERROR 1 %errorMessageMissingDebuggerTools%
 GOTO:EOF
 
 :makeFileLink
