@@ -488,6 +488,9 @@ IF NOT "!windowsSDKVersion!"=="" (
 ) ELSE (
 	CALL:ERROR 1 "Supported Windows SDK is not present. Latest supported Win SDK is 10.0.14393.0"
 )
+
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x64\cdb.exe CALL:ERROR 1 "Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version."
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x86\cdb.exe CALL:ERROR 1 "Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version."
 GOTO:EOF
 
 :makeFileLink
