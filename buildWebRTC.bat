@@ -49,9 +49,9 @@ CALL:setCompilerOption %currentPlatform%
 
 CALL:build
 
-CALL:combineLibs
+::CALL:combineLibs
 
-CALL:moveLibs
+::CALL:moveLibs
 
 GOTO:done
 
