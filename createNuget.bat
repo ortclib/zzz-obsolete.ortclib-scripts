@@ -27,7 +27,7 @@ SET SolutionPathWebRtc=webrtc\windows\solutions\WebRtc.sln
 SET nugetOrtcBasePath=ortc\windows\nuget
 SET nugetWebRtcBasePath=webrtc\windows\nuget
 SET OrtcWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
-SET WinrtWebRtcSolutionPath=webrtc\xplatform\webrtc\
+SET WinrtWebRtcSolutionPath=webrtc\xplatform\webrtc\webrtcLib.sln
 SET WebRtcSolutionPath=""
 SET nugetOutputPath=""
 SET nugetPath=""
@@ -237,11 +237,12 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:prepareTemplates ortc
 	
 	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln
-	::SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
+	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
 	SET nugetName=%nugetOrtcName%
 	
 	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc x86
 	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc x64
+	CALL:build !SolutionPathOrtc! Api\org_Ortc\org_ortc arm
 	
 	CALL:preparePackage Ortc
 )
@@ -252,11 +253,12 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:prepareTemplates webrtc
 	
 	SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln
-	::SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
+	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
 	
 	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x86
 	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x64
+	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc arm
 
 	CALL:preparePackage WebRtc
 )
@@ -276,8 +278,6 @@ CALL:print %trace% "Project: %~2"
 CALL:print %trace% "Compiler option: %~3"
 CALL:print %trace% "CONFIGURATION: %CONFIGURATION%"
 CALL:print %trace% "PLATFORM: %PLATFORM%"
-
-SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%out\winuwp_10_%PLATFORM%_!CONFIGURATION!\WebRtc.sln
 
 IF %logLevel% GEQ %trace% (
 	CALL bin\buildWebRTC.bat %WebRtcSolutionPath% %CONFIGURATION% %~3 %nugetName%
@@ -436,8 +436,8 @@ CALL:createFolder %nugetPath%\%nugetName%
 CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
 IF EXIST %sourcex86XmlPath% CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
 
-::CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
-::CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
+CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
+CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
 
 CALL::copyFiles %sourcex64DllPath% %nugetRuntimesx64Path%
 CALL::copyFiles %sourcex64PriPath% %nugetRuntimesx64Path%
@@ -499,7 +499,7 @@ GOTO:EOF
 
 :determineVisualStudioPath
 
-SET progfiles="%ProgramFiles%"
+SET progfiles=%ProgramFiles%
 IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
 
 REM Check if Visual Studio 2015 is installed
@@ -510,9 +510,9 @@ IF NOT EXIST %msVS_Path% (
 	SET msVS_Path="%progfiles%\Microsoft Visual Studio 12.0"
 )
 
-IF NOT EXIST !msVS_Path! CALL:error 1 "Visual Studio 2015 or 2013 is not installed"
+IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 or 2013 is not installed"
 
-CALL:print %trace% "Visual Studio path is !msVS_Path!"
+CALL:print %trace% "Visual Studio path is %msVS_Path%"
 
 GOTO:EOF
 
@@ -612,9 +612,9 @@ CALL:createFolder !packageNugetPath!
 FOR /R %nugetOutputPath% %%f in (*!nugetVersion!*.nupkg) DO COPY %%f !packageNugetPath! > NUL
 
 ::Copy ARM pdb files
-::CALL:createFolder !packagePdbsPath!\ARM
-::FOR /R %packagePdbsSourcePath%\ARM\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
-::FOR /R %packagePdbsSourceWrapperPath%\ARM\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+CALL:createFolder !packagePdbsPath!\ARM
+FOR /R %packagePdbsSourcePath%\ARM\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
+FOR /R %packagePdbsSourceWrapperPath%\ARM\Release\ %%f in (*.pdb) DO COPY %%f !packagePdbsPath!\ARM > NUL
 
 ::Copy X64 pdb files
 CALL:createFolder !packagePdbsPath!\X64

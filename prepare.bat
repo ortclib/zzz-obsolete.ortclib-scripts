@@ -73,7 +73,7 @@ SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
 SET getBinaries=1
-SET gn=0
+SET gn=1
 
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."

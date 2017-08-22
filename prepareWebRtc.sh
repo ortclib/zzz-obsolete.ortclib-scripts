@@ -721,6 +721,7 @@ generateProjectsForPlatform()
 
   outputPath=out/$1_$2_$3
   webRTCGnArgsDestinationPath=$outputPath/args.gn
+print $error "========= $webRTCGnArgsDestinationPath"
   webRTCGnArgsSourcePath=templates/gns/args.gn
   makeDirectory "$outputPath"
 
@@ -735,6 +736,9 @@ generateProjectsForPlatform()
   fi
   if [ "$1" == "linux" ]; then
     webRTCGnArgsSourcePath=../../linux/$webRTCGnArgsSourcePath
+
+print $error "========= pwd = $(pwd)"
+print $error "========= webRTCGnArgsSourcePath = $webRTCGnArgsSourcePath"
   fi
 
   cp -f $webRTCGnArgsSourcePath $webRTCGnArgsDestinationPath
@@ -743,16 +747,27 @@ generateProjectsForPlatform()
   sed -i -e "s/-is_debug-/$IsDebugTarget/g" $webRTCGnArgsDestinationPath
   sed -i -e "s/-target_os-/$1/g" $webRTCGnArgsDestinationPath
 
+
+print $error "========= vmir1: PWD BEFORE GN GEN: $(pwd)"
+
+print $error "========= vmir1: outputPath = $outputPath"
+
   if [ $logLevel -ge $trace ]; then
     gn gen $outputPath
   else
     gn gen $outputPath > /dev/null
   fi
+
+
+print $error "========= vmir2: PWD BEFORE NINJA: $(pwd)"
   if [ $? -ne 0 ]; then
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
   fi
 
+print $error "========= vmir3: PWD BEFORE NINJA $(pwd)"
   pushd "$outputPath/obj" 2> /dev/null
+
+print $error "========= vmir4: PWD BEFORE NINJA $(pwd)"
 
   $DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
 

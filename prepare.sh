@@ -12,7 +12,7 @@ set -e
 target=all
 platform=all
 ortcAvailable=0
-logLevel=2
+logLevel=4
 
 #log levels
 error=0
@@ -36,6 +36,12 @@ platform_android=0
 HOST_SYSTEM=mac
 HOST_OS=osx
 
+webrtcGnPath="webrtc/xplatform/webrtc"
+ortcGnPath="webrtc/xplatform/webrtc/ortc"
+webrtcGnBuildPath="ortc/xplatform/templates/gn/webRtcBUILD.gn"
+webrtcGnBuildPathDestination="webrtc/xplatform/webrtc/BUILD.gn"
+ortcGnBuildPath="ortc/xplatform/templates/gn/ortcBUILD.gn"
+ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
 print()
 {
@@ -102,6 +108,7 @@ error()
     echo
     print $error "FAILURE:Preparing environment has failed!"
     echo
+#cleanup
     exit 1
   fi
 }
@@ -111,6 +118,7 @@ finished()
   echo
   print $info "Success: Development environment is set."
   echo
+#cleanup
 }
 
 systemcheck()
@@ -288,6 +296,48 @@ prepareEventing()
   ./bin/prepareEventing.sh -l $logLevel
 }
 
+cleanup()
+{
+  if [ -f "$webrtcGnPath/originalBuild.gn" ]
+  then
+    rm -f $webrtcGnPath/BUILD.gn
+    mv $webrtcGnPath/originalBuild.gn $webrtcGnPath/BUILD.gn
+  else
+    echo "File $webrtcGnPath/originalBuild.gn does not exist."
+  fi
+}
+
+makeDirectory()
+{
+  TARGET=$1
+  if [ ! -d $TARGET ]; then
+    print $debug "Creating folder $TARGET"
+    mkdir -p $TARGET
+  fi
+  if [ ! -d $TARGET ]; then
+    error 1 "(makeDirectory): Unable to create folder $TARGET"
+  fi
+
+}
+
+prepareGN()
+{
+
+#  cleanup
+
+  makeDirectory "$ortcGnPath"
+
+#  mv $webrtcGnPath/BUILD.gn $webrtcGnPath/originalBuild.gn
+
+  cp $webrtcGnBuildPath $webrtcGnBuildPathDestination
+  cp $ortcGnBuildPath $ortcGnBuildPathDestination
+
+  print $info "In path $(pwd) creating symbolic link ortc/xplatform/udns to webrtc/xplatform/webrtc/ortc/udns"
+  ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
+}
+
+
+
 #platform;target;help;logLevel;noEventing;
 while true;
 do
@@ -358,6 +408,11 @@ identifyPlatform
 identifyLogLevel
 
 ##installNinja
+
+if [ $prepare_ORTC_Environemnt -eq 1 ];
+then
+  prepareGN
+fi
 
 prepareWebRTC
 
