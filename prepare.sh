@@ -320,6 +320,47 @@ makeDirectory()
 
 }
 
+makeLink()
+{
+  print $debug "Preparing webrtc paths symbolic links for \"$2\" pointing to \"$3\""
+  if [ ! -d "$1" ]; then
+    error 1 "Path to link does not exist \"$1\" !"
+  fi
+
+  pushd $1 > /dev/null
+
+  if [ ! -d "$3" ]; then
+    error 1 "Link destination is not found \"$3\" inside \"$1\" !"
+  fi
+
+  if [ ! -h "$2" ]; then
+    print $debug "In path \"$1\" creating webrtc symbolic link \"$2\" pointing to \"$3\"..."
+    #ln -s $3 $2
+
+    linkName=$(python -c "import os.path; print os.path.split('$2')[1]")
+    linkPath=$(python -c "import os.path; print os.path.split('$2')[0]")
+    linkAbsPath=$(python -c "import os.path; print os.path.abspath('$3')")
+     #relPath=$(python -c "import os.path; print os.path.relpath('$3', '$linkPath')")
+
+    if [ -z "$linkPath" ]; then
+      linkPath="."
+    fi
+
+    if [ ! -d "$linkPath" ]; then
+      error 1 "Link path does not exist: $linkPath"
+    fi
+
+     ln -s $linkAbsPath $2
+
+    if [ $? -ne 0 ]; then
+      failure=$?
+      error 1 "Failed to create symbolic link: ln -s $linkAbsPath $2"
+    fi
+  fi
+
+  popd > /dev/null
+}
+
 prepareGN()
 {
 
@@ -331,9 +372,13 @@ prepareGN()
 
   cp $webrtcGnBuildPath $webrtcGnBuildPathDestination
   cp $ortcGnBuildPath $ortcGnBuildPathDestination
-
+  
   print $info "In path $(pwd) creating symbolic link ortc/xplatform/udns to webrtc/xplatform/webrtc/ortc/udns"
-  ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
+ #ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
+  makeLink "." "$webrtcGnPath/ortc/udns" "./ortc/xplatform/udns"
+  makeLink "." "$webrtcGnPath/ortc/idnkit" "./ortc/xplatform/idnkit"
+  makeLink "." "$webrtcGnPath/ortc/cryptopp" "./ortc/xplatform/cryptopp"
+  
 }
 
 

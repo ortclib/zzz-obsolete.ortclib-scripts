@@ -164,7 +164,7 @@ CALL:gitCheck
 CALL:pythonSetup
 
 ::Install ninja if missing
-::CALL:installNinja
+CALL:installNinja
 
 IF %gn% EQU 1 (
     IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
@@ -486,6 +486,8 @@ CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
 
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\udns ortc\xplatform\udns
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\idnkit ortc\xplatform\idnkit
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\cryptopp ortc\xplatform\cryptopp
 
 GOTO:EOF
 
