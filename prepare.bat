@@ -72,7 +72,7 @@ SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-SET getBinaries=1
+SET getBinaries=0
 SET gn=1
 
 ::predefined messages
@@ -488,7 +488,10 @@ CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\udns ortc\xplatform\udns
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\idnkit ortc\xplatform\idnkit
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\cryptopp ortc\xplatform\cryptopp
-
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib ortc\xplatform\ortclib-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib ortc\xplatform\zsLib
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
 GOTO:EOF
 
 :downloadBinariesFromRepo
