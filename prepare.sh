@@ -380,7 +380,7 @@ prepareGN()
   makeLink "." "$webrtcGnPath/ortc/cryptopp" "./ortc/xplatform/cryptopp"
   makeLink "." "$webrtcGnPath/ortc/ortclib" "./ortc/xplatform/ortclib-cpp"
   makeLink "." "$webrtcGnPath/ortc/ortclib-services" "./ortc/xplatform/ortclib-services-cpp"
-  makeLink "." "$webrtcGnPath/ortc/zslib" "./ortc/xplatform/zsLib"
+  makeLink "." "$webrtcGnPath/ortc/zsLib" "./ortc/xplatform/zsLib"
   makeLink "." "$webrtcGnPath/ortc/zsLib-eventing" "./ortc/xplatform/zsLib-eventing"
 }
 
