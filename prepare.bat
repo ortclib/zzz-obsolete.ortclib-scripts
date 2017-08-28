@@ -170,8 +170,8 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 	CALL:prepareCurl
 	
 	CALL:prepareEventing
+  REM CALL:getBinaries
 
-	CALL:getBinaries
 )
 
 ::Finish script execution
