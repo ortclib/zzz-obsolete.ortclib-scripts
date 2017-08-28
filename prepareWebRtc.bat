@@ -249,6 +249,9 @@ CALL:makeLink . third_party\usrsctp\usrsctplib ..\usrsctp
 CALL:makeLink . third_party\protobuf chromium\src\third_party\protobuf
 CALL:makeLink . chromium\src\third_party\expat ..\chromium-pruned\third_party\expat
 CALL:makeLink . third_party\expat chromium\src\third_party\expat
+CALL:makeLink . chromium\src\third_party\googletest ..\chromium-pruned\third_party\googletest
+CALL:makeLink . third_party\googletest chromium\src\third_party\googletest
+CALL:makeLink . third_party\googletest\src ..\googletest
 CALL:makeLink . third_party\libsrtp ..\libsrtp
 CALL:makeLink . third_party\libvpx .\chromium\src\third_party\libvpx
 CALL:makeLink . third_party\libyuv ..\libyuv
@@ -262,8 +265,8 @@ CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium-pruned\tools\clang
-CALL:makeLink . testing\gtest ..\googletest
-CALL:makeLink . testing\gmock ..\googlemock
+::CALL:makeLink . testing\gtest ..\googletest
+::CALL:makeLink . testing\gmock ..\googlemock
 
 GOTO:EOF
 
@@ -445,6 +448,7 @@ IF %logLevel% GEQ %trace% (
 IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %~3"
 
 :alreadyexists
+CALL:print %trace% "Path "%~2" already exists"
 POPD
 
 GOTO:EOF
