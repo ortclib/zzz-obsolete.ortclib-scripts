@@ -3,7 +3,7 @@
 :: Author:    Sergej Jovanovic
 :: Email:     sergej@gnedo.com
 :: Twitter:   @JovanovicSergej
-:: Revision:  September 2016 - initial version
+:: Revision:  August 2017 - ORTC moving to GN build system
 
 @ECHO off
 
@@ -20,7 +20,12 @@ SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 SET ortciOSBinariesDestinationFolder=ortc\apple\libs\
 SET ortciOSBinariesDestinationPath=ortc\apple\libs\libOrtc.dylib
-
+SET webrtcGnPath=webrtc\xplatform\webrtc\
+SET ortcGnPath=webrtc\xplatform\webrtc\ortc\
+SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
+SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
+SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
+SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
 ::downloads
 SET pythonVersion=2.7.6
 SET ninjaVersion=v1.6.0
@@ -60,14 +65,16 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;				
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;				
 SET target=all
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
-SET getBinaries=1
+SET getBinaries=0
+SET gn=1
+
 ::predefined messages
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
@@ -157,7 +164,11 @@ CALL:gitCheck
 CALL:pythonSetup
 
 ::Install ninja if missing
-::CALL:installNinja
+CALL:installNinja
+
+IF %gn% EQU 1 (
+    IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
+)
 
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
@@ -462,6 +473,26 @@ IF %noEventing% EQU 0 (
 
 GOTO:EOF
 
+:prepareGN
+
+CALL:cleanup
+
+CALL:makeDirectory %ortcGNPath%
+
+REN %webrtcGnPath%build.gn originalBuild.gn
+IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
+
+CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
+CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
+
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\udns ortc\xplatform\udns
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\idnkit ortc\xplatform\idnkit
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\cryptopp ortc\xplatform\cryptopp
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib ortc\xplatform\ortclib-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib ortc\xplatform\zsLib
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
+GOTO:EOF
 
 :downloadBinariesFromRepo
 ECHO.
@@ -606,7 +637,7 @@ GOTO:EOF
 REM Create symbolic link (first argument), that will point to desired file (second argument)
 :makeLinkToFile
 
-IF EXIST %~1 GOTO:alreadyexists
+IF EXIST %~1 GOTO:filelinkalreadyexists
 IF NOT EXIST %~2 CALL:error 1 "%folderStructureError:"=% %~2 does not exist!"
 
 CALL:print %trace% Creating symbolic link "%~1" for the file "%~2"
@@ -620,8 +651,28 @@ IF %logLevel% GEQ %trace% (
 )
 IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2"
 
+:filelinkalreadyexists
+
+GOTO:EOF
+:makeLink
+IF NOT EXIST %~1\NUL CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
+
+::PUSHD %~1
+IF EXIST .\%~2\NUL GOTO:alreadyexists
+IF NOT EXIST %~3\NUL CALL:error 1 "%folderStructureError:"=% %~3 does not exist!"
+
+CALL:print %trace% In path "%~1" creating symbolic link for "%~2" to "%~3"
+
+IF %logLevel% GEQ %trace% (
+	MKLINK /J %~2 %~3
+) ELSE (
+	MKLINK /J %~2 %~3  >NUL
+)
+
+IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %~3"
+
 :alreadyexists
-POPD
+::  POPD
 
 GOTO:EOF
 
@@ -688,6 +739,13 @@ IF EXIST %vbs% DEL /f /q %vbs%
 DEL /f /q %2
 GOTO:EOF
 
+:cleanup
+IF EXIST %webrtcGnPath%originalBuild.gn (
+    DEL %webrtcGnPath%BUILD.gn
+    REN %webrtcGnPath%originalBuild.gn BUILD.gn
+)
+GOTO:EOF
+
 :showHelp
 IF %help% EQU 0 GOTO:EOF
 
@@ -741,6 +799,7 @@ IF %criticalError%==0 (
 	ECHO.
 	CALL:print %error% "FAILURE:Preparing environment has failed!"
 	ECHO.
+    CALL:cleanup
 	SET endTime=%time%
 	CALL:showTime
 	::terminate batch execution
@@ -778,6 +837,7 @@ GOTO:EOF
 :done
 ECHO.
 CALL:print %info% "Success: Development environment is set."
+CALL:cleanup
 SET endTime=%time%
 CALL:showTime
 ECHO. 

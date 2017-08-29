@@ -12,7 +12,7 @@ set -e
 target=all
 platform=all
 ortcAvailable=0
-logLevel=2
+logLevel=4
 
 #log levels
 error=0
@@ -36,6 +36,12 @@ platform_android=0
 HOST_SYSTEM=mac
 HOST_OS=osx
 
+webrtcGnPath="webrtc/xplatform/webrtc"
+ortcGnPath="webrtc/xplatform/webrtc/ortc"
+webrtcGnBuildPath="ortc/xplatform/templates/gn/webRtcBUILD.gn"
+webrtcGnBuildPathDestination="webrtc/xplatform/webrtc/BUILD.gn"
+ortcGnBuildPath="ortc/xplatform/templates/gn/ortcBUILD.gn"
+ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
 print()
 {
@@ -102,6 +108,7 @@ error()
     echo
     print $error "FAILURE:Preparing environment has failed!"
     echo
+#cleanup
     exit 1
   fi
 }
@@ -111,6 +118,7 @@ finished()
   echo
   print $info "Success: Development environment is set."
   echo
+#cleanup
 }
 
 systemcheck()
@@ -288,6 +296,96 @@ prepareEventing()
   ./bin/prepareEventing.sh -l $logLevel
 }
 
+cleanup()
+{
+  if [ -f "$webrtcGnPath/originalBuild.gn" ]
+  then
+    rm -f $webrtcGnPath/BUILD.gn
+    mv $webrtcGnPath/originalBuild.gn $webrtcGnPath/BUILD.gn
+  else
+    echo "File $webrtcGnPath/originalBuild.gn does not exist."
+  fi
+}
+
+makeDirectory()
+{
+  TARGET=$1
+  if [ ! -d $TARGET ]; then
+    print $debug "Creating folder $TARGET"
+    mkdir -p $TARGET
+  fi
+  if [ ! -d $TARGET ]; then
+    error 1 "(makeDirectory): Unable to create folder $TARGET"
+  fi
+
+}
+
+makeLink()
+{
+  print $debug "Preparing webrtc paths symbolic links for \"$2\" pointing to \"$3\""
+  if [ ! -d "$1" ]; then
+    error 1 "Path to link does not exist \"$1\" !"
+  fi
+
+  pushd $1 > /dev/null
+
+  if [ ! -d "$3" ]; then
+    error 1 "Link destination is not found \"$3\" inside \"$1\" !"
+  fi
+
+  if [ ! -h "$2" ]; then
+    print $debug "In path \"$1\" creating webrtc symbolic link \"$2\" pointing to \"$3\"..."
+    #ln -s $3 $2
+
+    linkName=$(python -c "import os.path; print os.path.split('$2')[1]")
+    linkPath=$(python -c "import os.path; print os.path.split('$2')[0]")
+    linkAbsPath=$(python -c "import os.path; print os.path.abspath('$3')")
+     #relPath=$(python -c "import os.path; print os.path.relpath('$3', '$linkPath')")
+
+    if [ -z "$linkPath" ]; then
+      linkPath="."
+    fi
+
+    if [ ! -d "$linkPath" ]; then
+      error 1 "Link path does not exist: $linkPath"
+    fi
+
+     ln -s $linkAbsPath $2
+
+    if [ $? -ne 0 ]; then
+      failure=$?
+      error 1 "Failed to create symbolic link: ln -s $linkAbsPath $2"
+    fi
+  fi
+
+  popd > /dev/null
+}
+
+prepareGN()
+{
+
+#  cleanup
+
+  makeDirectory "$ortcGnPath"
+
+#  mv $webrtcGnPath/BUILD.gn $webrtcGnPath/originalBuild.gn
+
+  cp $webrtcGnBuildPath $webrtcGnBuildPathDestination
+  cp $ortcGnBuildPath $ortcGnBuildPathDestination
+  
+  print $info "In path $(pwd) creating symbolic link ortc/xplatform/udns to webrtc/xplatform/webrtc/ortc/udns"
+ #ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
+  makeLink "." "$webrtcGnPath/ortc/udns" "./ortc/xplatform/udns"
+  makeLink "." "$webrtcGnPath/ortc/idnkit" "./ortc/xplatform/idnkit"
+  makeLink "." "$webrtcGnPath/ortc/cryptopp" "./ortc/xplatform/cryptopp"
+  makeLink "." "$webrtcGnPath/ortc/ortclib" "./ortc/xplatform/ortclib-cpp"
+  makeLink "." "$webrtcGnPath/ortc/ortclib-services" "./ortc/xplatform/ortclib-services-cpp"
+  makeLink "." "$webrtcGnPath/ortc/zsLib" "./ortc/xplatform/zsLib"
+  makeLink "." "$webrtcGnPath/ortc/zsLib-eventing" "./ortc/xplatform/zsLib-eventing"
+}
+
+
+
 #platform;target;help;logLevel;noEventing;
 while true;
 do
@@ -358,6 +456,11 @@ identifyPlatform
 identifyLogLevel
 
 ##installNinja
+
+if [ $prepare_ORTC_Environemnt -eq 1 ];
+then
+  prepareGN
+fi
 
 prepareWebRTC
 
