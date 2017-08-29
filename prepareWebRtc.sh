@@ -472,6 +472,9 @@ makeLinks()
   makeLink "." "third_party/protobuf" "chromium/src/third_party/protobuf"
   makeLink "." "chromium/src/third_party/expat" "../chromium-pruned/third_party/expat"
   makeLink "." "third_party/expat" "chromium/src/third_party/expat"
+  makeLink "." chromium/src/third_party\googletest ../chromium-pruned/third_party/googletest
+  makeLink "." third_party/googletest chromium/src/third_party/googletest
+  makeLink "." third_party/googletest/src ../googletest
   makeLink "." "third_party/libsrtp" "../libsrtp"
   makeLink "." "third_party/libvpx" "chromium/src/third_party/libvpx"
   makeLink "." "third_party/libyuv" "../libyuv"
@@ -485,8 +488,8 @@ makeLinks()
   #makeLink "." "third_party/winsdk_samples" "../winsdk_samples_v71"
   makeLink "." "tools/gyp" "../gyp"
   makeLink "." "tools/clang" "../chromium-pruned/tools/clang"
-  makeLink "." "testing/gtest" "../googletest"
-  makeLink "." "testing/gmock" "../googlemock"
+  #makeLink "." "testing/gtest" "../googletest"
+  #makeLink "." "testing/gmock" "../googlemock"
 
   #makeLink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
   ##makeLink "chromium" "src" $CHROMIUM_FOLDER_DESTINATION
