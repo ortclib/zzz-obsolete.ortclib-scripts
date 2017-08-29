@@ -472,9 +472,9 @@ makeLinks()
   makeLink "." "third_party/protobuf" "chromium/src/third_party/protobuf"
   makeLink "." "chromium/src/third_party/expat" "../chromium-pruned/third_party/expat"
   makeLink "." "third_party/expat" "chromium/src/third_party/expat"
-  makeLink "." chromium/src/third_party\googletest ../chromium-pruned/third_party/googletest
-  makeLink "." third_party/googletest chromium/src/third_party/googletest
-  makeLink "." third_party/googletest/src ../googletest
+  makeLink "." "chromium/src/third_party/googletest" "../chromium-pruned/third_party/googletest"
+  makeLink "." "third_party/googletest" "chromium/src/third_party/googletest"
+  makeLink "." "third_party/googletest/src" "../googletest"
   makeLink "." "third_party/libsrtp" "../libsrtp"
   makeLink "." "third_party/libvpx" "chromium/src/third_party/libvpx"
   makeLink "." "third_party/libyuv" "../libyuv"
