@@ -751,26 +751,17 @@ print $error "========= webRTCGnArgsSourcePath = $webRTCGnArgsSourcePath"
   sed -i -e "s/-target_os-/$1/g" $webRTCGnArgsDestinationPath
 
 
-print $error "========= vmir1: PWD BEFORE GN GEN: $(pwd)"
-
-print $error "========= vmir1: outputPath = $outputPath"
-
   if [ $logLevel -ge $trace ]; then
     gn gen $outputPath
   else
     gn gen $outputPath > /dev/null
   fi
 
-
-print $error "========= vmir2: PWD BEFORE NINJA: $(pwd)"
   if [ $? -ne 0 ]; then
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
   fi
-
-print $error "========= vmir3: PWD BEFORE NINJA $(pwd)"
+  
   pushd "$outputPath/obj" 2> /dev/null
-
-print $error "========= vmir4: PWD BEFORE NINJA $(pwd)"
 
   $DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
 
