@@ -439,6 +439,8 @@ makeLinks()
   print $warning "Creating soft links"
 
   makeLink "." "buildtools" "../buildtools"
+  makeLink "." "buildtools/third_party/libc++/trunk" "../llvm/libcxx"
+  makeLink "." "buildtools/third_party/libc++abi/trunk" "../llvm/libcxxabi"
   makeLink "." "build" "../chromium-pruned/build"
   makeLink "." "base" "../chromium-pruned/base"
   makeLink "." "chromium/src/third_party/jsoncpp" "../chromium-pruned/third_party/jsoncpp"
