@@ -43,6 +43,8 @@ webrtcGnBuildPathDestination="webrtc/xplatform/webrtc/BUILD.gn"
 ortcGnBuildPath="ortc/xplatform/templates/gn/ortcBUILD.gn"
 ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
+gnEventingPythonScriptSource="bin/runEventCompiler.py"
+gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/out/linux-x64-debug/runEventCompiler.py"
 print()
 {
   logType=$1
@@ -463,6 +465,8 @@ then
 fi
 
 prepareWebRTC
+
+cp $gnEventingPythonScriptSource $gnEventingPythonScriptDestination
 
 ##if [ $prepare_ORTC_Environemnt -eq 1 ];
 ##then
