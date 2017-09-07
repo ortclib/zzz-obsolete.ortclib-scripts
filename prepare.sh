@@ -43,8 +43,12 @@ webrtcGnBuildPathDestination="webrtc/xplatform/webrtc/BUILD.gn"
 ortcGnBuildPath="ortc/xplatform/templates/gn/ortcBUILD.gn"
 ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
+libCxxGnBuildTemplatePath="ortc/xplatform/templates/gn/libc++/BUILD.gn"
+libCxxGnBuildPathDestination="webrtc/xplatform/webrtc/buildtools/third_party/libc++/BUILD.gn"
+libCxxAbiGnBuildTemplatePath="ortc/xplatform/templates/gn/libc++abi/BUILD.gn"
+libCxxAbiGnBuildPathDestination="webrtc/xplatform/webrtc/buildtools/third_party/libc++abi/BUILD.gn"
+
 gnEventingPythonScriptSource="bin/runEventCompiler.py"
-gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/out/linux-x64-debug/runEventCompiler.py"
 gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/ortc/runEventCompiler.py"
 print()
 {
@@ -373,9 +377,12 @@ prepareGN()
 
 #  mv $webrtcGnPath/BUILD.gn $webrtcGnPath/originalBuild.gn
 
-  cp $webrtcGnBuildPath $webrtcGnBuildPathDestination
-  cp $ortcGnBuildPath $ortcGnBuildPathDestination
-  
+  yes | cp $webrtcGnBuildPath $webrtcGnBuildPathDestination
+  yes | cp $ortcGnBuildPath $ortcGnBuildPathDestination
+
+  yes | cp -rf $libCxxGnBuildTemplatePath $libCxxGnBuildPathDestination
+  yes | cp -rf $libCxxAbiGnBuildTemplatePath $libCxxAbiGnBuildPathDestination
+
   print $info "In path $(pwd) creating symbolic link ortc/xplatform/udns to webrtc/xplatform/webrtc/ortc/udns"
  #ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
   makeLink "." "$webrtcGnPath/ortc/udns" "./ortc/xplatform/udns"
@@ -463,11 +470,12 @@ identifyLogLevel
 if [ $prepare_ORTC_Environemnt -eq 1 ];
 then
   prepareGN
+  cp $gnEventingPythonScriptSource $gnEventingPythonScriptDestination
 fi
 
 prepareWebRTC
 
-cp $gnEventingPythonScriptSource $gnEventingPythonScriptDestination
+
 
 ##if [ $prepare_ORTC_Environemnt -eq 1 ];
 ##then
