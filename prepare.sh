@@ -45,6 +45,7 @@ ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
 gnEventingPythonScriptSource="bin/runEventCompiler.py"
 gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/out/linux-x64-debug/runEventCompiler.py"
+gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/ortc/runEventCompiler.py"
 print()
 {
   logType=$1
