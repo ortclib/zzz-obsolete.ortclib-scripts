@@ -44,9 +44,9 @@ ortcGnBuildPath="ortc/xplatform/templates/gn/ortcBUILD.gn"
 ortcGnBuildPathDestination="webrtc/xplatform/webrtc/ortc/BUILD.gn"
 
 libCxxGnBuildTemplatePath="ortc/xplatform/templates/gn/libc++/BUILD.gn"
-libCxxGnBuildPathDestination="webrtc/xplatform/webrtc/buildtools/third_party/libc++/BUILD.gn"
+libCxxGnBuildPathDestination="webrtc/xplatform/buildtools/third_party/libc++/BUILD.gn"
 libCxxAbiGnBuildTemplatePath="ortc/xplatform/templates/gn/libc++abi/BUILD.gn"
-libCxxAbiGnBuildPathDestination="webrtc/xplatform/webrtc/buildtools/third_party/libc++abi/BUILD.gn"
+libCxxAbiGnBuildPathDestination="webrtc/xplatform/buildtools/third_party/libc++abi/BUILD.gn"
 
 gnEventingPythonScriptSource="bin/runEventCompiler.py"
 gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/ortc/runEventCompiler.py"
