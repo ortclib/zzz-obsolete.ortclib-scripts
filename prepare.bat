@@ -26,6 +26,9 @@ SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
 SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
+SET gnEventingPythonScriptSource=bin\runEventCompiler.py
+SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runEventCompiler.py
+
 ::downloads
 SET pythonVersion=2.7.6
 SET ninjaVersion=v1.6.0
@@ -484,6 +487,8 @@ IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file
 
 CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
+
+CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
 
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\udns ortc\xplatform\udns
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\idnkit ortc\xplatform\idnkit
