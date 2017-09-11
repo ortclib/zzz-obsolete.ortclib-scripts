@@ -138,6 +138,11 @@ IF NOT EXIST %destinationPath% (
 SET webRtcLibs=
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
+IF EXIST %libsSourcePath%\..\..\boringssl.dll.lib SET webRtcLibs=!webRtcLibs! ..\..\boringssl.dll.lib
+IF EXIST %libsSourcePath%\..\..\protobuf_lite.dll.lib SET webRtcLibs=!webRtcLibs! ..\..\protobuf_lite.dll.lib
+
+echo !webRtcLibs!
+pause
 
 PUSHD %libsSourcePath%
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
@@ -151,7 +156,11 @@ IF EXIST *.dll (
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
+IF EXIST %libsSourcePath%\..\..\boringssl.dll.pdb  MOVE ..\..\boringssl.dll.pdb %destinationPath% 
+IF EXIST %libsSourcePath%\..\..\protobuf_lite.dll.pdb  MOVE ..\..\protobuf_lite.dll.pdb %destinationPath% 
 
+IF EXIST %libsSourcePath%\..\..\boringssl.dll COPY ..\..\boringssl.dll %destinationPath% 
+IF EXIST %libsSourcePath%\..\..\protobuf_lite.dll COPY ..\..\protobuf_lite.dll %destinationPath% 
 
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 POPD
