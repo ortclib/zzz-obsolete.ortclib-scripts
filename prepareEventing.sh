@@ -169,6 +169,6 @@ for f in $(find ./ortc -name '*.events.json'); do
   compileEvent "$f"
 done
 
-compileIdl
+#compileIdl
 
 finished

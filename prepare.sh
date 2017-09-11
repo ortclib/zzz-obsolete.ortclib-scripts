@@ -50,6 +50,8 @@ libCxxAbiGnBuildPathDestination="webrtc/xplatform/buildtools/third_party/libc++a
 
 gnEventingPythonScriptSource="bin/runEventCompiler.py"
 gnEventingPythonScriptDestination="webrtc/xplatform/webrtc/ortc/runEventCompiler.py"
+gnIDLPythonScriptSource="bin/runIDLCompiler.py"
+gnIDLPythonScriptDestination="webrtc/xplatform/webrtc/ortc/runIDLCompiler.py"
 print()
 {
   logType=$1
@@ -471,6 +473,7 @@ if [ $prepare_ORTC_Environemnt -eq 1 ];
 then
   prepareGN
   cp $gnEventingPythonScriptSource $gnEventingPythonScriptDestination
+  cp $gnIDLPythonScriptSource $gnIDLPythonScriptDestination
 fi
 
 prepareWebRTC
