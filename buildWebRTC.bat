@@ -141,9 +141,6 @@ FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpat
 IF EXIST %libsSourcePath%\..\..\boringssl.dll.lib SET webRtcLibs=!webRtcLibs! ..\..\boringssl.dll.lib
 IF EXIST %libsSourcePath%\..\..\protobuf_lite.dll.lib SET webRtcLibs=!webRtcLibs! ..\..\protobuf_lite.dll.lib
 
-echo !webRtcLibs!
-pause
-
 PUSHD %libsSourcePath%
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
