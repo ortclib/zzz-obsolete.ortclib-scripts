@@ -439,6 +439,8 @@ makeLinks()
   print $warning "Creating soft links"
 
   makeLink "." "buildtools" "../buildtools"
+  makeLink "." "buildtools/third_party/libc++/trunk" "../llvm/libcxx"
+  makeLink "." "buildtools/third_party/libc++abi/trunk" "../llvm/libcxxabi"
   makeLink "." "build" "../chromium-pruned/build"
   makeLink "." "base" "../chromium-pruned/base"
   makeLink "." "chromium/src/third_party/jsoncpp" "../chromium-pruned/third_party/jsoncpp"
@@ -472,6 +474,9 @@ makeLinks()
   makeLink "." "third_party/protobuf" "chromium/src/third_party/protobuf"
   makeLink "." "chromium/src/third_party/expat" "../chromium-pruned/third_party/expat"
   makeLink "." "third_party/expat" "chromium/src/third_party/expat"
+  makeLink "." "chromium/src/third_party/googletest" "../chromium-pruned/third_party/googletest"
+  makeLink "." "third_party/googletest" "chromium/src/third_party/googletest"
+  makeLink "." "third_party/googletest/src" "../googletest"
   makeLink "." "third_party/libsrtp" "../libsrtp"
   makeLink "." "third_party/libvpx" "chromium/src/third_party/libvpx"
   makeLink "." "third_party/libyuv" "../libyuv"
@@ -485,8 +490,8 @@ makeLinks()
   #makeLink "." "third_party/winsdk_samples" "../winsdk_samples_v71"
   makeLink "." "tools/gyp" "../gyp"
   makeLink "." "tools/clang" "../chromium-pruned/tools/clang"
-  makeLink "." "testing/gtest" "../googletest"
-  makeLink "." "testing/gmock" "../googlemock"
+  #makeLink "." "testing/gtest" "../googletest"
+  #makeLink "." "testing/gmock" "../googlemock"
 
   #makeLink "." "build" $BUILD_FOLDER_CHROMIUM_DESTINATION
   ##makeLink "chromium" "src" $CHROMIUM_FOLDER_DESTINATION
@@ -721,6 +726,7 @@ generateProjectsForPlatform()
 
   outputPath=out/$1_$2_$3
   webRTCGnArgsDestinationPath=$outputPath/args.gn
+print $error "========= $webRTCGnArgsDestinationPath"
   webRTCGnArgsSourcePath=templates/gns/args.gn
   makeDirectory "$outputPath"
 
@@ -735,6 +741,9 @@ generateProjectsForPlatform()
   fi
   if [ "$1" == "linux" ]; then
     webRTCGnArgsSourcePath=../../linux/$webRTCGnArgsSourcePath
+
+print $error "========= pwd = $(pwd)"
+print $error "========= webRTCGnArgsSourcePath = $webRTCGnArgsSourcePath"
   fi
 
   cp -f $webRTCGnArgsSourcePath $webRTCGnArgsDestinationPath
@@ -743,15 +752,17 @@ generateProjectsForPlatform()
   sed -i -e "s/-is_debug-/$IsDebugTarget/g" $webRTCGnArgsDestinationPath
   sed -i -e "s/-target_os-/$1/g" $webRTCGnArgsDestinationPath
 
+
   if [ $logLevel -ge $trace ]; then
     gn gen $outputPath
   else
     gn gen $outputPath > /dev/null
   fi
+
   if [ $? -ne 0 ]; then
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
   fi
-
+  
   pushd "$outputPath/obj" 2> /dev/null
 
   $DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
