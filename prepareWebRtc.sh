@@ -726,7 +726,6 @@ generateProjectsForPlatform()
 
   outputPath=out/$1_$2_$3
   webRTCGnArgsDestinationPath=$outputPath/args.gn
-print $error "========= $webRTCGnArgsDestinationPath"
   webRTCGnArgsSourcePath=templates/gns/args.gn
   makeDirectory "$outputPath"
 
@@ -741,9 +740,6 @@ print $error "========= $webRTCGnArgsDestinationPath"
   fi
   if [ "$1" == "linux" ]; then
     webRTCGnArgsSourcePath=../../linux/$webRTCGnArgsSourcePath
-
-print $error "========= pwd = $(pwd)"
-print $error "========= webRTCGnArgsSourcePath = $webRTCGnArgsSourcePath"
   fi
 
   cp -f $webRTCGnArgsSourcePath $webRTCGnArgsDestinationPath
@@ -765,7 +761,7 @@ print $error "========= webRTCGnArgsSourcePath = $webRTCGnArgsSourcePath"
   
   pushd "$outputPath/obj" 2> /dev/null
 
-  $DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
+  #$DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
 
   popd > /dev/null
 
