@@ -28,6 +28,8 @@ SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
 SET gnEventingPythonScriptSource=bin\runEventCompiler.py
 SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runEventCompiler.py
+SET gnIDLPythonScriptSource=bin\runIDLCompiler.py
+SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
 SET pythonVersion=2.7.6
@@ -489,6 +491,7 @@ CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
 
 CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
+CALL:copyTemplates %gnIDLPythonScriptSource% %gnIDLPythonScriptDestination%
 
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\udns ortc\xplatform\udns
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\idnkit ortc\xplatform\idnkit
@@ -497,6 +500,11 @@ CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib ortc\xplatform\ortclib-cpp
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib ortc\xplatform\zsLib
 CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
+
+IF %platform_win32% EQU 1 (
+    CALL:makeLink . webrtc\xplatform\webrtc\ortc\curl ortc\xplatform\curl
+)
+
 GOTO:EOF
 
 :downloadBinariesFromRepo
