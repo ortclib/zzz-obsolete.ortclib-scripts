@@ -30,6 +30,7 @@ updateScriptPath = os.path.dirname(os.path.realpath(__file__)) + "/../../../../b
 
 print "runIDLCompiler - UpdateScriptPath:" + updateScriptPath
 
-os.system("python " + updateScriptPath + " wrapper ortc " + sourcePathPrefix)
+#sources.gni is prepopulated, so there is no need to update that file anymore
+#os.system("python " + updateScriptPath + " wrapper ortc " + sourcePathPrefix)
 
 os.chdir(os.path.dirname(currentWorkingPath))
