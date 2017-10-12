@@ -15,27 +15,27 @@ warning=2
 debug=3
 trace=4
 
-BUILD_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/build/
-CHROMIUM_FOLDER_DESTINATION=../../chromium-pruned/
-BORINGSSL_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/boringssl/src/
-#COLORAMA_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/colorama/src/
-JSONCPP_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/jsoncpp/source/
-LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libjpeg_turbo/
+BUILD_FOLDER_CHROMIUM_DESTINATION=../chromium/build/
+CHROMIUM_FOLDER_DESTINATION=../../chromium/
+BORINGSSL_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/boringssl/src/
+#COLORAMA_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/colorama/src/
+JSONCPP_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/jsoncpp/source/
+LIBJPEG_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/libjpeg_turbo/
 
-LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libsrtp/
-LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libvpx/source/libvpx/
-LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/libyuv/
-OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/openmax_dl/
-OPUS_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/opus/src/
+LIBSRTP_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/libsrtp/
+LIBVPX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/libvpx/source/libvpx/
+LIBYUV_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/libyuv/
+OPENMAX_TURBO_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/openmax_dl/
+OPUS_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/opus/src/
 
-USRSCTP_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/usrsctp/usrsctplib/
-PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/yasm/source/patched-yasm/
-YASM_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/yasm/binaries/
-GYP_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/tools/gyp/
-GTEST_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/testing/gtest/
+USRSCTP_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/usrsctp/usrsctplib/
+PATCHED_YASM_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/yasm/source/patched-yasm/
+YASM_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/yasm/binaries/
+GYP_FOLDER_CHROMIUM_DESTINATION=../chromium/tools/gyp/
+GTEST_FOLDER_CHROMIUM_DESTINATION=../chromium/testing/gtest/
 
-GFLAGS_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/third_party/gflags/src/
-GMOCK_FOLDER_CHROMIUM_DESTINATION=../chromium-pruned/testing/gmock/
+GFLAGS_FOLDER_CHROMIUM_DESTINATION=../chromium/third_party/gflags/src/
+GMOCK_FOLDER_CHROMIUM_DESTINATION=../chromium/testing/gmock/
 
 BOGUS_EXPAT_PATH=../../../ortc/apple/templates/libs/bogus_gyps/bogus_expat.gyp
 BOGUS_CLASS_DUMP_PATH=../../../ortc/apple/templates/libs/bogus_gyps/bogus_class-dump.gyp
@@ -263,7 +263,7 @@ makeFolderStructure()
   #copyFolder ../googletest/ $GTEST_FOLDER_CHROMIUM_DESTINATION
   #copyFolder ../gflags/ $GFLAGS_FOLDER_CHROMIUM_DESTINATION
   #copyFolder ../googlemock/ $GMOCK_FOLDER_CHROMIUM_DESTINATION
-  #copyFolder ../chromium-pruned/ $SRC_FILES_DESTINATION
+  #copyFolder ../chromium/ $SRC_FILES_DESTINATION
 
   print $warning "Finished creating folder structure"
 }
@@ -441,25 +441,25 @@ makeLinks()
   makeLink "." "buildtools" "../buildtools"
   makeLink "." "buildtools/third_party/libc++/trunk" "../llvm/libcxx"
   makeLink "." "buildtools/third_party/libc++abi/trunk" "../llvm/libcxxabi"
-  makeLink "." "build" "../chromium-pruned/build"
-  makeLink "." "base" "../chromium-pruned/base"
-  makeLink "." "chromium/src/third_party/jsoncpp" "../chromium-pruned/third_party/jsoncpp"
+  makeLink "." "build" "../chromium/build"
+  makeLink "." "base" "../chromium/base"
+  makeLink "." "chromium/src/third_party/jsoncpp" "../chromium/third_party/jsoncpp"
   makeLink "." "chromium/src/third_party/jsoncpp/source" "../jsoncpp"
 
-  makeLink "." "chromium/src/tools/protoc_wrapper" "../chromium-pruned/tools/protoc_wrapper"
-  makeLink "." "chromium/src/tools/clang" "../chromium-pruned/tools/clang"
-  makeLink "." "chromium/src/third_party/protobuf" "../chromium-pruned/third_party/protobuf"
-  makeLink "." "chromium/src/third_party/yasm" "../chromium-pruned/third_party/yasm"
-  makeLink "." "chromium/src/third_party/opus" "../chromium-pruned/third_party/opus"
-  #makeLink "." "chromium/src/third_party/colorama" "../chromium-pruned/third_party/colorama"
-  makeLink "." "chromium/src/third_party/boringssl" "../chromium-pruned/third_party/boringssl"
-  makeLink "." "chromium/src/third_party/usrsctp" "../chromium-pruned/third_party/usrsctp"
-  makeLink "." "chromium/src/third_party/libvpx" "../chromium-pruned/third_party/libvpx"
+  #makeLink "." "chromium/src/tools/protoc_wrapper" "../chromium/tools/protoc_wrapper"
+  #makeLink "." "chromium/src/tools/clang" "../chromium/tools/clang"
+  makeLink "." "chromium/src/third_party/protobuf" "../chromium/third_party/protobuf"
+  makeLink "." "chromium/src/third_party/yasm" "../chromium/third_party/yasm"
+  makeLink "." "chromium/src/third_party/opus" "../chromium/third_party/opus"
+  #makeLink "." "chromium/src/third_party/colorama" "../chromium/third_party/colorama"
+  makeLink "." "chromium/src/third_party/boringssl" "../chromium/third_party/boringssl"
+  makeLink "." "chromium/src/third_party/usrsctp" "../chromium/third_party/usrsctp"
+  makeLink "." "chromium/src/third_party/libvpx" "../chromium/third_party/libvpx"
   makeLink "." "chromium/src/third_party/libvpx/source/libvpx" "../libvpx"
-  makeLink "." "chromium/src/testing" "../chromium-pruned/testing"
+  makeLink "." "chromium/src/testing" "../chromium/testing"
   makeLink "." "testing" "chromium/src/testing"
-  makeLink "." "tools/protoc_wrapper" "chromium/src/tools/protoc_wrapper"
-  makeLink "." "tools/clang" "chromium/src/tools/clang"
+  #makeLink "." "tools/protoc_wrapper" "chromium/src/tools/protoc_wrapper"
+  #makeLink "." "tools/clang" "chromium/src/tools/clang"
   makeLink "." "third_party/yasm" "chromium/src/third_party/yasm"
   makeLink "." "third_party/yasm/binaries" "../yasm/binaries"
   makeLink "." "third_party/yasm/source/patched-yasm" "../yasm/patched-yasm"
@@ -472,9 +472,9 @@ makeLinks()
   makeLink "." "third_party/usrsctp" "chromium/src/third_party/usrsctp"
   makeLink "." "third_party/usrsctp/usrsctplib" "../usrsctp"
   makeLink "." "third_party/protobuf" "chromium/src/third_party/protobuf"
-  makeLink "." "chromium/src/third_party/expat" "../chromium-pruned/third_party/expat"
+  makeLink "." "chromium/src/third_party/expat" "../chromium/third_party/expat"
   makeLink "." "third_party/expat" "chromium/src/third_party/expat"
-  makeLink "." "chromium/src/third_party/googletest" "../chromium-pruned/third_party/googletest"
+  makeLink "." "chromium/src/third_party/googletest" "../chromium/third_party/googletest"
   makeLink "." "third_party/googletest" "chromium/src/third_party/googletest"
   makeLink "." "third_party/googletest/src" "../googletest"
   makeLink "." "third_party/libsrtp" "../libsrtp"
@@ -489,7 +489,7 @@ makeLinks()
   makeLink "." "third_party/gflags/src" "../gflags"
   #makeLink "." "third_party/winsdk_samples" "../winsdk_samples_v71"
   makeLink "." "tools/gyp" "../gyp"
-  makeLink "." "tools/clang" "../chromium-pruned/tools/clang"
+  #makeLink "." "tools/clang" "../chromium/tools/clang"
   #makeLink "." "testing/gtest" "../googletest"
   #makeLink "." "testing/gmock" "../googlemock"
 
@@ -534,10 +534,10 @@ cpNewest()
 
 updateFolders()
 {
-  cpNewest ../chromium-pruned/third_party/BUILD.gn third_party/BUILD.gn
-  cpNewest ../chromium-pruned/third_party/DEPS third_party/DEPS
-  cpNewest ../chromium-pruned/third_party/OWNERS third_party/OWNERS
-  cpNewest ../chromium-pruned/third_party/PRESUBMIT.py third_party/PRESUBMIT.py
+  cpNewest ../chromium/third_party/BUILD.gn third_party/BUILD.gn
+  cpNewest ../chromium/third_party/DEPS third_party/DEPS
+  cpNewest ../chromium/third_party/OWNERS third_party/OWNERS
+  cpNewest ../chromium/third_party/PRESUBMIT.py third_party/PRESUBMIT.py
   cpNewest ../../linux/templates/build/linux/sysroot_scripts/install-sysroot-alt.py build/linux/sysroot_scripts/install-sysroot-alt.py
 }
 
@@ -949,7 +949,7 @@ makeLinks
 updateFolders
 installSysRoot
 #setBogusGypFiles
-updateClang
+#updateClang
 setupDepotTools
 downloadGnBinaries
 
