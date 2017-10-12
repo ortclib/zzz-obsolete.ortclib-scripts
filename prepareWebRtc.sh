@@ -48,7 +48,7 @@ SRC_FILES_DESTINATION=../webrtc/chromium/src/
 
 NINJA_PATH=../../../bin/ninja/
 #NINJA_PATH_TO_REPLACE_WITH=""
-NINJA_URL="http://github.com/martine/ninja/releases/download/v1.6.0/ninja-mac.zip"
+NINJA_URL="http://github.com/martine/ninja/releases/download/v1.7.2/ninja-mac.zip"
 NINJA_ZIP_FILE="ninja-mac.zip"
 
 PROJECT_FILE=all.ninja.xcworkspace
@@ -446,27 +446,24 @@ makeLinks()
   makeLink "." "chromium/src/third_party/jsoncpp" "../chromium/third_party/jsoncpp"
   makeLink "." "chromium/src/third_party/jsoncpp/source" "../jsoncpp"
 
-  #makeLink "." "chromium/src/tools/protoc_wrapper" "../chromium/tools/protoc_wrapper"
-  #makeLink "." "chromium/src/tools/clang" "../chromium/tools/clang"
+  makeLink "." "chromium/src/tools/protoc_wrapper" "../chromium/tools/protoc_wrapper"
+  makeLink "." "chromium/src/tools/clang" "../chromium/tools/clang"
   makeLink "." "chromium/src/third_party/protobuf" "../chromium/third_party/protobuf"
   makeLink "." "chromium/src/third_party/yasm" "../chromium/third_party/yasm"
   makeLink "." "chromium/src/third_party/opus" "../chromium/third_party/opus"
-  #makeLink "." "chromium/src/third_party/colorama" "../chromium/third_party/colorama"
   makeLink "." "chromium/src/third_party/boringssl" "../chromium/third_party/boringssl"
   makeLink "." "chromium/src/third_party/usrsctp" "../chromium/third_party/usrsctp"
   makeLink "." "chromium/src/third_party/libvpx" "../chromium/third_party/libvpx"
   makeLink "." "chromium/src/third_party/libvpx/source/libvpx" "../libvpx"
   makeLink "." "chromium/src/testing" "../chromium/testing"
   makeLink "." "testing" "chromium/src/testing"
-  #makeLink "." "tools/protoc_wrapper" "chromium/src/tools/protoc_wrapper"
-  #makeLink "." "tools/clang" "chromium/src/tools/clang"
+  makeLink "." "tools/protoc_wrapper" "chromium/src/tools/protoc_wrapper"
+  makeLink "." "tools/clang" "chromium/src/tools/clang"
   makeLink "." "third_party/yasm" "chromium/src/third_party/yasm"
   makeLink "." "third_party/yasm/binaries" "../yasm/binaries"
   makeLink "." "third_party/yasm/source/patched-yasm" "../yasm/patched-yasm"
   makeLink "." "third_party/opus" "chromium/src/third_party/opus"
   #makeLink "." "third_party/opus/src" "../opus"
-  #makeLink "." "third_party/colorama chromium/src/third_party/colorama"
-  #makeLink "." "third_party/colorama/src "../webrtc-deps/colorama"
   makeLink "." "third_party/boringssl" "chromium/src/third_party/boringssl"
   makeLink "." "third_party/boringssl/src" "../boringssl"
   makeLink "." "third_party/usrsctp" "chromium/src/third_party/usrsctp"
@@ -489,7 +486,7 @@ makeLinks()
   makeLink "." "third_party/gflags/src" "../gflags"
   #makeLink "." "third_party/winsdk_samples" "../winsdk_samples_v71"
   makeLink "." "tools/gyp" "../gyp"
-  #makeLink "." "tools/clang" "../chromium/tools/clang"
+  makeLink "." "tools/clang" "../chromium/tools/clang"
   #makeLink "." "testing/gtest" "../googletest"
   #makeLink "." "testing/gmock" "../googlemock"
 
@@ -949,7 +946,7 @@ makeLinks
 updateFolders
 installSysRoot
 #setBogusGypFiles
-#updateClang
+updateClang
 setupDepotTools
 downloadGnBinaries
 
