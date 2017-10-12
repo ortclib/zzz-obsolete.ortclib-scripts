@@ -33,7 +33,7 @@ SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
 SET pythonVersion=2.7.6
-SET ninjaVersion=v1.6.0
+SET ninjaVersion=v1.7.2
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ninjaDestinationPath=.\bin\ninja-win.zip
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
