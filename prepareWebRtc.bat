@@ -358,9 +358,9 @@ IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for debug/release %IsDebugTarget%"
 
 IF %logLevel% GEQ %trace% (
-	CALL GN gen !outputPath! --ide="vs2015"
+	CALL GN gen !outputPath! --ide="vs2017"
 ) ELSE (
-	CALL GN gen !outputPath! --ide="vs2015" >NUL
+	CALL GN gen !outputPath! --ide="vs2017" >NUL
 )
 IF !errorlevel! NEQ 0 CALL:error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
 
