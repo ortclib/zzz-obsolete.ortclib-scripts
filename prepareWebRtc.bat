@@ -185,9 +185,9 @@ CALL:updateFolders
 CALL:setupDepotTools
 
 CALL:downloadGnBinaries
-POPD
-CALL:updateSDKVersion
-PUSHD %baseWebRTCPath% > NUL
+::POPD
+::CALL:updateSDKVersion
+::PUSHD %baseWebRTCPath% > NUL
 
 ::CALL:gflagsPatchBuild
 CALL:generateProjects

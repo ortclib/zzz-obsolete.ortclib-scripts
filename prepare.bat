@@ -433,6 +433,7 @@ CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
 CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
 ::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
+CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib\ortc\idl\wrapper\cx ortc\windows\wrapper\cx
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
 GOTO:EOF
@@ -697,7 +698,6 @@ IF NOT EXIST %~1 CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
 echo COPY %~1 %~2
 COPY %~1 %~2 >NUL
 
-echo CALL print %trace% Copied file %~1 to %~2
 CALL:print %trace% Copied file %~1 to %~2
 
 IF %ERRORLEVEL% NEQ 0 CALL:error 1 "%folderStructureError:"=% Unable to copy WebRTC template solution file"
