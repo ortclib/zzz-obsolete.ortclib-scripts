@@ -86,8 +86,10 @@ GOTO parseInputArguments
 SET currentPlatform=%platform%
 CALL:print %warning% "Platform: %currentPlatform%"
 
-SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%currentPlatform%\"
-IF /I %currentPlatform%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\x86\"
+CALL:determineWindowsSDK
+
+SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\%currentPlatform%\"
+IF /I %currentPlatform%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\x86\"
 SET startTime=%time%
 
 CALL:checkPlatform
@@ -125,14 +127,71 @@ GOTO:EOF
 SET progfiles=%ProgramFiles%
 IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
 
-REM Check if Visual Studio 2015 is installed
-SET msVS_Path="%progfiles%\Microsoft Visual Studio 14.0"
+REM Check if Visual Studio 2017 is installed
+SET msVS_Path="%progfiles%\Microsoft Visual Studio\2017"
+SET msVS_Version=14
 
-IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 is not installed"
+IF EXIST !msVS_Path! (
+	SET msVS_Path=!msVS_Path:"=!
+	IF EXIST "!msVS_Path!\Community" SET msVS_Path="!msVS_Path!\Community"
+	IF EXIST "!msVS_Path!\Professional" SET msVS_Path="!msVS_Path!\Professional"
+	IF EXIST "!msVS_Path!\Enterprise" SET msVS_Path="!msVS_Path!\Enterprise"
+)
 
-CALL:print %trace% "Visual Studio path is %msVS_Path%"
+IF NOT EXIST !msVS_Path! CALL:error 1 "Visual Studio 2017 is not installed"
+
+CALL:print %debug% "Visual Studio path is !msVS_Path!"
 
 GOTO:EOF
+
+:determineWindowsSDK
+SET windowsSDKPath="Program Files (x86)\Windows Kits\10\Lib\"
+SET windowsSDKFullPath=C:\!windowsSDKPath!
+
+IF DEFINED USE_WIN_SDK_FULL_PATH SET windowsSDKFullPath=!USE_WIN_SDK_FULL_PATH! && GOTO parseSDKPath
+IF DEFINED USE_WIN_SDK SET windowsSDKVersion=!USE_WIN_SDK! && GOTO setVersion
+FOR %%p IN (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z) DO (
+	IF EXIST %%p:\!windowsSDKPath! (
+		SET windowsSDKFullPath=%%p:\!windowsSDKPath!
+		GOTO determineVersion
+	)
+)
+
+:parseSDKPath
+IF EXIST !windowsSDKFullPath! (
+	FOR %%A IN ("!windowsSDKFullPath!") DO (
+		SET windowsSDKVersion=%%~nxA
+	)
+) ELSE (
+	CALL:ERROR 1 "Invalid Windows SDK path"
+)
+GOTO setVersion
+
+::Supports 16299 or newer SDK
+:determineVersion
+IF EXIST !windowsSDKFullPath! (
+	PUSHD !windowsSDKFullPath!
+	FOR /F "delims=" %%a in ('dir /ad /b /on') do (
+		FOR /f "tokens=1-3 delims=[.] " %%i IN ("%%a") DO (SET v1=%%k)
+		IF !v1! GEQ 16299 SET windowsSDKVersion=%%a
+	)
+	POPD
+) ELSE (
+	CALL:ERROR 1 "Invalid Windows SDK path"
+)
+
+:setVersion
+IF NOT "!windowsSDKVersion!"=="" (
+	FOR /f "tokens=1-4 delims=[.] " %%i IN ("!windowsSDKVersion!") DO (SET selectedSDKVer=%%i.%%j.%%k.%%l)
+) ELSE (
+	CALL:ERROR 1 "Supported Windows SDK is not present. Supported Win SDK are 10.0.16299.0 or newer"
+)
+
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x64\cdb.exe CALL:ERROR 1 %errorMessageMissingDebuggerTools%
+IF NOT EXIST !windowsSDKFullPath!..\Debuggers\x86\cdb.exe CALL:ERROR 1 %errorMessageMissingDebuggerTools%
+GOTO:EOF
+
+
 
 :setCompilerOption
 CALL:print %trace% "Determining compiler options ..."
@@ -169,11 +228,11 @@ GOTO:EOF
 IF EXIST %compilerPath% GOTO:EOF
 
 CALL:print %warning% "Building eventing tool compiler ..."
-
+SET currentFolder=%CD%
 IF EXIST %msVS_Path% (
-	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
+	CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentBuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %eventingToolCompilerPlatform%"
-	
+	CD !currentFolder!
 	CALL:copyFiles %ortcZsLibTemplatePath% %ortcZsLibDestinationPath%
 	
 	IF %logLevel% GEQ %trace% (
@@ -245,16 +304,21 @@ IF ERRORLEVEL 1 CALL:error 1 "Creating resource has failed"
 CALL:print %debug% "Creating manifest resource dll for !currentPlatform! ..."
 
 IF %managedBuild% EQU 1 (
+	echo csc
 	IF %logLevel% GEQ %trace% (
-		%msVS_Path%\bin\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res
+		%msVS_Path%\MSBuild\15.0\Bin\Roslyn\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res
 	) ELSE (
-		%msVS_Path%\bin\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res > NUL
+		%msVS_Path%\MSBuild\15.0\Bin\Roslyn\csc.exe /out:!intermediatePath!!providerName!_win_etw.dll /target:library /win32res:!intermediatePath!!providerName!_win_etw.res > NUL
 	)
-) ELSE (
+) ELSE (  
+	echo link
+	SET tempPlatform=%currentPlatform%
+	IF /I %currentPlatform%==win32 SET tempPlatform=x86
+	echo %msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link
 	IF %logLevel% GEQ %trace% (
-		%msVS_Path%\VC\bin\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
+		%msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link -verbose -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
 	) ELSE (
-		%msVS_Path%\VC\bin\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
+		%msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
 	)
 )
 IF ERRORLEVEL 1 CALL:error 1 "Creating manifest resource dll has failed"
