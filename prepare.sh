@@ -286,7 +286,7 @@ prepareWebRTC()
 prepareORTC()
 {
   print $debug "Preparing Ortc..."
-  
+
   prepareCurl
   if [ "$noEventing" != "1" ]; then
     prepareEventing
@@ -394,6 +394,7 @@ prepareGN()
   makeLink "." "$webrtcGnPath/ortc/ortclib-services" "./ortc/xplatform/ortclib-services-cpp"
   makeLink "." "$webrtcGnPath/ortc/zsLib" "./ortc/xplatform/zsLib"
   makeLink "." "$webrtcGnPath/ortc/zsLib-eventing" "./ortc/xplatform/zsLib-eventing"
+  makeLink "." "$webrtcGnPath/ortc/curl" "./ortc/xplatform/curl"
 }
 
 
@@ -480,9 +481,9 @@ prepareWebRTC
 
 
 
-##if [ $prepare_ORTC_Environemnt -eq 1 ];
-##then
-##  prepareORTC
-##fi
+if [ $prepare_ORTC_Environemnt -eq 1 ];
+then
+  prepareORTC
+fi
 
 finished

@@ -162,6 +162,11 @@ done
 echo
 print $info "Running prepare eventing script ..."
 
+if [ "$OSTYPE" == "linux-gnu" ]; then
+  HOST_SYSTEM=linux
+else
+  HOST_SYSTEM=mac
+fi
 #Main flow
 buildEventCompiler
 
@@ -169,6 +174,8 @@ for f in $(find ./ortc -name '*.events.json'); do
   compileEvent "$f"
 done
 
-#compileIdl
+if [ "$HOST_SYSTEM" == "mac" ]; then
+  compileIdl
+fi
 
 finished

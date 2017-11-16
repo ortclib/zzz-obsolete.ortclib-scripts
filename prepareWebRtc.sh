@@ -177,6 +177,11 @@ identifyPlatform()
     else
       platform_iOS=1
       platform_macOS=1
+      TARGET_CPU_arm=1
+      TARGET_CPU_armv7=0
+      TARGET_CPU_arm64=1
+      TARGET_CPU_x86=1
+      TARGET_CPU_x64=1
       messageText="Preparing development environment for iOS and macOS platforms ..."
     fi
     validInput=1
@@ -213,14 +218,14 @@ makeDirectory()
   if [ ! -d $TARGET ]; then
     error 1 "(makeDirectory): Unable to create folder $TARGET"
   fi
-  
+
 }
 
 copyFolder()
 {
   SOURCE=$1
   TARGET=$2
-  
+
   if [[ -n $SOURCE && -n $TARGET ]]; then
     if [ -d $SOURCE ]; then
       print $debug "Copying $SOURCE to $TARGET"
@@ -495,7 +500,7 @@ makeLinks()
   #makeLink "." "testing" "chromium/src/testing"
   #makeLink "tools" "protoc_wrapper" "../chromium/src/tools/protoc_wrapper"
   #makeLink "tools" "gyp" "../chromium/src/tools/gyp"
- 
+
   #makeLink "third_party" "protobuf" "../chromium/src/third_party/protobuf"
   #makeLink "third_party" "yasm" "../chromium/src/third_party/yasm"
   #makeLink "third_party" "opus" "../chromium/src/third_party/opus"
@@ -517,16 +522,16 @@ makeLinks()
 
 cpNewest()
 {
-  SOURCE="$1"  
+  SOURCE="$1"
   DEST="$2"
-  if [ -e "$DEST" ]; then
-    cp -u $SOURCE $DEST
-  fi
+#  if [ -e "$DEST" ]; then
+#    cp -u $SOURCE $DEST
+#  fi
   if [ ! -e "$SOURCE" ]; then
     error 1 "Failed to copy the source file $SOURCE ..."
   fi
   print $debug "Copying file from $SOURCE to $DEST"
-  cp -u $SOURCE $DEST
+  cp $SOURCE $DEST
 }
 
 updateFolders()
@@ -568,7 +573,7 @@ downloadGnBinaries()
     print $debug "Downloading gn tool ..."
     result=$(python $DepotToolsPath/download_from_google_storage.py -b chromium-gn -s buildtools/$hostBuildTools/gn.sha1)
     print $debug "$result"
-  fi  
+  fi
   if [ ! -e "buildtools/$hostBuildTools/clang-format" ]; then
     print $debug "Downloading clang-format tool ..."
     result=$(python $DepotToolsPath/download_from_google_storage.py -b chromium-clang-format -s buildtools/$hostBuildTools/clang-format.sha1)
@@ -755,7 +760,7 @@ generateProjectsForPlatform()
   if [ $? -ne 0 ]; then
     error 1 "Could not generate WebRTC projects for %1 platform, %2 CPU"
   fi
-  
+
   pushd "$outputPath/obj" 2> /dev/null
 
   #$DepotToolsPath/ninja -C "../../../$outputPath/" obj/default.stamp
@@ -781,29 +786,9 @@ generateProjects()
       generateProjectsForPlatform ios arm64 debug
       generateProjectsForPlatform ios arm64 release
     fi
-    if [ $TARGET_CPU_x86 -eq 1 ]; then
-      generateProjectsForPlatform ios x86 debug
-      generateProjectsForPlatform ios x86 release
-    fi
-    if [ $TARGET_CPU_x64 -eq 1 ]; then
-      generateProjectsForPlatform ios x64 debug
-      generateProjectsForPlatform ios x64 release
-    fi
   fi
 
   if [ $platform_macOS -eq 1 ]; then
-    if [ $TARGET_CPU_arm -eq 1 ]; then
-      generateProjectsForPlatform mac arm debug
-      generateProjectsForPlatform mac arm release
-    fi
-    if [ $TARGET_CPU_armv7 -eq 1 ]; then
-      generateProjectsForPlatform mac armv7 debug
-      generateProjectsForPlatform mac armv7 release
-    fi
-    if [ $TARGET_CPU_arm64 -eq 1 ]; then
-      generateProjectsForPlatform mac arm64 debug
-      generateProjectsForPlatform mac arm64 release
-    fi
     if [ $TARGET_CPU_x86 -eq 1 ]; then
       generateProjectsForPlatform mac x86 debug
       generateProjectsForPlatform mac x86 release
@@ -861,7 +846,7 @@ finished()
 {
   echo
   print $info "Success: WebRtc development environment is set."
-    
+
 }
 
 #-------------------------------------------------------------------------------
@@ -952,7 +937,7 @@ downloadGnBinaries
 
 generateProjects
 
-#if [ $platform_iOS -eq  1 ]; 
+#if [ $platform_iOS -eq  1 ];
 #then
 #    make_ios_project armv7
 #    make_ios_project arm64
@@ -961,7 +946,7 @@ generateProjects
 #if [ $platform_macOS -eq  1 ]; then
 #  make_mac_project
 #fi
-  
+
 #setNinjaPathForWrappers
 popd > /dev/null
 #finished
