@@ -2,45 +2,50 @@
 
 set -e
 
+
+target=webrtc
+platform=all
+configuration=debug
+architecture=all
 merge=1
+logLevel=2
+################
 target_webrtc=1
 target_ortc=0
-configuration=debug
-
-TARGET_CPU_arm=0
-TARGET_CPU_armv7=0
-TARGET_CPU_arm64=0
-TARGET_CPU_x86=0
-TARGET_CPU_x64=1
-
-configuration_Release=0
-configuration_Debug=1
-
-HOST_SYSTEM=mac
-HOST_OS=osx
 
 platform_iOS=1
 platform_macOS=0
 platform_linux=0
 platform_android=0
 
-configuration_release=0
-configuration_debug=1
+configuration_Release=0
+configuration_Debug=1
 
+architecture_arm=0
+architecture_armv7=0
+architecture_arm64=0
+architecture_x86=0
+architecture_x64=1
+
+#log levels
 error=0
 info=1
 warning=2
 debug=3
 trace=4
+################
+
+HOST_SYSTEM=mac
+HOST_OS=osx
 
 basePath="webrtc/xplatform/webrtc/out"
 ninjaExe="webrtc/xplatform/depot_tools/ninja"
 webrtcLibPath=obj/webrtc/libwebrtc.a
-ortcLibPath=ortclib.dylib
+ortcLibPath=libortclib.dylib
+
 identifyPlatform()
 {
-  validInput=0
-
+  print $trace "Identifying target platforms ..."
   if [ "$platform" == "all" ]; then
     if [ "$HOST_SYSTEM" == "linux" ]; then
       platform_linux=1
@@ -51,22 +56,17 @@ identifyPlatform()
       platform_macOS=1
       messageText="WebRtc will be built for iOS and macOS platforms ..."
     fi
-    validInput=1
-  elif [ "$platform" == "iOS" ]; then
+  elif [ "$platform" == "ios" ]; then
     platform_iOS=1
-    validInput=1
     messageText="WebRtc will be built for $platform platform..."
-  elif [ "$platform" == "macOS" ]; then
+  elif [ "$platform" == "mac" ]; then
     platform_macOS=1
-    validInput=1
     messageText="WebRtc will be built for $platform platform..."
   elif [ "$platform" == "linux" ]; then
     platform_linux=1
-    validInput=1
     messageText="WebRtc will be built for $platform platform..."
   elif [ "$platform" == "android" ]; then
     platform_android=1
-    validInput=1
     messageText="WebRtc will be built for $platform platform..."
   else
     error 1 "Invalid platform"
@@ -77,7 +77,8 @@ identifyPlatform()
 
 identifyConfiguration()
 {
-  shopt -s nocasematch
+  print $trace "Identifying target configuration ..."
+
   if [ "$configuration" == "all" ]; then
     configuration_Release=1
     configuration_Debug=1
@@ -88,44 +89,42 @@ identifyConfiguration()
     configuration_Release=0
     configuration_Debug=1
   fi
-  shopt -u nocasematch
 }
 
 identifyArchitecture()
 {
-  shopt -s nocasematch
-  
-  if [ "$platform" == "iOS" ]; then
+  print $trace "Identifying target architecture ..."
+  if [ $platform_iOS -eq 1 ] || [ $platform_android -eq 1 ]; then
     if [ "$architecture" == "all" ]; then
-      TARGET_CPU_arm=1
-      TARGET_CPU_arm64=1
+      architecture_arm=1
+      architecture_arm64=1
     elif [ "$architecture" == "arm" ]; then
-      TARGET_CPU_arm=1
-      TARGET_CPU_arm64=0
+      architecture_arm=1
+      architecture_arm64=0
     elif [ "$architecture" == "arm64" ]; then
-      TARGET_CPU_arm=0
-      TARGET_CPU_arm64=1
+      architecture_arm=0
+      architecture_arm64=1
     fi
   fi
 
-  if [ "$platform" == "macOS" ] || [ "$platform" == "linux" ]; then
+  if [ $platform_macOS -eq 1 ] || [ $platform_linux -eq 1 ]; then
     if [ "$architecture" == "all" ]; then
-      TARGET_CPU_x86=1
-      TARGET_CPU_x64=1
+      architecture_x86=1
+      architecture_x64=1
     elif [ "$architecture" == "x86" ]; then
-      TARGET_CPU_x86=1
-      TARGET_CPU_x64=0
+      architecture_x86=1
+      architecture_x64=0
     elif [ "$architecture" == "x64" ]; then
-      TARGET_CPU_x86=0
-      TARGET_CPU_x64=1
+      architecture_x86=0
+      architecture_x64=1
     fi
   fi
-  shopt -u nocasematch
 }
 
 identifyTarget()
 {
-  shopt -s nocasematch
+  print $trace "Identifying target ..."
+
   if [ "$target" == "all" ]; then
     target_webrtc=1
     target_ortc=1
@@ -136,7 +135,6 @@ identifyTarget()
     target_webrtc=1
     target_ortc=0
   fi
-  shopt -u nocasematch
 }
 
 buildTarget()
@@ -167,20 +165,24 @@ buildArchitecture()
 }
 buildPlatform()
 {
-  if [ $TARGET_CPU_arm -eq 1]; then
-    buildArchitecture $1 arm
+  if [ "$1" == "ios" ] || [ "$1" == "android" ]; then
+    if [ $architecture_arm -eq 1 ]; then
+      buildArchitecture $1 arm
+    fi
+
+    if [ $architecture_arm64 -eq 1 ]; then
+      buildArchitecture $1 arm64
+    fi
   fi
 
-  if [ $TARGET_CPU_arm64 -eq 1]; then
-    buildArchitecture $1 arm64
-  fi
+  if [ "$1" == "mac" ] || [ "$1" == "linux" ]; then
+    if [ $architecture_x86 -eq 1 ]; then
+      buildArchitecture $1 x86
+    fi
 
-  if [ $TARGET_CPU_x86 -eq 1]; then
-    buildArchitecture $1 x86
-  fi
-
-  if [ $TARGET_CPU_x64 -eq 1]; then
-    buildArchitecture $1 x64
+    if [ $architecture_x64 -eq 1 ]; then
+      buildArchitecture $1 x64
+    fi
   fi
 }
 build()
@@ -213,15 +215,23 @@ runLipo()
 
 mergeConfiguration()
 {
+  print $trace "Running merge for  $1 $2 $3"
   if [ $platform_iOS -eq 1 ]; then
-      if [ -f "$basePath/ios_arm_$1/$2" ] && [ -f "$basePath/ios_arm64_$1/$2" ]; then
-        make_directory "webrtc/xplatform/webrtc/out_ios_$1"
-        runLipo $basePath/ios_arm_$1/$2" $basePath/ios_arm64_$1/$2 webrtc/xplatform/webrtc/out_ios_$1/$3.a
+      if [ -f $basePath/ios_arm_$1/$2 ] && [ -f $basePath/ios_arm64_$1/$2 ]; then
+        make_directory webrtc/xplatform/webrtc/out_ios_$1
+        if [ "$3" == "webrtc" ]; then 
+          runLipo $basePath/ios_arm_$1/$2 $basePath/ios_arm64_$1/$2 webrtc/xplatform/webrtc/out_ios_$1/$3.a
+        fi
+
+        if [ "$3" == "ortc" ]; then 
+          runLipo $basePath/ios_arm_$1/$2 $basePath/ios_arm64_$1/$2 webrtc/xplatform/webrtc/out_ios_$1/$3.dylib
+        fi
+
       fi
   fi
 }
 mergeTarget()
-{
+{ 
   if [ $configuration_Release -eq 1 ]; then
     mergeConfiguration release $1 $2
   fi
@@ -230,8 +240,9 @@ mergeTarget()
     mergeConfiguration debug $1 $2
   fi
 }
-merge()
+mergeLibs()
 {
+  print $debug "Merging libs ..."
   if [ $target_webrtc -eq 1 ]; then
     mergeTarget $webrtcLibPath webrtc
   fi
@@ -244,7 +255,7 @@ merge()
 make_directory()
 {
 	if [ ! -d "$1" ]; then
-		echo "Creating directory \"$1\"..."
+		print $trace "Creating directory \"$1\"..."
 		mkdir -p $1
     if [ $? -ne 0 ]; then
       error 1 "Failed creating $1 directory"
@@ -257,7 +268,7 @@ print()
   logType=$1
   logMessage=$2
 
-  if [ $logLevel -eq  $logType ] || [ $logLevel -gt  $logType ]
+  if [ $logLevel -eq $logType ] || [ $logLevel -gt $logType ]
   then
     if [ $logType -eq 0 ]
     then
@@ -300,66 +311,6 @@ error()
   fi
 }
 
-build_webrtc()
-{
-  webrtc/xplatform/depot_tools/ninja -C "webrtc/xplatform/webrtc/out/ios_$1_$2" webrtc
-  if [ $? -ne 0 ]; then
-    error 1 "Could not build WebRTC projects for %1 platform, %2 configuration"
-  fi
-}
-
-merge_arm_libs()
-{
-  if [ -f "webrtc/xplatform/webrtc/out/ios_arm_$1/obj/webrtc/libwebrtc.a" ] && [ -f "webrtc/xplatform/webrtc/out/ios_arm64_$1/obj/webrtc/libwebrtc.a" ]; then
-    make_directory "webrtc/xplatform/webrtc/out_ios_$1"
-    if [ $? -ne 0 ]; then
-      error 1 "Could not make directory webrtc/xplatform/webrtc/out_ios_$1"
-    fi
-
-    lipo -create "webrtc/xplatform/webrtc/out/ios_arm_$1/obj/webrtc/libwebrtc.a" "webrtc/xplatform/webrtc/out/ios_arm64_$1/obj/webrtc/libwebrtc.a" -output "webrtc/xplatform/webrtc/out_ios_$1/webrtc.a"
-    if [ $? -ne 0 ]; then
-      error 1 "Could not merge arm and arm64 webrtc libs"
-    fi
-  else
-    error 1 "Could not merge arm and arm64 webrtc libs because they do not exist"
-  fi
-}
-
-merge_libs_with_different_arch()
-{
-  if [ -d "$inputFolderPath1" ] && [ -d "$inputFolderPath2" ]; then
-    make_directory $outputFolderPath
-    for f in $(find $inputFolderPath1 -name '*.a'); do
-      filename=$(basename "${f}")
-      echo filename: $filename
-      echo CHECKING $inputFolderPath2/$filename
-      if [ -f $inputFolderPath2/$filename ]; then
-        echo filename: MERGING  $filename
-        lipo -create $f $inputFolderPath2/$filename -output $outputFolderPath/$filename
-      else
-        echo filename 1: COPYING $filename
-        cp $f $outputFolderPath
-      fi
-    done
-
-    for f in $(find $inputFolderPath2 -name '*.a'); do
-      filename=$(basename "${f}")
-      if [ ! -f $inputFolderPath1/$filename ]; then
-        echo filename 2: COPYING $filename
-        cp $f $outputFolderPath
-      fi
-    done
-  fi
-}
-
-make_fat_webrtc()
-{
-  make_directory $outputLibFolderPath
-  if [ -d "$outputFolderPath" ]; then
-    libtool -static -o $outputLibFolderPath/webrtc.a $outputFolderPath/*.a
-  fi
-}
-
 while true;
 do
   tempParam=$(echo $1 | awk '{print tolower($0)}')
@@ -384,14 +335,13 @@ do
         ;;
     -merge|-m)
         merge=1
-        exit 1
+        shift 1
         ;;
     -help|-h)
         help
         exit 1
         ;;
     -loglevel|-l)
-        logLevel=$2
         if [ "$2" == "error" ]; then
           logLevel=0
         elif [ "$2" == "info" ]; then
@@ -410,17 +360,12 @@ do
   esac
 done
 
-identifyPlatform()
-identifyConfiguration()
-identifyArchitecture()
-identifyTarget()
+identifyPlatform
+identifyConfiguration
+identifyArchitecture
+identifyTarget
 
-build()
-merge()
-#build_webrtc arm Debug
-#build_webrtc arm64 Debug
-#build_webrtc arm Release
-#build_webrtc arm64 Release
-#merge_arm_libs release
-#merge_libs_with_different_arch
-#make_fat_webrtc
+build
+if [ $merge -eq 1 ]; then
+  mergeLibs
+fi

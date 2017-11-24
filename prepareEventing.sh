@@ -12,7 +12,7 @@ trace=4
 eventsIncludePath=../Internal
 eventsIntermediatePath=IntermediateTemp
 eventsOutput=$PWD/ortc/Apple/workspace/eventing/
-compilerPath=$PWD/bin/eventing/zsLib.Eventing.Compiler.Tool
+compilerPath=$PWD/bin/eventing/zslib-eventing-tool-compiler
 
 
 print()
@@ -88,16 +88,16 @@ buildEventCompiler()
 		xcodebuild -workspace zsLib-Eventing.xcworkspace -scheme "zsLib.Eventing.Compiler.Tool" -configuration "Release" -derivedDataPath "./zsLib.Eventing.Compiler.Tool-osx.Tool/output/" > /dev/null
 	fi
   if (( $? )); then
-    error 1 "zsLib.Eventing.Compiler.Tool compilation has failed"
+    error 1 "zslib-eventing-tool-compiler compilation has failed"
   else
     print $warning "Event compiler is built successfully"
   fi
 
   make_directory ../../../../../bin/eventing/
 
-  if [ -f ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/zsLib.Eventing.Compiler.Tool ] && [ -f ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/libcryptopp-osx.a ]
+  if [ -f ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/zslib-eventing-tool-compiler ] && [ -f ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/libcryptopp-osx.a ]
   then
-    cp ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/zsLib.Eventing.Compiler.Tool ../../../../../bin/eventing/zsLib.Eventing.Compiler.Tool
+    cp ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/zslib-eventing-tool-compiler ../../../../../bin/eventing/zslib-eventing-tool-compiler
     cp ./zsLib.Eventing.Compiler.Tool-osx.Tool/output/Build/Products/Release/libcryptopp-osx.a ../../../../../bin/eventing/libcryptopp-osx.a
   fi
 
