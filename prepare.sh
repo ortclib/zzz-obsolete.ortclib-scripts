@@ -287,9 +287,11 @@ prepareORTC()
 {
   print $debug "Preparing Ortc..."
 
-  prepareCurl
-  if [ "$noEventing" != "1" ]; then
-    prepareEventing
+  if [ "$HOST_SYSTEM" != "linux" ]; then
+    prepareCurl
+    if [ "$noEventing" != "1" ]; then
+      prepareEventing
+    fi
   fi
 }
 

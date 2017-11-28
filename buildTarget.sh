@@ -10,22 +10,22 @@ architecture=all
 merge=1
 logLevel=2
 ################
-target_webrtc=1
+target_webrtc=0
 target_ortc=0
 
-platform_iOS=1
+platform_iOS=0
 platform_macOS=0
 platform_linux=0
 platform_android=0
 
 configuration_Release=0
-configuration_Debug=1
+configuration_Debug=0
 
 architecture_arm=0
 architecture_armv7=0
 architecture_arm64=0
 architecture_x86=0
-architecture_x64=1
+architecture_x64=0
 
 #log levels
 error=0
@@ -43,6 +43,17 @@ ninjaExe="webrtc/xplatform/depot_tools/ninja"
 webrtcLibPath=obj/webrtc/libwebrtc.a
 ortcLibPath=libortclib.dylib
 
+systemcheck()
+{
+  if [ "$OSTYPE" == "linux-gnu" ];
+  then
+    HOST_SYSTEM=linux
+    HOST_OS=$(lsb_release -si | awk '{print tolower($0)}')
+    HOST_ARCH=$(uname -m | sed 's/x86_//;s/i[3-6]86/32/')
+    HOST_VER=$(lsb_release -sr)
+  fi
+}
+
 identifyPlatform()
 {
   print $trace "Identifying target platforms ..."
@@ -50,23 +61,39 @@ identifyPlatform()
     if [ "$HOST_SYSTEM" == "linux" ]; then
       platform_linux=1
       platform_android=1
+      platform_iOS=0
+      platform_macOS=0
       messageText="WebRtc will be built for linux and android platforms ..."
     else
       platform_iOS=1
       platform_macOS=1
+      platform_linux=0
+      platform_android=0
       messageText="WebRtc will be built for iOS and macOS platforms ..."
     fi
   elif [ "$platform" == "ios" ]; then
     platform_iOS=1
+    platform_macOS=0
+    platform_linux=0
+    platform_android=0
     messageText="WebRtc will be built for $platform platform..."
   elif [ "$platform" == "mac" ]; then
     platform_macOS=1
+    platform_iOS=0
+    platform_linux=0
+    platform_android=0
     messageText="WebRtc will be built for $platform platform..."
   elif [ "$platform" == "linux" ]; then
     platform_linux=1
+    platform_macOS=0
+    platform_iOS=0
+    platform_android=0
     messageText="WebRtc will be built for $platform platform..."
   elif [ "$platform" == "android" ]; then
     platform_android=1
+    platform_linux=0
+    platform_macOS=0
+    platform_iOS=0
     messageText="WebRtc will be built for $platform platform..."
   else
     error 1 "Invalid platform"
@@ -165,6 +192,7 @@ buildArchitecture()
 }
 buildPlatform()
 {
+  print $debug "Building for platform $1"
   if [ "$1" == "ios" ] || [ "$1" == "android" ]; then
     if [ $architecture_arm -eq 1 ]; then
       buildArchitecture $1 arm
@@ -342,6 +370,7 @@ do
         exit 1
         ;;
     -loglevel|-l)
+        logLevel=$2
         if [ "$2" == "error" ]; then
           logLevel=0
         elif [ "$2" == "info" ]; then
@@ -359,6 +388,8 @@ do
         error 1 "Command line argument was not understood"
   esac
 done
+
+systemcheck
 
 identifyPlatform
 identifyConfiguration

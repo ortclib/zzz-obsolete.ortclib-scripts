@@ -4,6 +4,7 @@ set -e
 
 target=all
 platform=all
+architecture=all
 logLevel=4
 platform_iOS=0
 platform_macOS=0
@@ -63,8 +64,8 @@ PROJECT_IOS_FILE=all_ios.xcodeproj
 TARGET_CPU_arm=0
 TARGET_CPU_armv7=0
 TARGET_CPU_arm64=0
-TARGET_CPU_x86=0
-TARGET_CPU_x64=1
+architecture_x86=0
+architecture_x64=0
 
 HOST_SYSTEM=mac
 HOST_OS=osx
@@ -173,32 +174,45 @@ identifyPlatform()
     if [ "$HOST_SYSTEM" == "linux" ]; then
       platform_linux=1
       platform_android=1
+      platform_iOS=0
+      platform_macOS=0
+      validInput=1
       messageText="Preparing development environment for linux and android platforms ..."
     else
       platform_iOS=1
       platform_macOS=1
-      TARGET_CPU_arm=1
-      TARGET_CPU_armv7=0
-      TARGET_CPU_arm64=1
-      TARGET_CPU_x86=1
-      TARGET_CPU_x64=1
+      platform_linux=0
+      platform_android=0
+      validInput=1
       messageText="Preparing development environment for iOS and macOS platforms ..."
     fi
     validInput=1
   elif [ "$platform" == "iOS" ]; then
     platform_iOS=1
+    platform_macOS=0
+    platform_linux=0
+    platform_android=0
     validInput=1
     messageText="Preparing development environment for $platform platform..."
-  elif [ "$platform" == "macOS" ]; then
+  elif [ "$platform" == "mac" ]; then
     platform_macOS=1
+    platform_iOS=0
+    platform_linux=0
+    platform_android=0
     validInput=1
     messageText="Preparing development environment for $platform platform..."
   elif [ "$platform" == "linux" ]; then
     platform_linux=1
+    platform_macOS=0
+    platform_iOS=0
+    platform_android=0
     validInput=1
     messageText="Preparing development environment for $platform platform..."
   elif [ "$platform" == "android" ]; then
     platform_android=1
+    platform_linux=0
+    platform_macOS=0
+    platform_iOS=0
     validInput=1
     messageText="Preparing development environment for $platform platform..."
   else
@@ -208,6 +222,35 @@ identifyPlatform()
   print $warning "$messageText"
 }
 
+identifyArchitecture()
+{
+  print $trace "Identifying target architecture ..."
+  if [ $platform_iOS -eq 1 ] || [ $platform_android -eq 1 ]; then
+    if [ "$architecture" == "all" ]; then
+      architecture_arm=1
+      architecture_arm64=1
+    elif [ "$architecture" == "arm" ]; then
+      architecture_arm=1
+      architecture_arm64=0
+    elif [ "$architecture" == "arm64" ]; then
+      architecture_arm=0
+      architecture_arm64=1
+    fi
+  fi
+
+  if [ $platform_macOS -eq 1 ] || [ $platform_linux -eq 1 ]; then
+    if [ "$architecture" == "all" ]; then
+      architecture_x86=1
+      architecture_x64=1
+    elif [ "$architecture" == "x86" ]; then
+      architecture_x86=1
+      architecture_x64=0
+    elif [ "$architecture" == "x64" ]; then
+      architecture_x86=0
+      architecture_x64=1
+    fi
+  fi
+}
 makeDirectory()
 {
   TARGET=$1
@@ -789,11 +832,11 @@ generateProjects()
   fi
 
   if [ $platform_macOS -eq 1 ]; then
-    if [ $TARGET_CPU_x86 -eq 1 ]; then
+    if [ $architecture_x86 -eq 1 ]; then
       generateProjectsForPlatform mac x86 debug
       generateProjectsForPlatform mac x86 release
     fi
-    if [ $TARGET_CPU_x64 -eq 1 ]; then
+    if [ $architecture_x64 -eq 1 ]; then
       generateProjectsForPlatform mac x64 debug
       generateProjectsForPlatform mac x64 release
     fi
@@ -812,11 +855,11 @@ generateProjects()
       generateProjectsForPlatform linux arm64 debug
       generateProjectsForPlatform linux arm64 release
     fi
-    if [ $TARGET_CPU_x86 -eq 1 ]; then
+    if [ $architecture_x86 -eq 1 ]; then
       generateProjectsForPlatform linux x86 debug
       generateProjectsForPlatform linux x86 release
     fi
-    if [ $TARGET_CPU_x64 -eq 1 ]; then
+    if [ $architecture_x64 -eq 1 ]; then
       generateProjectsForPlatform linux x64 debug
       generateProjectsForPlatform linux x64 release
     fi
@@ -831,11 +874,11 @@ generateProjects()
       generateProjectsForPlatform android armv7 debug
       generateProjectsForPlatform android armv7 release
     fi
-    if [ $TARGET_CPU_x86 -eq 1 ]; then
+    if [ $architecture_x86 -eq 1 ]; then
       generateProjectsForPlatform android x86 debug
       generateProjectsForPlatform android x86 release
     fi
-    if [ $TARGET_CPU_x64 -eq 1 ]; then
+    if [ $architecture_x64 -eq 1 ]; then
       generateProjectsForPlatform android x64 debug
       generateProjectsForPlatform android x64 release
     fi
@@ -886,7 +929,7 @@ do
         shift 2
         ;;
     -help|-h)
-        help
+        helpgenerateProjects
         exit 1
         ;;
     -loglevel|-l)
@@ -923,6 +966,7 @@ print $warning "LogLevel: $logLevel"
 
 precheck
 identifyPlatform
+identifyArchitecture
 makeFolderStructure
 ##cleanPreviousResults
 ##setNinja
