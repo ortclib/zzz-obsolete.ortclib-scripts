@@ -61,9 +61,9 @@ PROJECT_IOS_FILE=all_ios.xcodeproj
 #OUTPUT_ANDROID=out_android
 #OUTPUT_LINUX=out_linux
 
-TARGET_CPU_arm=0
-TARGET_CPU_armv7=0
-TARGET_CPU_arm64=0
+architecture_arm=0
+architecture_armv7=0
+architecture_arm64=0
 architecture_x86=0
 architecture_x64=0
 
@@ -817,15 +817,15 @@ generateProjects()
   print $debug "Executing generateProjects function"
 
   if [ $platform_iOS -eq 1 ]; then
-    if [ $TARGET_CPU_arm -eq 1 ]; then
+    if [ $architecture_arm -eq 1 ]; then
       generateProjectsForPlatform ios arm debug
       generateProjectsForPlatform ios arm release
     fi
-    if [ $TARGET_CPU_armv7 -eq 1 ]; then
+    if [ $architecture_armv7 -eq 1 ]; then
       generateProjectsForPlatform ios armv7 debug
       generateProjectsForPlatform ios armv7 release
     fi
-    if [ $TARGET_CPU_arm64 -eq 1 ]; then
+    if [ $architecture_arm64 -eq 1 ]; then
       generateProjectsForPlatform ios arm64 debug
       generateProjectsForPlatform ios arm64 release
     fi
@@ -843,15 +843,15 @@ generateProjects()
   fi
 
   if [ $platform_linux -eq 1 ]; then
-    if [ $TARGET_CPU_arm -eq 1 ]; then
+    if [ $architecture_arm -eq 1 ]; then
       generateProjectsForPlatform linux arm debug
       generateProjectsForPlatform linux arm release
     fi
-    if [ $TARGET_CPU_armv7 -eq 1 ]; then
+    if [ $architecture_armv7 -eq 1 ]; then
       generateProjectsForPlatform linux armv7 debug
       generateProjectsForPlatform linux armv7 release
     fi
-    if [ $TARGET_CPU_arm64 -eq 1 ]; then
+    if [ $architecture_arm64 -eq 1 ]; then
       generateProjectsForPlatform linux arm64 debug
       generateProjectsForPlatform linux arm64 release
     fi
@@ -866,11 +866,11 @@ generateProjects()
   fi
 
   if [ $platform_android -eq 1 ]; then
-    if [ $TARGET_CPU_arm -eq 1 ]; then
+    if [ $architecture_arm -eq 1 ]; then
       generateProjectsForPlatform android arm debug
       generateProjectsForPlatform android arm release
     fi
-    if [ $TARGET_CPU_armv7 -eq 1 ]; then
+    if [ $architecture_armv7 -eq 1 ]; then
       generateProjectsForPlatform android armv7 debug
       generateProjectsForPlatform android armv7 release
     fi
