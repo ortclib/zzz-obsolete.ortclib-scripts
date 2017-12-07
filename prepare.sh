@@ -125,7 +125,7 @@ error()
 path_remove() {
   PATH=${PATH/":$1"/} # delete any instances in the middle or at the end
   PATH=${PATH/"$1:"/} # delete any instances at the beginning
-#  echo "path $PATH"
+  print $trace "new tmp path: $PATH"
 }
 
 depotToolsPathCheck(){
@@ -133,11 +133,10 @@ depotToolsPathCheck(){
 for file in $(echo $PATH | tr ":" "\n"); do
     if [ -f $file/depot-tools-auth* ]
         then
-            echo "found"
+            print $trace "found $file"
             path_remove $file
-            echo "newTmpPath=$PATH"
             numberOfRemoved=$((numberOfRemoved+1))
-            echo "numberOfRemoved $numberOfRemoved"
+            print $trace "numberOfRemoved $numberOfRemoved"
     fi
 done
 
@@ -149,7 +148,7 @@ finished()
   if [ $result -gt 0 ]
   then
     PATH=$oldPath
-    echo "restored path=$PATH"
+    print $trace "restored path=$PATH"
   fi
 
   echo
@@ -502,10 +501,10 @@ identifyLogLevel
 
 numberOfRemoved=0
 oldPath=$(echo $PATH)
-echo "oldPath=$oldPath"
+print $trace "oldPath=$oldPath"
 depotToolsPathCheck
 result=$numberOfRemoved
-echo "result=$result"
+print $trace "Number of paths temporarily removed from environment PATH:=$result"
 
 if [ $prepare_ORTC_Environemnt -eq 1 ];
 then

@@ -755,7 +755,7 @@ GOTO:EOF
 
 
 :depotToolsPathCheck
-echo depotToolsPathCheck entered...
+CALL:print %trace% "depotToolsPathCheck entered..."
 
 SET numberOfRemoved=0
 SET oldPath=%PATH%
@@ -771,18 +771,17 @@ rem    echo !aux3!
         CALL SET PATH=%%PATH:%~1;=%%
 
         SET /A numberOfRemoved=numberOfRemoved+1
-        echo !numberOfRemoved! numberOfRemoved        
+        CALL:print %trace% "numberOfRemoved: !numberOfRemoved!"        
     ) 
 )
 GOTO:EOF
 
 
 :restorePathEnv
-echo restorePathEnv entered...
-echo numberOfRemoved=%numberOfRemoved% 
+CALL:print %trace% "restorePathEnv entered..."
+CALL:print %trace% "Number of paths temporarily removed from environment PATH: !numberOfRemoved!"
 
-IF %numberOfRemoved% GTR 0  (
-rem     echo %numberOfRemoved%     
+IF %numberOfRemoved% GTR 0  (     
     set PATH=!oldPath!
 )
 echo Restored PATH = !PATH!
