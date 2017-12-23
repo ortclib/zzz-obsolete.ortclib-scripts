@@ -7,6 +7,8 @@ SET CONFIGURATION=Release
 SET eventingToolCompilerPlatform=x86
 SET solutionPath=ortc\windows\solutions\zsLib.Eventing.sln
 SET msVS_Path=""
+SET tools_MSVC_Path=""
+SET tools_MSVC_Version=""
 SET x86BuildCompilerOption=amd64_x86
 SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
@@ -136,11 +138,15 @@ IF EXIST !msVS_Path! (
 	IF EXIST "!msVS_Path!\Community" SET msVS_Path="!msVS_Path!\Community"
 	IF EXIST "!msVS_Path!\Professional" SET msVS_Path="!msVS_Path!\Professional"
 	IF EXIST "!msVS_Path!\Enterprise" SET msVS_Path="!msVS_Path!\Enterprise"
+	IF EXIST "!msVS_Path!\VC\Tools\MSVC" SET tools_MSVC_Path=!msVS_Path!\VC\Tools\MSVC
 )
 
 IF NOT EXIST !msVS_Path! CALL:error 1 "Visual Studio 2017 is not installed"
 
+for /f %%i in ('dir /b %tools_MSVC_Path%') do set tools_MSVC_Version=%%i
+
 CALL:print %debug% "Visual Studio path is !msVS_Path!"
+CALL:print %debug% "Visual Studio 2017 Tools MSVC Version is !tools_MSVC_Version!"
 
 GOTO:EOF
 
@@ -314,11 +320,11 @@ IF %managedBuild% EQU 1 (
 	echo link
 	SET tempPlatform=%currentPlatform%
 	IF /I %currentPlatform%==win32 SET tempPlatform=x86
-	echo %msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link
+    echo %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link
 	IF %logLevel% GEQ %trace% (
-		%msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link -verbose -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
+        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link -verbose -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
 	) ELSE (
-		%msVS_Path%\VC\Tools\MSVC\14.11.25503\bin\Hostx64\!tempPlatform!\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
+        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
 	)
 )
 IF ERRORLEVEL 1 CALL:error 1 "Creating manifest resource dll has failed"
