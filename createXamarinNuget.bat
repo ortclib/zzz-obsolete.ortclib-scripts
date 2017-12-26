@@ -145,8 +145,9 @@ ECHO.
 CALL:checkOrtcAvailability
 
 CALL:identifyTarget
-
-CALL:downloadNuget
+CALL:determineHostCPU
+CALL::setCompilerOption x64
+CALL:downloadNuget 
 
 IF %xamarin% NEQ 1 (
 	CALL:generateNugetPackages
@@ -245,7 +246,7 @@ CALL:determineVisualStudioPath
 IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating Ortc nuget package ..."
 	
-	::CALL:prepareTemplates ortc
+	CALL:prepareTemplates ortc
 	
 	SET SolutionPathOrtc=!nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln
 	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
@@ -294,16 +295,16 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	SET nugetName=%nugetOrtcName%
 	
   CALL bin\prepare.bat
-  pause
+  
 	::this will build Org.Ortc.Xamarin.iOS as well
 	CALL:buildNativeLibs ortc win32
 	CALL:buildNativeLibs ortc win32_x64
 	
-  pause
-  CALL:buildWrapper !SolutionPathOrtc! wrappers\Org.Ortc.Xamarin.iOS "Any CPU"
-	CALL:buildWrapper !SolutionPathOrtc! wrappers\Org.Ortc.Net.Standard "Any CPU"
   
-  pause
+  CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin_iOS "Any CPU"
+	CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Net_Standard "Any CPU"
+  
+  
   CALL:preparePackage Ortc.Xamarin
 
 )
@@ -319,19 +320,21 @@ IF %logLevel% GEQ %trace% (
 	CALL bin\buildWebRTC.bat %CONFIGURATION% %~2 %~1 >NUL
 )
 IF ERRORLEVEL 1 CALL:error 1 "Building %nugetName% native libs for %~1 %CONFIGURATION% has failed"
-pause
+
 GOTO:EOF
 
 :buildWrapper
-echo buildWrapper
+CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
+IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+
 CALL:print %trace% "Restoring nuget packages for %~1"
 bin\nuget.exe restore !SolutionPathOrtc!
 IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
 
 IF %logLevel% GEQ %trace% (
-	MSBuild %~1 /t: /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False
+	%msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False
 ) ELSE (
-	MSBuild %~1 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False >NUL
+	%msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False >NUL
 )
 
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
@@ -592,11 +595,17 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 )
 GOTO:EOF
 
+:determineHostCPU
+CALL:print %trace% "Determining host cpu ..."
+REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
+CALL:print %trace% "CPU arhitecture is %CPU%"
+GOTO:EOF
+
 :setCompilerOption
 CALL:print %trace% "Determining compiler options ..."
-REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
+::REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
 
-CALL:print %trace% "CPU arhitecture is %CPU%"
+::CALL:print %trace% "CPU arhitecture is %CPU%"
 
 IF /I %CPU% == x86 (
 	SET x86BuildCompilerOption=x86
@@ -894,7 +903,7 @@ GOTO:EOF
 IF EXIST !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln DEL /s /q /f !nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln > NUL
 IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Nuget.sln > NUL
 IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Core.Xamarin.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Core.Xamarin.Nuget.sln > NUL
-IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln > NUL
+::IF EXIST !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln DEL /s /q /f !nugetOrtcTemplateProjectDestinationPath!Ortc.Xamarin.Nuget.sln > NUL
 GOTO:EOF
 
 REM Print the error message and terminate further execution if error is critical.Firt argument is critical error flag (1 for critical). Second is error message

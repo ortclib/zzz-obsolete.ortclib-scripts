@@ -169,8 +169,8 @@ GOTO:EOF
 :combineLibs
 CALL:setPaths %~dp1
 
-::CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-::IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
+IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 
 IF NOT EXIST %destinationPath% (
 	CALL:makeDirectory %destinationPath%
