@@ -3,15 +3,14 @@
 :: Author:    Sergej Jovanovic
 :: Email:     sergej@gnedo.com
 :: Twitter:   @JovanovicSergej
-:: Revision:  November 2016 - initial version
+:: Revision:  December 2017 - initial version
 
 @ECHO off
 SETLOCAL EnableDelayedExpansion
 
-SET SOLUTIONPATH=%1
-SET CONFIGURATION=%2
-SET PLATFORM=%3
-SET SOFTWARE_PLATFORM=%4
+SET CONFIGURATION=%1
+SET PLATFORM=%2
+SET SOFTWARE_PLATFORM=%3
 SET msVS_Path=""
 SET failure=0
 SET x86BuildCompilerOption=amd64_x86
@@ -33,10 +32,13 @@ SET warning=2
 SET debug=3														
 SET trace=4	
 
+SET baseBuildPath=webrtc\xplatform\webrtc\out
+
 CALL:print %info% "Webrtc build is started. It will take couple of minutes."
 CALL:print %info% "Working ..."
 
 SET currentPlatform=%PLATFORM%
+SET linkPlatform=%currentPlatform%
 
 CALL:print %info%  "%PLATFORM%"
 CALL:print %info%  "%Platform !currentPlatform!"
@@ -47,11 +49,13 @@ CALL:determineVisualStudioPath
 
 CALL:setCompilerOption %currentPlatform%
 
-CALL:build
+::CALL:build
 
-CALL:combineLibs
+CALL:buildNativeLibs
 
-CALL:moveLibs
+::CALL:combineLibs
+
+::CALL:moveLibs
 
 GOTO:done
 
@@ -60,17 +64,24 @@ GOTO:done
 SET progfiles=%ProgramFiles%
 IF NOT "%ProgramFiles(x86)%" == "" SET progfiles=%ProgramFiles(x86)%
 
-REM Check if Visual Studio 2015 is installed
-SET msVS_Path="%progfiles%\Microsoft Visual Studio 14.0"
+REM Check if Visual Studio 2017 is installed
+SET msVS_Path="%progfiles%\Microsoft Visual Studio\2017"
+SET msVS_Version=14
 
-IF NOT EXIST %msVS_Path% (
-	REM Check if Visual Studio 2013 is installed
-	SET msVS_Path="%progfiles%\Microsoft Visual Studio 12.0"
+IF EXIST !msVS_Path! (
+	SET msVS_Path=!msVS_Path:"=!
+	IF EXIST "!msVS_Path!\Community" SET msVS_Path="!msVS_Path!\Community"
+	IF EXIST "!msVS_Path!\Professional" SET msVS_Path="!msVS_Path!\Professional"
+	IF EXIST "!msVS_Path!\Enterprise" SET msVS_Path="!msVS_Path!\Enterprise"
+	IF EXIST "!msVS_Path!\VC\Tools\MSVC" SET tools_MSVC_Path=!msVS_Path!\VC\Tools\MSVC
 )
 
-IF NOT EXIST %msVS_Path% CALL:error 1 "Visual Studio 2015 or 2013 is not installed"
+IF NOT EXIST !msVS_Path! CALL:error 1 "Visual Studio 2017 is not installed"
 
-CALL:print %trace% "Visual Studio path is %msVS_Path%"
+for /f %%i in ('dir /b %tools_MSVC_Path%') do set tools_MSVC_Version=%%i
+
+CALL:print %debug% "Visual Studio path is !msVS_Path!"
+CALL:print %debug% "Visual Studio 2017 Tools MSVC Version is !tools_MSVC_Version!"
 
 GOTO:EOF
 
@@ -87,7 +98,7 @@ IF /I %CPU% == x86 (
 	SET win32BuildCompilerOption=x86
 	
 	SET x86Win32BuildCompilerOption=x86
-    SET x64Win32BuildCompilerOption=x86_amd64
+  SET x64Win32BuildCompilerOption=x86_amd64
 )
 	
 IF /I %~1==x86 (
@@ -99,8 +110,10 @@ IF /I %~1==x86 (
 		IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
 			IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
 				SET currentBuildCompilerOption=%x64Win32BuildCompilerOption%
+        SET linkPlatform=x64
 			) ELSE (
 				SET currentBuildCompilerOption=%x86Win32BuildCompilerOption%
+        SET linkPlatform=x86
 			)
 		) ELSE (
 			SET currentBuildCompilerOption=%x64BuildCompilerOption%
@@ -112,11 +125,37 @@ CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
 
 GOTO:EOF
 
+:buildNativeLibs
+  IF EXIST !baseBuildPath! (
+    PUSHD !baseBuildPath!
+    SET ninjaPath=..\..\..\..\..\bin\ninja
+    SET outputPath=win_x64_!CONFIGURATION!
+    
+    IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+			IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
+				SET outputPath=win_x64_!CONFIGURATION!
+			) ELSE (
+				SET outputPath=win_x86_!CONFIGURATION!
+			)
+		) ELSE (
+			SET outputPath=winuwp_10_!PLATFORM!_!CONFIGURATION!
+		)
+    
+    CD !outputPath!
+    IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
+    
+    !ninjaPath! %SOFTWARE_PLATFORM%
+    IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_PLATFORM% in %CD% has failed"s
+    
+    CALL:combineLibs !outputPath!
+    CD ..
+  )
+GOTO:EOF
 
 :build
 
 IF EXIST %msVS_Path% (
-	CALL %msVS_Path%\VC\vcvarsall.bat %currentBuildCompilerOption%
+	CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
 	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 	
 rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Build /nodeReuse:False
@@ -128,7 +167,10 @@ rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Pla
 GOTO:EOF
 
 :combineLibs
-CALL:setPaths %SOLUTIONPATH%
+CALL:setPaths %~dp1
+
+::CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
+::IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 
 IF NOT EXIST %destinationPath% (
 	CALL:makeDirectory %destinationPath%
@@ -140,7 +182,8 @@ SET webRtcLibs=
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
 PUSHD %libsSourcePath%
-IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Bin\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
+
+IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 IF EXIST *.dll (
@@ -151,7 +194,6 @@ IF EXIST *.dll (
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
-
 
 IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
 POPD
@@ -172,44 +214,20 @@ IF NOT EXIST %libsSourceBackupPath%NUL (
 
 
 CALL:print %debug% "Moving %libsSourcePath% to %libsSourceBackupPath%"
-MOVE %libsSourcePath% %libsSourceBackupPath%
+COPY %libsSourcePath% %libsSourceBackupPath%
 if ERRORLEVEL 1 CALL:error 0 "Failed moving %libsSourcePath% to %libsSourceBackupPath%"
 
 GOTO:EOF
 
 :setPaths
-SET basePath=%~dp1
+SET basePath=%1
+SET libsSourcePath=%basePath%
 
-IF /I "%currentPlatform%"=="x64" (
-	SET libsSourcePath=%basePath%obj\webrtc
-	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-)
+SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 
-IF /I "%currentPlatform%"=="x86" (
-	SET libsSourcePath=%basePath%obj\webrtc
-	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-)
+CALL:print %debug% "Source path is "%basePath%""
 
-IF /I "%currentPlatform%"=="ARM" (
-	SET libsSourcePath=%basePath%obj\webrtc
-	SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-)
-
-
-IF /I "%currentPlatform%"=="win32" (
-	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%
-	SET libsSourceBackupPath=%basePath%build_win32\%SOFTWARE_PLATFORM%\
-)
-
-IF /I "%currentPlatform%"=="win32_x64" (
-	SET libsSourcePath=%basePath%build_win32\%CONFIGURATION%_x64
-	SET libsSourceBackupPath=%basePath%build_win32\%SOFTWARE_PLATFORM%\
-)
-
-CALL:print %debug% "Source path is %libsSourcePath%"
-
-::SET destinationPath=%basePath%WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-SET destinationPath=%libsSourcePath%\..\..\..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF

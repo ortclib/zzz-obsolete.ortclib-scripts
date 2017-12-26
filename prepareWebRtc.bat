@@ -183,9 +183,9 @@ CALL:makeJunctionLinks
 
 CALL:updateFolders
 
-IF %platform_win32_x64% EQU 1 (
-    CALL:updateClang
-)
+::IF %platform_win32_x64% EQU 1 (
+::    CALL:updateClang
+::)
 
 CALL:setupDepotTools
 
