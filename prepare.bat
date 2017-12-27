@@ -33,14 +33,11 @@ SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
 SET pythonVersion=2.7.6
-SET ninjaVersion=v1.7.2
 SET pythonDestinationPath=python-%pythonVersion%.msi
-SET ninjaDestinationPath=.\bin\ninja-win.zip
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
  
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
-SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
 SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
 
 ::helper flags
@@ -168,8 +165,6 @@ CALL:gitCheck
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
-::Install ninja if missing
-CALL:installNinja
 
 IF %gn% EQU 1 (
     IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
@@ -706,32 +701,6 @@ GOTO:EOF
 IF EXIST ortc\NUL SET ortcAvailable=1
 GOTO:EOF
 
-:installNinja
-
-WHERE ninja > NUL 2>&1
-IF !ERRORLEVEL! EQU 1 (
-
-	CALL:print %trace% "Ninja is not in the path"
-	
-	IF NOT EXIST .\bin\ninja.exe (
-		CALL:print %trace% "Downloading ninja ..."
-		CALL:download %ninjaDownloadUrl% %ninjaDestinationPath%
-
-		IF EXIST .\bin\ninja-win.zip (
-			CALL::print %trace% "Unarchiving ninja-win.zip ..."
-			CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
-		) ELSE (
-			CALL:error 0 "Ninja is not installed. Projects won't be buildable."
-		)
-	)
-	
-	IF EXIST .\bin\ninja.exe (
-		CALL::print %trace% "Updating projects ..."
-		START /B /wait .\bin\upn.exe .\bin\ .\webrtc\xplatform\webrtc\ .\webrtc\xplatform\webrtc\chromium\src\
-	)
-)
-
-GOTO:EOF
 
 :unzipfile 
 SET vbs="%temp%\_.vbs"
