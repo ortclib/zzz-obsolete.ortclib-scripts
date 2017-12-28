@@ -33,14 +33,11 @@ SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
 SET pythonVersion=2.7.6
-SET ninjaVersion=v1.7.2
 SET pythonDestinationPath=python-%pythonVersion%.msi
-SET ninjaDestinationPath=.\bin\ninja-win.zip
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
  
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
-SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
 SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
 
 ::helper flags
@@ -168,8 +165,9 @@ CALL:gitCheck
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
-::Install ninja if missing
-CALL:installNinja
+
+::Check if depot_tools is in PATH environment
+CALL:depotToolsPathCheck
 
 IF %gn% EQU 1 (
     IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
@@ -706,32 +704,6 @@ GOTO:EOF
 IF EXIST ortc\NUL SET ortcAvailable=1
 GOTO:EOF
 
-:installNinja
-
-WHERE ninja > NUL 2>&1
-IF !ERRORLEVEL! EQU 1 (
-
-	CALL:print %trace% "Ninja is not in the path"
-	
-	IF NOT EXIST .\bin\ninja.exe (
-		CALL:print %trace% "Downloading ninja ..."
-		CALL:download %ninjaDownloadUrl% %ninjaDestinationPath%
-
-		IF EXIST .\bin\ninja-win.zip (
-			CALL::print %trace% "Unarchiving ninja-win.zip ..."
-			CALL:unzipfile "%~dp0" "%~dp0ninja-win.zip" 
-		) ELSE (
-			CALL:error 0 "Ninja is not installed. Projects won't be buildable."
-		)
-	)
-	
-	IF EXIST .\bin\ninja.exe (
-		CALL::print %trace% "Updating projects ..."
-		START /B /wait .\bin\upn.exe .\bin\ .\webrtc\xplatform\webrtc\ .\webrtc\xplatform\webrtc\chromium\src\
-	)
-)
-
-GOTO:EOF
 
 :unzipfile 
 SET vbs="%temp%\_.vbs"
@@ -750,11 +722,49 @@ IF EXIST %vbs% DEL /f /q %vbs%
 DEL /f /q %2
 GOTO:EOF
 
+
+:depotToolsPathCheck
+CALL:print %trace% "depotToolsPathCheck entered..."
+
+SET numberOfRemoved=0
+SET oldPath=%PATH%
+rem echo Old path: !oldPath!
+
+FOR %%A IN ("%path:;=";"%") DO (
+rem    echo %%~A
+    SET aux3="%%~A\depot-tools-auth*"
+rem    echo !aux3! 
+    
+    IF EXIST "!aux3!" (
+        echo Remove %%~A from path       
+        CALL SET PATH=%%PATH:;%~1=%%
+        CALL SET PATH=%%PATH:%~1;=%%
+rem     echo Modified path: !PATH!
+
+        SET /A numberOfRemoved=numberOfRemoved+1
+        CALL:print %trace% "numberOfRemoved: !numberOfRemoved!"        
+    ) 
+)
+GOTO:EOF
+
+
+:restorePathEnv
+CALL:print %trace% "restorePathEnv entered..."
+CALL:print %trace% "Number of paths temporarily removed from environment PATH: !numberOfRemoved!"
+
+IF %numberOfRemoved% GTR 0  (     
+    set PATH=!oldPath!
+)
+echo Restored PATH = !PATH!
+GOTO:EOF
+
+
 :cleanup
 IF EXIST %webrtcGnPath%originalBuild.gn (
     DEL %webrtcGnPath%BUILD.gn
     REN %webrtcGnPath%originalBuild.gn BUILD.gn
 )
+CALL:restorePathEnv
 GOTO:EOF
 
 :showHelp
