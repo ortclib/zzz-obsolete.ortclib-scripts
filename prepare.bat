@@ -728,6 +728,7 @@ CALL:print %trace% "depotToolsPathCheck entered..."
 
 SET numberOfRemoved=0
 SET oldPath=%PATH%
+rem echo Old path: !oldPath!
 
 FOR %%A IN ("%path:;=";"%") DO (
 rem    echo %%~A
@@ -738,6 +739,7 @@ rem    echo !aux3!
         echo Remove %%~A from path       
         CALL SET PATH=%%PATH:;%~1=%%
         CALL SET PATH=%%PATH:%~1;=%%
+rem     echo Modified path: !PATH!
 
         SET /A numberOfRemoved=numberOfRemoved+1
         CALL:print %trace% "numberOfRemoved: !numberOfRemoved!"        
