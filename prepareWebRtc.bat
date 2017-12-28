@@ -183,6 +183,10 @@ CALL:makeJunctionLinks
 
 CALL:updateFolders
 
+IF %platform_win32_x64% EQU 1 (
+    CALL:updateClang
+)
+
 CALL:setupDepotTools
 
 CALL:downloadGnBinaries
@@ -425,6 +429,26 @@ IF NOT EXIST %~1\NUL (
 ) ELSE (
 	CALL:print %trace% "%~1 folder already exists"
 )
+GOTO:EOF
+
+:updateClang
+CALL:print %trace% "Running clang update ..."
+
+IF EXIST third_party\llvm-build\Release+Asserts\bin\clang-cl.exe GOTO:clangalreadyexists
+
+:: TODO Need to find workaround solution for pop-up window "Git Credential Manager for Windows". In the meanwhile, just click "Cancel" button in case pop-up window appears.
+CALL:print %warning% "In case pop-up window 'Git Credential Manager for Windows' appears after clang download, just click 'Cancel' button."
+
+CALL python tools\clang\scripts\update.py %*
+
+CALL:makeDirectory third_party\llvm
+
+CALL:makeLink . third_party\llvm chromium\src\third_party\llvm
+CALL:makeLink . third_party\llvm-build chromium\src\third_party\llvm-build
+
+:clangalreadyexists
+CALL:print %trace% "Clang already exists, skipping clang update..."
+
 GOTO:EOF
 
 :makeLink

@@ -252,7 +252,7 @@ mergeConfiguration()
         fi
 
         if [ "$3" == "ortc" ]; then 
-          runLipo $basePath/ios_arm_$1/$2 $basePath/ios_arm64_$1/$2 webrtc/xplatform/webrtc/out_ios_$1/$3.dylib
+          runLipo $basePath/ios_arm_$1/$2 $basePath/ios_arm64_$1/$2 webrtc/xplatform/webrtc/out_ios_$1/libOrtc.dylib
         fi
 
       fi
