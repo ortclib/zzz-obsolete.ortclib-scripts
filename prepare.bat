@@ -166,6 +166,9 @@ CALL:gitCheck
 CALL:pythonSetup
 
 
+::Check if depot_tools is in PATH environment
+CALL:depotToolsPathCheck
+
 IF %gn% EQU 1 (
     IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
 )
@@ -719,11 +722,49 @@ IF EXIST %vbs% DEL /f /q %vbs%
 DEL /f /q %2
 GOTO:EOF
 
+
+:depotToolsPathCheck
+CALL:print %trace% "depotToolsPathCheck entered..."
+
+SET numberOfRemoved=0
+SET oldPath=%PATH%
+rem echo Old path: !oldPath!
+
+FOR %%A IN ("%path:;=";"%") DO (
+rem    echo %%~A
+    SET aux3="%%~A\depot-tools-auth*"
+rem    echo !aux3! 
+    
+    IF EXIST "!aux3!" (
+        echo Remove %%~A from path       
+        CALL SET PATH=%%PATH:;%~1=%%
+        CALL SET PATH=%%PATH:%~1;=%%
+rem     echo Modified path: !PATH!
+
+        SET /A numberOfRemoved=numberOfRemoved+1
+        CALL:print %trace% "numberOfRemoved: !numberOfRemoved!"        
+    ) 
+)
+GOTO:EOF
+
+
+:restorePathEnv
+CALL:print %trace% "restorePathEnv entered..."
+CALL:print %trace% "Number of paths temporarily removed from environment PATH: !numberOfRemoved!"
+
+IF %numberOfRemoved% GTR 0  (     
+    set PATH=!oldPath!
+)
+echo Restored PATH = !PATH!
+GOTO:EOF
+
+
 :cleanup
 IF EXIST %webrtcGnPath%originalBuild.gn (
     DEL %webrtcGnPath%BUILD.gn
     REN %webrtcGnPath%originalBuild.gn BUILD.gn
 )
+CALL:restorePathEnv
 GOTO:EOF
 
 :showHelp

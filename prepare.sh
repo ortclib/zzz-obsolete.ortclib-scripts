@@ -122,8 +122,35 @@ error()
   fi
 }
 
+path_remove() {
+  PATH=${PATH/":$1"/} # delete any instances in the middle or at the end
+  PATH=${PATH/"$1:"/} # delete any instances at the beginning
+  print $trace "new tmp path: $PATH"
+}
+
+depotToolsPathCheck(){
+
+for file in $(echo $PATH | tr ":" "\n"); do
+    if [ -f $file/depot-tools-auth* ]
+        then
+            print $trace "found $file"
+            path_remove $file
+            numberOfRemoved=$((numberOfRemoved+1))
+            print $trace "numberOfRemoved $numberOfRemoved"
+    fi
+done
+
+}
+
+
 finished()
 {
+  if [ $result -gt 0 ]
+  then
+    PATH=$oldPath
+    print $trace "restored path=$PATH"
+  fi
+
   echo
   print $info "Success: Development environment is set."
   echo
@@ -471,6 +498,13 @@ identifyPlatform
 identifyLogLevel
 
 ##installNinja
+
+numberOfRemoved=0
+oldPath=$(echo $PATH)
+print $trace "oldPath=$oldPath"
+depotToolsPathCheck
+result=$numberOfRemoved
+print $trace "Number of paths temporarily removed from environment PATH:=$result"
 
 if [ $prepare_ORTC_Environemnt -eq 1 ];
 then
