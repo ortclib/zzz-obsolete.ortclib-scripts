@@ -24,7 +24,8 @@ print "runIDLCompiler - sourcePathPrefix: " + sourcePathPrefix
 print "runIDLCompiler - NewWorkingPath:" + os.getcwd()
 
 #os.system(compilerNewPath + " -idl cx c dotnet json wrapper -c config.json -o .")
-os.system(compilerNewPath + " -idl cx c dotnet json wrapper -c " + jsonFile + " -o .")
+os.system(compilerNewPath + " -idl c dotnet json -c " + jsonFile + " -o .")
+os.system(compilerNewPath + " -idl cx json wrapper -c " + jsonFile + " -s winuwp.json -o .")
 
 updateScriptPath = os.path.dirname(os.path.realpath(__file__)) + "/../../../../bin/updateGniFileWithSources.py"
 

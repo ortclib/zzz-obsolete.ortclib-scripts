@@ -407,9 +407,11 @@ CALL:print %warning% "Preparing IDL wrappers [cx/c/dotnet/json] ..."
 PUSHD %idlOutput%
 
 IF %logLevel% GEQ %trace% (
-	CALL %compilerPath% -idl cx c dotnet json wrapper -c config.json -s winuwp.json -o .
+	CALL %compilerPath% -idl cx json wrapper -c config.json -s winuwp.json -o .
+  CALL %compilerPath% -idl c dotnet json -c config.json -o .
 ) ELSE (
-	CALL %compilerPath% -idl cx c dotnet json wrapper -c config.json -s winuwp.json -o . > NUL
+	CALL %compilerPath% -idl cx json wrapper -c config.json -s winuwp.json -o . > NUL
+  CALL %compilerPath% -idl c dotnet json -c config.json -o . > NUL
 )
 
 POPD

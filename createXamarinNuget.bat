@@ -410,7 +410,7 @@ SET nugetBuildNetCorex64Path=%nugetBuildNetCorePath%\x64
 SET nugetBuildNetCoreARMPath=%nugetBuildNetCorePath%\arm
 
 SET nugetLibPath=%nugetPath%\%nugetName%\lib
-SET nugetLibNetStandardPath=%nugetLibPath%\netstandard1.1
+SET nugetLibNetStandardPath=%nugetLibPath%\netstandard2.0
 SET nugetLibXamariniOSPath=%nugetLibPath%\xamarinios
 SET nugetLibUAPPath=%nugetLibPath%\uap10.0
 
@@ -419,6 +419,8 @@ SET nugetRuntimesx86Path=%nugetRuntimesPath%\win10-x86\native
 SET nugetRuntimesx64Path=%nugetRuntimesPath%\win10-x64\native
 SET nugetRuntimesARMPath=%nugetRuntimesPath%\win10-arm\native
 SET nugetRuntimesiOSPath=%nugetRuntimesPath%\iOS\native
+SET nugetRuntimesNetWinx64Path=%nugetRuntimesPath%\win-x64\native
+SET nugetRuntimesNetWinx86Path=%nugetRuntimesPath%\win-x86\native
 
 CALL:print %debug% "nugetTargetPath: !nugetTargetPath!"
 CALL:print %debug% "nugetSpecPath: !nugetSpecPath!"
