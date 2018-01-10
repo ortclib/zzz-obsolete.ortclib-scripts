@@ -51,6 +51,9 @@ SET nugetOrtcTemplateProjectDestinationPath=ortc\windows\solutions\
 SET nugetWebRtcTemplateProjectPath=%nugetWebRtcBasePath%\templates\WebRtc.Nuget.sln
 SET nugetWebRtcTemplateProjectDestinationPath=webrtc\windows\solutions\
 
+SET iOSProjectName=Org.Ortc.Xamarin.iOS
+SET netProjectName=Org.Ortc.Net.Standard
+SET uwpProjectName=Org.Ortc.Uwp
 ::urls
 SET nugetDownloadUrl=https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
@@ -300,13 +303,10 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	CALL:buildNativeLibs ortc win32
 	CALL:buildNativeLibs ortc win32_x64
 	
-  
   CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin_iOS "Any CPU"
 	CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Net_Standard "Any CPU"
   
-  
   CALL:preparePackage Ortc.Xamarin
-
 )
 
 GOTO:EOF
