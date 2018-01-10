@@ -162,12 +162,12 @@ CALL:perlCheck
 ::Check if git installed
 CALL:gitCheck
 
+::Check if depot_tools is in PATH environment
+CALL:depotToolsPathCheck
+
 ::Check if python is installed. If it isn't install it and add in the path
 CALL:pythonSetup
 
-
-::Check if depot_tools is in PATH environment
-CALL:depotToolsPathCheck
 
 IF %gn% EQU 1 (
     IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
@@ -732,13 +732,14 @@ rem echo Old path: !oldPath!
 
 FOR %%A IN ("%path:;=";"%") DO (
 rem    echo %%~A
-    SET aux3="%%~A\depot-tools-auth*"
+    SET aux3=%%~A\depot-tools-auth
 rem    echo !aux3! 
     
     IF EXIST "!aux3!" (
+rem     echo Before modification !PATH! 
         echo Remove %%~A from path       
-        CALL SET PATH=%%PATH:;%~1=%%
-        CALL SET PATH=%%PATH:%~1;=%%
+        CALL SET PATH=%%PATH:;%%~A=%%
+        CALL SET PATH=%%PATH:%%~A;=%%
 rem     echo Modified path: !PATH!
 
         SET /A numberOfRemoved=numberOfRemoved+1
@@ -755,7 +756,7 @@ CALL:print %trace% "Number of paths temporarily removed from environment PATH: !
 IF %numberOfRemoved% GTR 0  (     
     set PATH=!oldPath!
 )
-echo Restored PATH = !PATH!
+rem echo Restored PATH = !PATH!
 GOTO:EOF
 
 
