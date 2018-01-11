@@ -128,7 +128,7 @@ GOTO:EOF
 :buildNativeLibs
   IF EXIST !baseBuildPath! (
     PUSHD !baseBuildPath!
-    SET ninjaPath=..\..\..\..\..\bin\ninja
+    SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
     SET outputPath=win_x64_!CONFIGURATION!
     
     IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
@@ -193,9 +193,9 @@ IF EXIST *.dll (
 
 CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" MOVE %%~A %destinationPath% >NUL )
+FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" COPY %%~A %destinationPath% >NUL )
 
-IF ERRORLEVEL 1 CALL:error 0 "Failed moving pdb files"
+IF ERRORLEVEL 1 CALL:error 0 "Failed copying pdb files"
 POPD
 GOTO:EOF
 
