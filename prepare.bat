@@ -765,7 +765,6 @@ IF EXIST %webrtcGnPath%originalBuild.gn (
     DEL %webrtcGnPath%BUILD.gn
     REN %webrtcGnPath%originalBuild.gn BUILD.gn
 )
-CALL:restorePathEnv
 GOTO:EOF
 
 :showHelp
@@ -860,6 +859,7 @@ GOTO:EOF
 ECHO.
 CALL:print %info% "Success: Development environment is set."
 CALL:cleanup
+CALL:restorePathEnv
 SET endTime=%time%
 CALL:showTime
 ECHO. 
