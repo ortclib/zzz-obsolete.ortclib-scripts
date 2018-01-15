@@ -80,7 +80,7 @@ SET help=0
 SET logLevel=2
 SET pack=0
 SET packDestination=..
-SET xamarin=1
+SET xamarin=0 
 
 ::build variables
 SET msVS_Path=""
@@ -138,7 +138,7 @@ GOTO parseInputArguments
 
 :main
 SET startTime=%time%
-
+SET currentDir=%CD%
 CALL:precheck
 
 CALL:showHelp
@@ -256,12 +256,13 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
 	SET nugetName=%nugetOrtcName%
 	
-	CALL:buildNativeLibs x86
-	CALL:buildNativeLibs x64
-	CALL:buildNativeLibs arm
+	CALL:buildNativeLibs ortc x86
+	CALL:buildNativeLibs ortc x64
+REM CALL:buildNativeLibs arm
 	
-  CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin_iOS
-  CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Net_Standard
+  CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp x86
+  CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp x64
+REM CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp arm
   
 	CALL:preparePackage Ortc
 )
@@ -300,17 +301,18 @@ GOTO:EOF
     SET WebRtcSolutionPath=%OrtcWebRtcWin32SolutionPath%
     SET nugetName=%nugetOrtcName%
 
-    CALL bin\prepare.bat
+    CALL bin\prepare.bat -getBinaries
 
     ::this will build Org.Ortc.Xamarin.iOS as well
     CALL:buildNativeLibs ortc win32
     CALL:buildNativeLibs ortc win32_x64
 
     CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Net_Standard "Any CPU"
+    REM CALL:buildWrapper !SolutionPathOrtc! wrappers\Org_Ortc_Xamarin_iOS "iPhone"
     CALL:preparePackage Ortc.Xamarin
   )
-
 GOTO:EOF
+
 :buildNativeLibs
 
 IF %logLevel% GEQ %trace% (
@@ -327,17 +329,25 @@ GOTO:EOF
 bin\nuget.exe restore !SolutionPathOrtc!
 IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
 
-REM CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-REM IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
+IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
 
 CALL:print %trace% "Restoring nuget packages for %~1"
 
-REM PUSHD C:\Work\2018\xamarin_net\ortclib-sdk
+PUSHD %currentDir%
 
-IF %logLevel% GEQ %trace% (
-	%msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False
+IF /I "%~3"=="iPhone" (
+  IF %logLevel% GEQ %trace% (
+    %msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=AppStore /property:Platform=%3 /nodeReuse:False /p:ServerAddress=%XAMARIN_BUILD_SERVER_IOS_ADDRESS% /p:ServerUser=%XAMARIN_BUILD_SERVER_IOS_USER% /p:ServerPassword=%XAMARIN_BUILD_SERVER_IOS_PASSWORD%
+  ) ELSE (
+    %msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=AppStore /property:Platform=%3 /nodeReuse:False /p:ServerAddress=%XAMARIN_BUILD_SERVER_IOS_ADDRESS% /p:ServerUser=%XAMARIN_BUILD_SERVER_IOS_USER% /p:ServerPassword=%XAMARIN_BUILD_SERVER_IOS_PASSWORD% >NUL
+  )
 ) ELSE (
-	%msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False >NUL
+  IF %logLevel% GEQ %trace% (
+    %msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False
+  ) ELSE (
+    %msVS_Path%\MSBuild\15.0\Bin\amd64\MSBuild %~1 /t:%~2 /property:Configuration=%CONFIGURATION% /property:Platform=%3 /nodeReuse:False >NUL
+  )
 )
 
 IF ERRORLEVEL 1 CALL:error 1 "Building %~2 project for %PLATFORM% %CONFIGURATION% has failed"
@@ -398,7 +408,7 @@ IF /I "%~1"=="webrtc" (
 )
 
 SET nugetTargetPath=%nugetBasePath%\%nugetName%.targets
-SET nugetSpecPath=%nugetBasePath%\%projectName%.nuspec
+SET nugetSpecPath=%nugetBasePath%\%nugetName%.nuspec
 SET nugetPackageVersion=%nugetBasePath%\%projectName%.version
 SET nugetPath=%nugetBasePath%\package
 SET nugetOutputPath=%nugetBasePath%\..\NugetOutput
@@ -448,28 +458,28 @@ CALL:print %debug% "nugetRuntimesx64Path: !nugetRuntimesx64Path!"
 CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
 
 IF !xamarinNuget! NEQ  1 (
-	SET sourcex86Path=%libSourceBasePath%\x86\Release\%projectName%
-	SET sourcex86DllPath=%sourcex86Path%\%projectNameForNuget%.dll
-	SET sourcex86WinmdPath=%sourcex86Path%\%projectNameForNuget%.winmd
-	SET sourcex86PdbPath=%sourcex86Path%\%projectNameForNuget%.pdb
-	SET sourcex86PriPath=%sourcex86Path%\%projectNameForNuget%.pri
+	SET sourcex86Path=!libSourceBasePath!\!projectName!.UWP\Release\x86
+	SET sourcex86DllPath=!sourcex86Path!\!projectNameForNuget!.dll
+	SET sourcex86WinmdPath=!sourcex86Path!\!projectNameForNuget!.winmd
+	SET sourcex86PdbPath=!sourcex86Path!\!projectNameForNuget!.pdb
+	SET sourcex86PriPath=!sourcex86Path!\!projectNameForNuget!.pri
 
 
-	SET sourcex86XmlPath=%sourcex86Path%\%projectNameForNuget%.xml
+	SET sourcex86XmlPath=!sourcex86Path!\!projectNameForNuget!.xml
 
-	SET sourcex64Path=%libSourceBasePath%\x64\Release\%projectName%
-	SET sourcex64DllPath=%sourcex64Path%\%projectNameForNuget%.dll
-	SET sourcex64WinmdPath=%sourcex64Path%\%projectNameForNuget%.winmd
-	SET sourcex64PdbPath=%sourcex64Path%\%projectNameForNuget%.pdb
-	SET sourcex64PriPath=%sourcex64Path%\%projectNameForNuget%.pri
+	SET sourcex64Path=!libSourceBasePath!\!projectName!.UWP\Release\x64
+	SET sourcex64DllPath=!sourcex64Path!\!projectNameForNuget!.dll
+	SET sourcex64WinmdPath=!sourcex64Path!\!projectNameForNuget!.winmd
+	SET sourcex64PdbPath=!sourcex64Path!\!projectNameForNuget!.pdb
+	SET sourcex64PriPath=!sourcex64Path!\!projectNameForNuget!.pri
 
-	SET sourcexARMPath=%libSourceBasePath%\ARM\Release\%projectName%
-	SET sourcexARMDllPath=%sourcexARMPath%\%projectNameForNuget%.dll
-	SET sourcexARMWinmdPath=%sourcexARMPath%\%projectNameForNuget%.winmd
-	SET sourcexARMPdbPath=%sourcexARMPath%\%projectNameForNuget%.pdb
-	SET sourcexARMPriPath=%sourcexARMPath%\%projectNameForNuget%.pri
+	SET sourcexARMPath=!libSourceBasePath!\!projectName!.UWP\Release\ARM
+	SET sourcexARMDllPath=!sourcexARMPath!\!projectNameForNuget!.dll
+	SET sourcexARMWinmdPath=!sourcexARMPath!\!projectNameForNuget!.winmd
+	SET sourcexARMPdbPath=!sourcexARMPath!\!projectNameForNuget!.pdb
+	SET sourcexARMPriPath=!sourcexARMPath!\!projectNameForNuget!.pri
 
-	SET nugetSpec=%nugetPath%\%nugetName%\%projectNameForNuget%.nuspec
+	SET nugetSpec=!nugetPath!\!nugetName!\!nugetName!.nuspec
 
 	CALL:print %debug% "sourcex86Path: !sourcex86Path!"
 	CALL:print %debug% "sourcex86DllPath: !sourcex86DllPath!"
@@ -543,25 +553,29 @@ IF EXIST %nugetPath%\%nugetName%\NUL RMDIR /s /q %nugetPath%\%nugetName%\
 CALL:createFolder %nugetPath%\%nugetName%
 
 IF !xamarinNuget! NEQ 1 (
-	CALL::copyFiles %sourcex86WinmdPath% %nugetLibUAPPath%
-	IF EXIST %sourcex86XmlPath% CALL::copyFiles %sourcex86XmlPath% %nugetLibUAPPath%
+	CALL::copyFiles !sourcex86WinmdPath! !nugetLibUAPPath!
+	IF EXIST !sourcex86XmlPath! CALL::copyFiles !sourcex86XmlPath! !nugetLibUAPPath!
 	
-	CALL::copyFiles %sourcexARMDllPath% %nugetRuntimesARMPath%
-	CALL::copyFiles %sourcexARMPriPath% %nugetRuntimesARMPath%
+REM CALL::copyFiles !sourcexARMDllPath! !nugetRuntimesARMPath!
+REM CALL::copyFiles !sourcexARMPriPath! !nugetRuntimesARMPath!
 
-	CALL::copyFiles %sourcex64DllPath% %nugetRuntimesx64Path%
-	CALL::copyFiles %sourcex64PriPath% %nugetRuntimesx64Path%
+	CALL::copyFiles !sourcex64DllPath! !nugetRuntimesx64Path!
+	CALL::copyFiles !sourcex64PriPath! !nugetRuntimesx64Path!
 
-	CALL::copyFiles %sourcex86DllPath% %nugetRuntimesx86Path%
-	CALL::copyFiles %sourcex86PriPath% %nugetRuntimesx86Path%
+	CALL::copyFiles !sourcex86DllPath! !nugetRuntimesx86Path!
+	CALL::copyFiles !sourcex86PriPath! !nugetRuntimesx86Path!
 	
-	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%
-	CALL:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
+	CALL::copyFiles !nugetTargetPath! !nugetBuildNativePath!
+	CALL:copyFiles !nugetSpecPath! !nugetPath!\!nugetName!
 ) ELSE (
 	CALL::copyFiles %sourceOrgOrtcNetStandardDllPath% %nugetLibNetStandardPath%
 	IF EXIST !sourceOrgOrtcNetStandardXmlPath! CALL::copyFiles !sourceOrgOrtcNetStandardXmlPath! %nugetLibNetStandardPath%
 	
-	REM CALL::copyFiles %sourceOrgOrtcXamariniOSDllPath% %nugetLibXamariniOSPath%
+	IF EXIST !sourceOrgOrtcXamariniOSDllPath! (
+    CALL::copyFiles %sourceOrgOrtcXamariniOSDllPath% %nugetLibXamariniOSPath%
+  ) ELSE (
+    print %warning% "iOS library cannot be found - !sourceOrgOrtcXamariniOSDllPath!"
+  )
 	IF EXIST !sourceOrgOrtcXamariniOSXmlPath! CALL::copyFiles !sourceOrgOrtcXamariniOSXmlPath! %nugetLibXamariniOSPath%
 	
 	CALL::copyFiles !sourceLibOrtcx86DllPath! %nugetRuntimesx86Path%
@@ -576,7 +590,11 @@ REM CALL::copyFiles !sourceWebRtcProtoBufLitex64Path! %nugetRuntimesx64Path%
 	
 	CALL::copyFiles %nugetTargetPath% %nugetBuildNativePath%
 	CALL:copyFiles %nugetSpecPath% %nugetPath%\%nugetName%
-REM CALL:copyFiles !iOSOrtcLibSourcePath! !nugetRuntimesiOSPath!
+  IF EXIST !iOSOrtcLibSourcePath! (
+    CALL:copyFiles !iOSOrtcLibSourcePath! !nugetRuntimesiOSPath!
+  ) ELSE (
+    print %warning% "iOS native library cannot be found - !iOSOrtcLibSourcePath!"
+  )
 REM CALL:renameFile %nugetBuildNativePath%\Org.Ortc.Xamarin.targets Org.Ortc.targets
 REM CALL:renameFile %nugetPath%\%nugetName%\Org.Ortc.Xamarin.nuspec Org.Ortc.nuspec
 	
