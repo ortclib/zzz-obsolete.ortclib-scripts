@@ -234,7 +234,11 @@ SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%
 
 CALL:print %debug% "Source path is "%basePath%""
 
-SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
+  SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\win32_%linkPlatform%\
+) ELSE (
+  SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+)
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF

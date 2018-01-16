@@ -379,27 +379,27 @@ CALL:print %debug% "Creating a package ..."
 SET nugetTargetPath=""
 SET nugetSpecPath=""
 SET nugetBasePath=""
-SET projectName=""
+SET BuildingProjectName=""
 SET libSourceBasePath=""
 SET projectNameForNuget=""
 SET xamarinNuget=0
 
 IF /I "%~1"=="webrtc" (
-	SET projectName=%projectNameWebRtc%
+	SET BuildingProjectName=%projectNameWebRtc%
 	SET nugetBasePath=%nugetWebRtcBasePath%
 	SET nugetName=%nugetWebRtcName%
 	SET projectNameForNuget=%projectNameWebRtc%
 	SET libSourceBasePath=webrtc\windows\solutions\Build\Output
 ) ELSE (
 	IF /I "%~1"=="ortc" (
-		SET projectName=%projectNameOrtc%
+		SET BuildingProjectName=%projectNameOrtc%
 		SET nugetBasePath=%nugetOrtcBasePath%
 		SET nugetName=%nugetOrtcName%
 		SET projectNameForNuget=%projectNameOrtc%
 		SET libSourceBasePath=ortc\windows\solutions\Build\Output
 	) ELSE (
 		SET xamarinNuget=1
-		SET projectName=%nugetOrtcXamarinName%
+		SET BuildingProjectName=%nugetOrtcXamarinName%
 		SET nugetBasePath=%nugetOrtcBasePath%
 		SET nugetName=%nugetOrtcXamarinName%
 		SET projectNameForNuget=%projectNameOrtc%
@@ -409,7 +409,7 @@ IF /I "%~1"=="webrtc" (
 
 SET nugetTargetPath=%nugetBasePath%\%nugetName%.targets
 SET nugetSpecPath=%nugetBasePath%\%nugetName%.nuspec
-SET nugetPackageVersion=%nugetBasePath%\%projectName%.version
+SET nugetPackageVersion=%nugetBasePath%\%BuildingProjectName%.version
 SET nugetPath=%nugetBasePath%\package
 SET nugetOutputPath=%nugetBasePath%\..\NugetOutput
 	
@@ -458,7 +458,7 @@ CALL:print %debug% "nugetRuntimesx64Path: !nugetRuntimesx64Path!"
 CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
 
 IF !xamarinNuget! NEQ  1 (
-	SET sourcex86Path=!libSourceBasePath!\!projectName!.UWP\Release\x86
+	SET sourcex86Path=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\x86
 	SET sourcex86DllPath=!sourcex86Path!\!projectNameForNuget!.dll
 	SET sourcex86WinmdPath=!sourcex86Path!\!projectNameForNuget!.winmd
 	SET sourcex86PdbPath=!sourcex86Path!\!projectNameForNuget!.pdb
@@ -467,13 +467,13 @@ IF !xamarinNuget! NEQ  1 (
 
 	SET sourcex86XmlPath=!sourcex86Path!\!projectNameForNuget!.xml
 
-	SET sourcex64Path=!libSourceBasePath!\!projectName!.UWP\Release\x64
+	SET sourcex64Path=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\x64
 	SET sourcex64DllPath=!sourcex64Path!\!projectNameForNuget!.dll
 	SET sourcex64WinmdPath=!sourcex64Path!\!projectNameForNuget!.winmd
 	SET sourcex64PdbPath=!sourcex64Path!\!projectNameForNuget!.pdb
 	SET sourcex64PriPath=!sourcex64Path!\!projectNameForNuget!.pri
 
-	SET sourcexARMPath=!libSourceBasePath!\!projectName!.UWP\Release\ARM
+	SET sourcexARMPath=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\ARM
 	SET sourcexARMDllPath=!sourcexARMPath!\!projectNameForNuget!.dll
 	SET sourcexARMWinmdPath=!sourcexARMPath!\!projectNameForNuget!.winmd
 	SET sourcexARMPdbPath=!sourcexARMPath!\!projectNameForNuget!.pdb
@@ -499,7 +499,7 @@ IF !xamarinNuget! NEQ  1 (
 	CALL:print %debug% "sourcexARMWinmdPath: !sourcexARMWinmdPath!"
 	CALL:print %debug% "sourcexARMPdbPath: !sourcexARMPdbPath!"
 ) ELSE (
-	SET sourceLibOrtcx86Path=%OrtcWebRtcOutputPath%\win32
+	SET sourceLibOrtcx86Path=%OrtcWebRtcOutputPath%\win32_x86
 	SET sourceLibOrtcx86DllPath=!sourceLibOrtcx86Path!\libOrtc.dll
 	SET sourceLibOrtcx86PdbPath=!sourceLibOrtcx86Path!\libOrtc.pdb
 	SET sourceLibOrtcx86PriPath=!sourceLibOrtcx86Path!\libOrtc.pri
@@ -528,7 +528,7 @@ IF !xamarinNuget! NEQ  1 (
 	SET sourceWebRtcBoringSSLx64Path=!sourceWebRtcx64Path!\boringssl.dll
 	SET sourceWebRtcProtoBufLitex64Path=!sourceWebRtcx64Path!\protobuf_lite.dll
 	
-	SET sourceWebRtcx86Path=%OrtcWebRtcOutputPath%\win32
+	SET sourceWebRtcx86Path=%OrtcWebRtcOutputPath%\win32_x86
 	SET sourceWebRtcBoringSSLx86Path=!sourceWebRtcx86Path!\boringssl.dll
 	SET sourceWebRtcProtoBufLitex86Path=!sourceWebRtcx86Path!\protobuf_lite.dll
 	
