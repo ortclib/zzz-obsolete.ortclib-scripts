@@ -144,8 +144,15 @@ GOTO:EOF
     CD !outputPath!
     IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
     
+    CALL:print %warning% "Building %SOFTWARE_PLATFORM% native libs"
     !ninjaPath! %SOFTWARE_PLATFORM%
     IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_PLATFORM% in %CD% has failed"s
+    
+    IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
+      CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
+      !ninjaPath! webrtc/rtc_base:rtc_json
+      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
+    )
     
     CALL:combineLibs !outputPath!
     CD ..
@@ -187,11 +194,11 @@ IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hos
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 IF EXIST *.dll (
-	CALL:print %debug% "Moving dlls from %libsSourcePath% to %destinationPath%"
+	CALL:print %debug% "Copying dlls from %libsSourcePath% to %destinationPath%"
 	FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
 )
 
-CALL:print %debug% "Moving pdbs from %libsSourcePath% to %destinationPath%"
+CALL:print %debug% "Copying pdbs from %libsSourcePath% to %destinationPath%"
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" COPY %%~A %destinationPath% >NUL )
 
@@ -213,9 +220,9 @@ IF NOT EXIST %libsSourceBackupPath%NUL (
 )
 
 
-CALL:print %debug% "Moving %libsSourcePath% to %libsSourceBackupPath%"
+CALL:print %debug% "Copying %libsSourcePath% to %libsSourceBackupPath%"
 COPY %libsSourcePath% %libsSourceBackupPath%
-if ERRORLEVEL 1 CALL:error 0 "Failed moving %libsSourcePath% to %libsSourceBackupPath%"
+if ERRORLEVEL 1 CALL:error 0 "Failed copying %libsSourcePath% to %libsSourceBackupPath%"
 
 GOTO:EOF
 
