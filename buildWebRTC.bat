@@ -154,7 +154,7 @@ GOTO:EOF
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     
-    CALL:combineLibs !outputPath!
+    IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
     CD ..
   )
 GOTO:EOF

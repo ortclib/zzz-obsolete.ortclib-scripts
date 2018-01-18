@@ -67,7 +67,7 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;				
+SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
 SET target=all
 SET platform=all
 SET help=0
@@ -75,6 +75,7 @@ SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
 SET getBinaries=0
+SET server=1
 SET gn=1
 
 ::predefined messages
@@ -188,6 +189,9 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 
 )
 
+IF %server% EQU 1 (
+    CALL:buildPeerCCServer
+)
 ::Finish script execution
 CALL:done
 
@@ -502,6 +506,14 @@ IF %platform_win32% EQU 1 (
     CALL:makeLink . webrtc\xplatform\webrtc\ortc\curl ortc\xplatform\curl
 )
 
+GOTO:EOF
+
+:buildPeerCCServer
+  CALL:print %info% "Building PeerConnection server"
+  CALL bin\buildWebRtc.bat Release win32 webrtc/examples:peerconnection_server
+  IF !ERRORLEVEL! EQU 0 (
+    CALL:copyTemplates webrtc\xplatform\webrtc\out\win_x86_release\peerconnection_server.exe .\bin\
+  )
 GOTO:EOF
 
 :downloadBinariesFromRepo
