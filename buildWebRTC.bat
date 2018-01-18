@@ -49,13 +49,7 @@ CALL:determineVisualStudioPath
 
 CALL:setCompilerOption %currentPlatform%
 
-::CALL:build
-
 CALL:buildNativeLibs
-
-::CALL:combineLibs
-
-::CALL:moveLibs
 
 GOTO:done
 
