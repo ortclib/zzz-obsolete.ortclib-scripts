@@ -414,11 +414,8 @@ prepareGN()
   yes | cp -rf $libCxxGnBuildTemplatePath $libCxxGnBuildPathDestination
   yes | cp -rf $libCxxAbiGnBuildTemplatePath $libCxxAbiGnBuildPathDestination
 
-  print $info "In path $(pwd) creating symbolic link ortc/xplatform/udns to webrtc/xplatform/webrtc/ortc/udns"
+  print $info "In path $(pwd) creating symbolic links..."
  #ln -s $(pwd)"/ortc/xplatform/udns" $(pwd)"/webrtc/xplatform/webrtc/ortc/udns"
-  makeLink "." "$webrtcGnPath/ortc/udns" "./ortc/xplatform/udns"
-  makeLink "." "$webrtcGnPath/ortc/idnkit" "./ortc/xplatform/idnkit"
-  makeLink "." "$webrtcGnPath/ortc/cryptopp" "./ortc/xplatform/cryptopp"
   makeLink "." "$webrtcGnPath/ortc/ortclib" "./ortc/xplatform/ortclib-cpp"
   makeLink "." "$webrtcGnPath/ortc/ortclib-services" "./ortc/xplatform/ortclib-services-cpp"
   makeLink "." "$webrtcGnPath/ortc/zsLib" "./ortc/xplatform/zsLib"
