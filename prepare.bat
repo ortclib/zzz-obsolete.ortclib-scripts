@@ -75,7 +75,7 @@ SET logLevel=2
 SET diagnostic=0
 SET noEventing=0
 SET getBinaries=0
-SET server=1
+SET server=0
 SET gn=1
 
 ::predefined messages
@@ -509,6 +509,10 @@ IF %platform_win32% EQU 1 (
 GOTO:EOF
 
 :buildPeerCCServer
+  IF NOT "%platform%"=="all" (
+    IF NOT "%platform%"=="win32" CALL bin\prepareWebRtc.bat -platform win32 -logLevel %logLevel%
+  )
+  
   CALL:print %info% "Building PeerConnection server"
   CALL bin\buildWebRtc.bat Release win32 webrtc/examples:peerconnection_server
   IF !ERRORLEVEL! EQU 0 (
