@@ -549,6 +549,10 @@ makeLinks()
   #makeLink "." "third_party/winsdk_samples" "../winsdk_samples_v71"
   makeLink "." "tools/gyp" "../gyp"
   makeLink "." "tools/clang" "../chromium/tools/clang"
+  makeLink "." "third_party/udns" "../../../ortc/xplatform/udns"
+  makeLink "." "third_party/idnkit" "../../../ortc/xplatform/idnkit"
+  makeLink "." "third_party/cryptopp" "../../../ortc/xplatform/cryptopp"
+
   #makeLink "." "testing/gtest" "../googletest"
   #makeLink "." "testing/gmock" "../googlemock"
 
