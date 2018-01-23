@@ -151,7 +151,7 @@ CALL:checkOrtcAvailability
 
 CALL:identifyTarget
 CALL:determineHostCPU
-CALL::setCompilerOption x64
+REM CALL::setCompilerOption x64
 CALL:downloadNuget 
 
 IF %xamarin% NEQ 1 (
@@ -276,9 +276,13 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
 	
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x86
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc x64
-	CALL:build !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc arm
+ CALL:buildNativeLibs webrtc x86
+ CALL:buildNativeLibs webrtc x64
+REM CALL:buildNativeLibs webrtc arm
+
+	CALL:buildWrapper !SolutionPathWebRtc! "WebRtc_Stats_Observer,Api\org_WebRtc\Org_WebRtc_Uwp" x86
+	CALL:buildWrapper !SolutionPathWebRtc! "WebRtc_Stats_Observer,Api\org_WebRtc\Org_WebRtc_Uwp" x64
+REM CALL:buildWrapper !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc arm
 
 	CALL:preparePackage WebRtc
 )
@@ -326,15 +330,19 @@ GOTO:EOF
 
 :buildWrapper
 
-bin\nuget.exe restore !SolutionPathOrtc!
-IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
+IF %generate_Ortc_Nuget% EQU 1 (
+  bin\nuget.exe restore !SolutionPathOrtc!
+  IF ERRORLEVEL 1 CALL:error 1 "Failed restoring nuget packages for %~1"
+)
 
-CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+REM IF %xamarin% NEQ 1 (
+REM   CALL::setCompilerOption %3
+
+REM  CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat !currentbuildCompilerOption!
+REM   IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+REM )
 
 CALL:print %trace% "Restoring nuget packages for %~1"
-
-PUSHD %currentDir%
 
 IF /I "%~3"=="iPhone" (
   IF %logLevel% GEQ %trace% (
@@ -634,16 +642,16 @@ CALL:print %trace% "Determining compiler options ..."
 
 ::CALL:print %trace% "CPU arhitecture is %CPU%"
 
-IF /I %CPU% == x86 (
+IF /I "%CPU%"=="x86" (
 	SET x86BuildCompilerOption=x86
 	SET x64BuildCompilerOption=x86_amd64
 	SET armBuildCompilerOption=x86_arm
 )
 
-IF /I %~1==x86 (
+IF /I "%~1"=="x86" (
 	SET currentBuildCompilerOption=%x86BuildCompilerOption%
 ) ELSE (
-	IF /I %~1==ARM (
+	IF /I "%~1"=="ARM" (
 		SET currentBuildCompilerOption=%armBuildCompilerOption%
 	) ELSE (
 		SET currentBuildCompilerOption=%x64BuildCompilerOption%
