@@ -266,6 +266,8 @@ SET intermediatePath=!eventPath!%eventsIntermediatePath%\
 SET headersPath=!eventPath!%eventsIncludePath%
 SET outputPath=%eventsOutput%!providerName!\%currentPlatform%
 
+IF EXIST webrtc\xplatform\webrtc\ortc\!providerName!_eventsCompiled.flg GOTO:EOF
+
 CALL:print %warning% "Preparing !providerName! ..."
 CALL:print %trace% eventJsonPath=!eventJsonPath!
 CALL:print %trace% eventPath=!eventPath!
@@ -401,6 +403,8 @@ FOR /r . %%g IN (*.events.json) DO CALL:compileEvent %%g
 GOTO:EOF
 
 :prepareIdl
+
+IF EXIST webrtc\xplatform\webrtc\ortc\idl.flg GOTO:EOF
 
 CALL:print %warning% "Preparing IDL wrappers [cx/c/dotnet/json] ..."
 
