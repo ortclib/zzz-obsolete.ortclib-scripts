@@ -443,7 +443,11 @@ GOTO:EOF
 ::Generate WebRTC projects
 :prepareWebRTC
 
-CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
+IF %prepare_ORTC_Environemnt% EQU 1 (
+  CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel% -target ortc
+) ELSE (
+  CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
+)
 
 GOTO:EOF
 
