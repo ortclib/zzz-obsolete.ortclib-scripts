@@ -18,7 +18,7 @@ else:
   compilerPath="zslib-eventing-tool-compiler.exe"
   
 eventProviderName=os.path.splitext(os.path.basename(eventJsonPath))[0]
-eventCompilationPath=dir_path + "\\" + eventProviderName + "_eventsCompiled.flg"
+eventCompilationPath=dir_path + "/" + eventProviderName + "_eventsCompiled.flg"
 print ("Event compilatio flag path: ",eventCompilationPath)
 if not os.path.isfile(eventCompilationPath):
   print("Running events compilation for " + eventJsonPath)

@@ -41,7 +41,7 @@ HOST_OS=osx
 basePath="webrtc/xplatform/webrtc/out"
 ninjaExe="webrtc/xplatform/depot_tools/ninja"
 webrtcLibPath=obj/webrtc/libwebrtc.a
-ortcLibPath=libortclib.dylib
+ortcLibPath=libOrtc.dylib
 
 systemcheck()
 {

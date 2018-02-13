@@ -32,11 +32,12 @@ SET debug=3
 SET trace=4	
 
 ::input arguments
-SET supportedInputArguments=;platform;help;logLevel;diagnostic;					
+SET supportedInputArguments=;platform;help;logLevel;diagnostic;target;			
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
+SET target=webrtc
 
 ::predefined messages
 SET folderStructureError="WebRTC invalid folder structure."
@@ -267,9 +268,11 @@ CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium\tools\clang
-CALL:makeLink . third_party\udns ..\..\..\ortc\xplatform\udns
-CALL:makeLink . third_party\idnkit ..\..\..\ortc\xplatform\idnkit
-CALL:makeLink . third_party\cryptopp ..\..\..\ortc\xplatform\cryptopp
+IF /I "%target%"=="ortc" (
+  CALL:makeLink . third_party\udns ..\..\..\ortc\xplatform\udns
+  CALL:makeLink . third_party\idnkit ..\..\..\ortc\xplatform\idnkit
+  CALL:makeLink . third_party\cryptopp ..\..\..\ortc\xplatform\cryptopp
+)
 
 GOTO:EOF
 
