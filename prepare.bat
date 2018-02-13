@@ -184,8 +184,8 @@ IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Download curl and build it
 	CALL:prepareCurl
 	
-	CALL:prepareEventing
-  CALL:getBinaries
+REM CALL:prepareEventing
+REM CALL:getBinaries
 
 )
 
