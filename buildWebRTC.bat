@@ -132,7 +132,7 @@ GOTO:EOF
 				SET outputPath=win_x86_!CONFIGURATION!
 			)
 		) ELSE (
-			SET outputPath=winuwp_10_!PLATFORM!_!CONFIGURATION!
+			SET outputPath=winuwp_!PLATFORM!_!CONFIGURATION!
 		)
     
     CD !outputPath!
