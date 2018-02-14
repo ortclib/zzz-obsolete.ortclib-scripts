@@ -13,6 +13,7 @@ target=all
 platform=all
 ortcAvailable=0
 logLevel=4
+noEventing=1
 
 #log levels
 error=0
