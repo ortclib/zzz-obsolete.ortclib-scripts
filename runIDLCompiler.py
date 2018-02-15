@@ -11,7 +11,10 @@ toolchain=inputArray[3]
 tempToolchain=toolchain.split(":")
 toolchainCPU=tempToolchain[1]
 
-compilerPath="zslib-eventing-tool-compiler"
+if (os.name == "posix"):
+  compilerPath="zslib-eventing-tool-compiler"
+else:
+  compilerPath="zslib-eventing-tool-compiler.exe"
 
 currentWorkingPath=os.getcwd()
 pathname = os.path.dirname(sys.argv[0]) 
@@ -20,7 +23,12 @@ print "idlCompilationPath - : " + idlCompilationPath
 if not os.path.isfile(idlCompilationPath):
   print("Running idl compilation")
 
-  compilerNewPath = os.getcwd() + "/" + toolchainCPU + "/" + compilerPath;
+  compilerNewPath = os.getcwd() + "/" + compilerPath;
+  if not os.path.isfile(compilerNewPath):
+    compilerNewPath = os.getcwd() + "/" + toolchainCPU + "/" + compilerPath;
+    if not os.path.isfile(compilerNewPath):
+      sys.exit("Idl compiler doesn't exist")
+      
   os.chdir(os.path.dirname(idlPath))
   jsonFile=os.path.basename(idlPath)
 
