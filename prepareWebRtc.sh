@@ -253,8 +253,7 @@ identifyArchitecture()
 
   if [ $platform_linux -eq 1 ]; then
     if [ "$architecture" == "all" ]; then
-# architecture "all" is currently broken for linux because of broken x86. as a temporarily workaround, the following line is commented out.
-#      architecture_x86=1    
+      architecture_x86=1    
       architecture_x64=1
     elif [ "$architecture" == "x86" ]; then
       architecture_x86=1
