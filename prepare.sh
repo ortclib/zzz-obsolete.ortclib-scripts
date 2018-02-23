@@ -143,6 +143,17 @@ done
 
 }
 
+updatePlatformSpecific() 
+{
+  if [ "$HOST_SYSTEM" == "linux" ];
+  then
+    export PATH=$PATH:$PWD/webrtc/xplatform/depot_tools
+    pushd ./webrtc/xplatform/webrtc
+    python ./build/android/update_deps/update_third_party_deps.py download -b chromium-android-support-test-runner -l third_party/android_support_test_runner
+    python ./build/android/play_services/update.py download
+    popd
+  fi
+}
 
 finished()
 {
@@ -503,6 +514,8 @@ print $trace "oldPath=$oldPath"
 depotToolsPathCheck
 result=$numberOfRemoved
 print $trace "Number of paths temporarily removed from environment PATH:=$result"
+
+updatePlatformSpecific
 
 if [ $prepare_ORTC_Environemnt -eq 1 ];
 then

@@ -253,7 +253,8 @@ identifyArchitecture()
 
   if [ $platform_linux -eq 1 ]; then
     if [ "$architecture" == "all" ]; then
-      architecture_x86=1    
+# architecture "all" is currently broken for linux because of broken x86. as a temporarily workaround, the following line is commented out.
+#      architecture_x86=1    
       architecture_x64=1
     elif [ "$architecture" == "x86" ]; then
       architecture_x86=1
@@ -303,6 +304,7 @@ makeFolderStructure()
   makeDirectory chromium/src/third_party/libjingle/source/talk/media/testdata
   makeDirectory third_party
   makeDirectory tools
+  makeDirectory tools/android
 
   ##copyFolder ../build/ $BUILD_FOLDER_CHROMIUM_DESTINATION
   ##copyFolder ../colorama/ $COLORAMA_FOLDER_CHROMIUM_DESTINATION
@@ -551,6 +553,44 @@ makeLinks()
   makeLink "." "third_party/udns" "../../../ortc/xplatform/udns"
   makeLink "." "third_party/idnkit" "../../../ortc/xplatform/idnkit"
   makeLink "." "third_party/cryptopp" "../../../ortc/xplatform/cryptopp"
+
+  makeLink "." "third_party/ijar" "../chromium/third_party/ijar"
+  makeLink "." "third_party/android_platform" "../chromium/third_party/android_platform"
+  makeLink "." "tools/grit" "../chromium/tools/grit"
+  makeLink "." "third_party/closure_compiler" "../chromium/third_party/closure_compiler"
+  makeLink "." "third_party/ow2_asm" "../chromium/third_party/ow2_asm"
+  makeLink "." "tools/android/md5sum" "../chromium/tools/android/md5sum"
+  makeLink "." "third_party/android_support_test_runner" "../chromium/third_party/android_support_test_runner"
+  makeLink "." "third_party/junit" "../chromium/third_party/junit"
+  makeLink "." "tools/android/forwarder2" "../chromium/tools/android/forwarder2"
+  makeLink "." "third_party/espresso" "../chromium/third_party/espresso"
+  makeLink "." "third_party/hamcrest" "../chromium/third_party/hamcrest"
+  makeLink "." "tools/android/common" "../chromium/tools/android/common"
+  makeLink "." "third_party/guava" "../chromium/third_party/guava"
+  makeLink "." "third_party/bazel" "../chromium/third_party/bazel"
+  makeLink "." "third_party/javax_inject" "../chromium/third_party/javax_inject"
+  makeLink "." "third_party/android_support_test_runner" "../chromium/third_party/android_support_test_runner"
+  makeLink "." "third_party/libxml" "../chromium/third_party/libxml"
+  makeLink "." "third_party/icu" "../chromium/third_party/icu"
+  makeLink "." "third_party/jsr-305" "../chromium/third_party/jsr-305"
+  makeLink "." "third_party/zlib" "../chromium/third_party/zlib"
+  makeLink "." "third_party/modp_b64" "../chromium/third_party/modp_b64"
+  makeLink "." "third_party/ashmem" "../chromium/third_party/ashmem"
+  makeLink "." "third_party/ced" "../chromium/third_party/ced"
+  makeLink "." "third_party/ub-uiautomator" "../chromium/third_party/ub-uiautomator"
+  makeLink "." "third_party/mockito" "../chromium/third_party/mockito"
+  makeLink "." "third_party/robolectric" "../chromium/third_party/robolectric"
+  makeLink "." "third_party/byte_buddy" "../chromium/third_party/byte_buddy"
+  makeLink "." "third_party/objenesis" "../chromium/third_party/objenesis"
+  makeLink "." "third_party/bouncycastle" "../chromium/third_party/bouncycastle"
+  makeLink "." "third_party/icu4j" "../chromium/third_party/icu4j"
+  makeLink "." "third_party/intellij" "../chromium/third_party/intellij"
+  makeLink "." "third_party/sqlite4java" "../chromium/third_party/sqlite4java"
+  makeLink "." "third_party/xstream" "../chromium/third_party/xstream"
+  makeLink "." "third_party/accessibility_test_framework" "../chromium/third_party/accessibility_test_framework"
+  makeLink "." "third_party/android_tools" "../chromium/third_party/android_tools"
+  makeLink "." "third_party/catapult" "../chromium/third_party/catapult"
+  
 
   #makeLink "." "testing/gtest" "../googletest"
   #makeLink "." "testing/gmock" "../googlemock"
