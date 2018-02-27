@@ -143,6 +143,17 @@ done
 
 }
 
+cloneRepo()
+{
+  pushd $4
+  if [ ! -d $2 ]; then
+    git clone --recursive $1
+    cd $2
+    git reset --hard $3
+  fi
+  popd
+}
+
 updatePlatformSpecific() 
 {
   if [ "$HOST_SYSTEM" == "linux" ];
@@ -153,6 +164,13 @@ updatePlatformSpecific()
     python ./build/android/update_deps/update_third_party_deps.py download -b chromium-ow2-asm -l third_party/ow2_asm
     python ./build/android/play_services/update.py download
     popd
+
+    makeDirectory ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/android_tools.git android_tools e9d4018e149d50172ed462a7c21137aa915940ec ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/external/github.com/catapult-project/catapult.git eebaedf9bcacd089d8561842ce75b64ebf71a26b ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/chromium/deps/icu.git 08cb956852a5ccdba7f9c941728bb833529ba3c6 ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/android_ndk.git eecd8c2d681b019efca486f92fdda9a93f52328f ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/external/colorama.git 799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8 ./webrtc/android
   fi
 }
 
