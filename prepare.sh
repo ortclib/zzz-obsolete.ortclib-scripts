@@ -150,6 +150,7 @@ updatePlatformSpecific()
     export PATH=$PATH:$PWD/webrtc/xplatform/depot_tools
     pushd ./webrtc/xplatform/webrtc
     python ./build/android/update_deps/update_third_party_deps.py download -b chromium-android-support-test-runner -l third_party/android_support_test_runner
+    python ./build/android/update_deps/update_third_party_deps.py download -b chromium-ow2-asm -l third_party/ow2_asm
     python ./build/android/play_services/update.py download
     popd
   fi
