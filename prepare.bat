@@ -26,7 +26,7 @@ SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ninjaDestinationPath=.\bin\ninja-win.zip
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
-SET ninjaDownloadUrl=http://github.com/martine/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
+SET ninjaDownloadUrl=https://github.com/ninja-build/ninja/releases/download/%ninjaVersion%/ninja-win.zip 
 
 ::helper flags
 SET taskFailed=0
@@ -424,7 +424,7 @@ REM Download file (first argument) to desired destination (second argument)
 :download
 IF EXIST %~2 GOTO:EOF
 ::%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
-%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('%~1','%~2')
+%powershell_path% -Command [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(new-object System.Net.WebClient).DownloadFile('%~1','%~2')
 
 IF %ERRORLEVEL% EQU 1 SET taskFailed=1
 
