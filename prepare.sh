@@ -143,6 +143,47 @@ done
 
 }
 
+makeLink()
+{
+  print $debug "Preparing webrtc paths symbolic links for \"$2\" pointing to \"$3\""
+  if [ ! -d "$1" ]; then
+    error 1 "Path to link does not exist \"$1\" !"
+  fi
+
+  pushd $1 > /dev/null
+
+  if [ ! -d "$3" ]; then
+    error 1 "Link destination is not found \"$3\" inside \"$1\" !"
+  fi
+
+  if [ ! -h "$2" ]; then
+    print $debug "In path \"$1\" creating webrtc symbolic link \"$2\" pointing to \"$3\"..."
+    #ln -s $3 $2
+
+    linkName=$(python -c "import os.path; print os.path.split('$2')[1]")
+    linkPath=$(python -c "import os.path; print os.path.split('$2')[0]")
+    linkAbsPath=$(python -c "import os.path; print os.path.abspath('$3')")
+     #relPath=$(python -c "import os.path; print os.path.relpath('$3', '$linkPath')")
+
+    if [ -z "$linkPath" ]; then
+      linkPath="."
+    fi
+
+    if [ ! -d "$linkPath" ]; then
+      error 1 "Link path does not exist: $linkPath"
+    fi
+
+     ln -s $linkAbsPath $2
+
+    if [ $? -ne 0 ]; then
+      failure=$?
+      error 1 "Failed to create symbolic link: ln -s $linkAbsPath $2"
+    fi
+  fi
+
+  popd > /dev/null
+}
+
 cloneRepo()
 {
   pushd $4
@@ -159,18 +200,26 @@ updatePlatformSpecific()
   if [ "$HOST_SYSTEM" == "linux" ];
   then
     export PATH=$PATH:$PWD/webrtc/xplatform/depot_tools
-    pushd ./webrtc/xplatform/webrtc
-    python ./build/android/update_deps/update_third_party_deps.py download -b chromium-android-support-test-runner -l third_party/android_support_test_runner
-    python ./build/android/update_deps/update_third_party_deps.py download -b chromium-ow2-asm -l third_party/ow2_asm
-    python ./build/android/play_services/update.py download
-    popd
 
     makeDirectory ./webrtc/android
     cloneRepo https://chromium.googlesource.com/android_tools.git android_tools e9d4018e149d50172ed462a7c21137aa915940ec ./webrtc/android
-    cloneRepo https://chromium.googlesource.com/external/github.com/catapult-project/catapult.git eebaedf9bcacd089d8561842ce75b64ebf71a26b ./webrtc/android
-    cloneRepo https://chromium.googlesource.com/chromium/deps/icu.git 08cb956852a5ccdba7f9c941728bb833529ba3c6 ./webrtc/android
-    cloneRepo https://chromium.googlesource.com/android_ndk.git eecd8c2d681b019efca486f92fdda9a93f52328f ./webrtc/android
-    cloneRepo https://chromium.googlesource.com/external/colorama.git 799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8 ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/external/github.com/catapult-project/catapult.git catapult eebaedf9bcacd089d8561842ce75b64ebf71a26b ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/chromium/deps/icu.git icu 8cb956852a5ccdba7f9c941728bb833529ba3c6 ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/android_ndk.git android_ndk eecd8c2d681b019efca486f92fdda9a93f52328f ./webrtc/android
+    cloneRepo https://chromium.googlesource.com/external/colorama.git colorama 799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8 ./webrtc/android
+    
+    makeLink . ./webrtc/android/android_tools/ndk ./webrtc/android/android_ndk
+    makeLink . ./webrtc/xplatform/chromium/third_party/android_tools ./webrtc/android/android_tools
+    makeLink . ./webrtc/xplatform/chromium/third_party/catapult ./webrtc/android/catapult
+    makeLink . ./webrtc/xplatform/chromium/third_party/icu ./webrtc/android/icu
+    makeLink . ./webrtc/xplatform/chromium/third_party/colorama/src ./webrtc/android/colorama
+    #pushd ./webrtc/xplatform/webrtc
+    python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-android-support-test-runner -l third_party/android_support_test_runner
+    python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-ow2-asm -l third_party/ow2_asm
+    python ./webrtc/xplatform/chromium/build/android/play_services/update.py download
+    #popd
+
+    
   fi
 }
 
