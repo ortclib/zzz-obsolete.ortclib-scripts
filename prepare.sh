@@ -197,7 +197,7 @@ cloneRepo()
 
 updatePlatformSpecific() 
 {
-  if [ "$HOST_SYSTEM" == "linux" ];
+  if [ "$HOST_SYSTEM" == "linux" ] && [ $platform_android -eq 1 ];
   then
     export PATH=$PATH:$PWD/webrtc/xplatform/depot_tools
 
@@ -213,14 +213,11 @@ updatePlatformSpecific()
     makeLink . ./webrtc/xplatform/chromium/third_party/catapult ./webrtc/android/catapult
     makeLink . ./webrtc/xplatform/chromium/third_party/icu ./webrtc/android/icu
     makeLink . ./webrtc/xplatform/chromium/third_party/colorama/src ./webrtc/android/colorama
-    #pushd ./webrtc/xplatform/webrtc
+
     python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-android-support-test-runner -l third_party/android_support_test_runner
     python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-ow2-asm -l third_party/ow2_asm
-python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-android-tools/bazel/desugar -l third_party/bazel/desugar
+    python ./webrtc/xplatform/chromium/build/android/update_deps/update_third_party_deps.py download -b chromium-android-tools/bazel/desugar -l third_party/bazel/desugar
     python ./webrtc/xplatform/chromium/build/android/play_services/update.py download
-    #popd
-
-    
   fi
 }
 
@@ -387,7 +384,6 @@ installNinja()
 
 prepareWebRTC()
 {
-  #NINJA_PATH_TO_REPLACE_WITH=$NINJA_PATH_TO_USE
   ./bin/prepareWebRtc.sh -p $platform -l $logLevel
 }
 
