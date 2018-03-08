@@ -874,18 +874,6 @@ generateProjects()
   fi
 
   if [ $platform_linux -eq 1 ]; then
-    if [ $architecture_arm -eq 1 ]; then
-      generateProjectsForPlatform linux arm debug
-      generateProjectsForPlatform linux arm release
-    fi
-    if [ $architecture_armv7 -eq 1 ]; then
-      generateProjectsForPlatform linux armv7 debug
-      generateProjectsForPlatform linux armv7 release
-    fi
-    if [ $architecture_arm64 -eq 1 ]; then
-      generateProjectsForPlatform linux arm64 debug
-      generateProjectsForPlatform linux arm64 release
-    fi
     if [ $architecture_x86 -eq 1 ]; then
       generateProjectsForPlatform linux x86 debug
       generateProjectsForPlatform linux x86 release
@@ -904,14 +892,6 @@ generateProjects()
     if [ $architecture_armv7 -eq 1 ]; then
       generateProjectsForPlatform android armv7 debug
       generateProjectsForPlatform android armv7 release
-    fi
-    if [ $architecture_x86 -eq 1 ]; then
-      generateProjectsForPlatform android x86 debug
-      generateProjectsForPlatform android x86 release
-    fi
-    if [ $architecture_x64 -eq 1 ]; then
-      generateProjectsForPlatform android x64 debug
-      generateProjectsForPlatform android x64 release
     fi
   fi
 }
