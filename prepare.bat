@@ -418,6 +418,18 @@ IF %ERRORLEVEL% EQU 1 (
 	)
 ) ELSE (
 	CALL:print %trace%  "Python is present."
+	    
+    python -V > NUL 2> tmpPyVerFile.txt
+    set /p pyVer= < tmpPyVerFile.txt 
+    del tmpPyVerFile.txt 
+    CALL:print %trace% "!pyVer!"
+
+    for /f "tokens=2" %%a in ("!pyVer!") do (set verFound=%%a)
+    CALL:print %trace% "!verFound!"
+
+    IF "!verFound!" GEQ "3.0" (
+        CALL:error 1 "Please install python 2.7, and in the PATH place it in front of python !verFound!"
+   )    
 )
 
 GOTO:EOF
