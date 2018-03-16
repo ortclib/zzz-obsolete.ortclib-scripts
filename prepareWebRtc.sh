@@ -888,9 +888,9 @@ generateProjects()
       generateProjectsForPlatform android arm debug
       generateProjectsForPlatform android arm release
     fi
-    if [ $architecture_armv7 -eq 1 ]; then
-      generateProjectsForPlatform android armv7 debug
-      generateProjectsForPlatform android armv7 release
+    if [ $architecture_arm64 -eq 1 ]; then
+      generateProjectsForPlatform android arm64 debug
+      generateProjectsForPlatform android arm64 release
     fi
   fi
 }
