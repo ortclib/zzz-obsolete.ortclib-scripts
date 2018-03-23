@@ -13,6 +13,7 @@ set taskFailed=0
 
 ::platforms
 SET platform_ARM=0
+SET platform_ARM64=0
 SET platform_x86=0
 SET platform_x64=0
 SET platform_win32=0
@@ -122,7 +123,8 @@ SET validInput=0
 SET messageText=
 
 IF /I "%platform%"=="all" (
-	SET platform_ARM=0
+	SET platform_ARM=1
+  SET platform_ARM64=1
 	SET platform_x64=1
 	SET platform_x86=1
 	SET platform_win32=1
@@ -132,6 +134,11 @@ IF /I "%platform%"=="all" (
 ) ELSE (
 	IF /I "%platform%"=="arm" (
 		SET platform_ARM=1
+		SET validInput=1
+	)
+  
+  IF /I "%platform%"=="arm64" (
+		SET platform_ARM64=1
 		SET validInput=1
 	)
 	
@@ -390,6 +397,14 @@ IF %platform_ARM% EQU 1 (
 	SET platform_ARM_prepared=1
 	CALL:generateProjectsForPlatform winuwp arm debug
 	CALL:generateProjectsForPlatform winuwp arm release
+	SET platform_ARM_prepared=2
+)
+
+IF %platform_ARM64% EQU 1 (
+	CALL:print %warning% "Generating WebRTC projects for arm64 platform ..."
+	SET platform_ARM_prepared=1
+	CALL:generateProjectsForPlatform winuwp arm64 debug
+	CALL:generateProjectsForPlatform winuwp arm64 release
 	SET platform_ARM_prepared=2
 )
 
