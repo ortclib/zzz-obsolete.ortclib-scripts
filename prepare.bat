@@ -53,6 +53,7 @@ SET prepare_WebRTC_Environemnt=0
 
 ::platforms
 SET platform_ARM=1
+SET platform_ARM64=1
 SET platform_x86=1
 SET platform_x64=1
 SET platform_win32=1
@@ -284,6 +285,7 @@ SET messageText=
 
 IF /I "%platform%"=="all" (
 	SET platform_ARM=1
+  SET platform_ARM64=1
 	SET platform_x64=1
 	SET platform_x86=1
 	SET platform_win32=1
@@ -292,6 +294,11 @@ IF /I "%platform%"=="all" (
 ) ELSE (
 	IF /I "%platform%"=="arm" (
 		SET platform_ARM=1
+		SET validInput=1
+	)
+  
+  IF /I "%platform%"=="arm64" (
+		SET platform_ARM64=1
 		SET validInput=1
 	)
 	
