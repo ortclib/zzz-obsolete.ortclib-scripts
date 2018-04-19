@@ -180,21 +180,21 @@ IF NOT EXIST %destinationPath% (
 
 SET webRtcLibs=
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
+FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
-PUSHD %libsSourcePath%
+PUSHD %libsSourcePath%obj
 
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 IF EXIST *.dll (
-	CALL:print %debug% "Copying dlls from %libsSourcePath% to %destinationPath%"
-	FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
+	CALL:print %debug% "Copying dlls from %libsSourcePath%obj to %destinationPath%"
+	FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
 )
 
-CALL:print %debug% "Copying pdbs from %libsSourcePath% to %destinationPath%"
+CALL:print %debug% "Copying pdbs from %libsSourcePath%obj to %destinationPath%"
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath% /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" COPY %%~A %destinationPath% >NUL )
+FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" COPY %%~A %destinationPath% >NUL )
 
 IF ERRORLEVEL 1 CALL:error 0 "Failed copying pdb files"
 POPD
