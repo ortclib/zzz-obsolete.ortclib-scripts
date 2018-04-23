@@ -134,7 +134,7 @@ GOTO:EOF
 		) ELSE (
 			SET outputPath=winuwp_!PLATFORM!_!CONFIGURATION!
 		)
-    
+
     CD !outputPath!
     IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
     
@@ -144,7 +144,8 @@ GOTO:EOF
     
     IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
-      !ninjaPath! webrtc/rtc_base:rtc_json
+        !ninjaPath! third_party/jsoncpp:jsoncpp_sl
+        !ninjaPath! webrtc/rtc_base:rtc_json_sl          
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     

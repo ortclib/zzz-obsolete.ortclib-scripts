@@ -24,6 +24,10 @@ SET webrtcGnPath=webrtc\xplatform\webrtc\
 SET ortcGnPath=webrtc\xplatform\webrtc\ortc\
 SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
+SET templateRtcJsonGnBuildFile=ortc\xplatform\templates\gn\rtcJsonBUILD.gn
+SET templateRtcJsonDestination=webrtc\xplatform\webrtc\webrtc\rtc_base\BUILD.gn
+SET templateJsonCppGnBuildFile=ortc\xplatform\templates\gn\jsonCppBUILD.gn
+SET templateJsonCppDestination=webrtc\xplatform\webrtc\third_party\jsoncpp\BUILD.gn
 SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
 SET gnEventingPythonScriptSource=bin\runEventCompiler.py
@@ -506,6 +510,20 @@ IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file
 
 CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
+
+findstr /m "rtc_json_sl" %templateRtcJsonDestination%
+if %errorlevel% NEQ 0 (
+    COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
+) ELSE (
+    CALL:print %info% "rtc_json_sl already appended"
+)
+
+findstr /m "jsoncpp_sl" %templateJsonCppDestination%
+if %errorlevel% NEQ 0 (
+    COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
+) ELSE (
+    CALL:print %info% "jsoncpp_sl already appended"
+)
 
 CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
 CALL:copyTemplates %gnIDLPythonScriptSource% %gnIDLPythonScriptDestination%
