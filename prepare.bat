@@ -181,6 +181,23 @@ IF %gn% EQU 1 (
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
 
+IF %prepare_WebRTC_Environemnt% EQU 1 (
+
+	findstr /m "rtc_json_sl" %templateRtcJsonDestination%
+	if %errorlevel% NEQ 0 (
+		COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
+	) ELSE (
+		CALL:print %info% "rtc_json_sl already appended"
+	)
+
+	findstr /m "jsoncpp_sl" %templateJsonCppDestination%
+	if %errorlevel% NEQ 0 (
+		COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
+	) ELSE (
+		CALL:print %info% "jsoncpp_sl already appended"
+	)
+)
+
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
 	CALL:prepareORTC
@@ -510,20 +527,6 @@ IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file
 
 CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
-
-findstr /m "rtc_json_sl" %templateRtcJsonDestination%
-if %errorlevel% NEQ 0 (
-    COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
-) ELSE (
-    CALL:print %info% "rtc_json_sl already appended"
-)
-
-findstr /m "jsoncpp_sl" %templateJsonCppDestination%
-if %errorlevel% NEQ 0 (
-    COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
-) ELSE (
-    CALL:print %info% "jsoncpp_sl already appended"
-)
 
 CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
 CALL:copyTemplates %gnIDLPythonScriptSource% %gnIDLPythonScriptDestination%
