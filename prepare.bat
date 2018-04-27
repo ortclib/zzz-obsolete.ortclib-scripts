@@ -181,21 +181,18 @@ IF %gn% EQU 1 (
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
 
-IF %prepare_WebRTC_Environemnt% EQU 1 (
+FINDSTR /C:"rtc_json_sl" %templateRtcJsonDestination%
+if %ERRORLEVEL% NEQ 0 (
+	COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
+) ELSE (
+	CALL:print %info% "rtc_json_sl already appended"
+)
 
-	findstr /m "rtc_json_sl" %templateRtcJsonDestination%
-	if %errorlevel% NEQ 0 (
-		COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
-	) ELSE (
-		CALL:print %info% "rtc_json_sl already appended"
-	)
-
-	findstr /m "jsoncpp_sl" %templateJsonCppDestination%
-	if %errorlevel% NEQ 0 (
-		COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
-	) ELSE (
-		CALL:print %info% "jsoncpp_sl already appended"
-	)
+FINDSTR /C:"jsoncpp_sl" %templateJsonCppDestination%
+if %ERRORLEVEL% NEQ 0 (
+	COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
+) ELSE (
+	CALL:print %info% "jsoncpp_sl already appended"
 )
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
