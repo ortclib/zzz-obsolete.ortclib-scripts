@@ -24,10 +24,6 @@ SET webrtcGnPath=webrtc\xplatform\webrtc\
 SET ortcGnPath=webrtc\xplatform\webrtc\ortc\
 SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
-SET templateRtcJsonGnBuildFile=webrtc\xplatform\templates\gn\rtcJsonBUILD.gn
-SET templateRtcJsonDestination=webrtc\xplatform\webrtc\webrtc\rtc_base\BUILD.gn
-SET templateJsonCppGnBuildFile=webrtc\xplatform\templates\gn\jsonCppBUILD.gn
-SET templateJsonCppDestination=webrtc\xplatform\webrtc\third_party\jsoncpp\BUILD.gn
 SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
 SET gnEventingPythonScriptSource=bin\runEventCompiler.py
@@ -181,19 +177,6 @@ IF %gn% EQU 1 (
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
 
-FINDSTR /C:"rtc_json_sl" %templateRtcJsonDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
-) ELSE (
-	CALL:print %info% "rtc_json_sl already appended"
-)
-
-FINDSTR /C:"jsoncpp_sl" %templateJsonCppDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
-) ELSE (
-	CALL:print %info% "jsoncpp_sl already appended"
-)
 
 IF %prepare_ORTC_Environemnt% EQU 1 (
 	::Prepare ORTC development environment
