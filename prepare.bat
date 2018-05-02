@@ -577,7 +577,7 @@ REM Download file (first argument) to desired destination (second argument)
 :download
 IF EXIST %~2 GOTO:EOF
 ::%powershell_path% "Start-BitsTransfer %~1 -Destination %~2"
-%powershell_path% -Command (new-object System.Net.WebClient).DownloadFile('%~1','%~2')
+%powershell_path% -Command [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(new-object System.Net.WebClient).DownloadFile('%~1','%~2')
 
 IF %ERRORLEVEL% EQU 1 SET taskFailed=1
 
