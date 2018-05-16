@@ -124,7 +124,7 @@ SET messageText=
 
 IF /I "%platform%"=="all" (
 	SET platform_ARM=1
-  SET platform_ARM64=1
+  SET platform_ARM64=0
 	SET platform_x64=1
 	SET platform_x86=1
 	SET platform_win32=1
