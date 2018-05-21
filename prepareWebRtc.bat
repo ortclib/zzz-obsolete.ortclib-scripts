@@ -275,6 +275,11 @@ CALL:makeLink . third_party\gflags\src ..\gflags
 CALL:makeLink . third_party\winsdk_samples ..\winsdk_samples_v71
 CALL:makeLink . tools\gyp ..\gyp
 CALL:makeLink . tools\clang ..\chromium\tools\clang
+CALL:makeLink . third_party\harfbuzz-ng ..\chromium\third_party\harfbuzz-ng
+CALL:makeLink . third_party\freetype ..\chromium\third_party\freetype
+CALL:makeLink . third_party\zlib ..\chromium\third_party\zlib
+CALL:makeLink . third_party\libpng ..\chromium\third_party\libpng
+CALL:makeLink . third_party\icu ..\icu
 IF /I "%target%"=="ortc" (
   CALL:makeLink . third_party\udns ..\..\..\ortc\xplatform\udns
   CALL:makeLink . third_party\idnkit ..\..\..\ortc\xplatform\idnkit
