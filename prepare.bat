@@ -32,7 +32,7 @@ SET gnIDLPythonScriptSource=bin\runIDLCompiler.py
 SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
-SET pythonVersion=2.7.6
+SET pythonVersion=2.7.9
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
  
