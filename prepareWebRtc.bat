@@ -246,6 +246,7 @@ CALL:makeLink . chromium\src\third_party\libvpx ..\chromium\third_party\libvpx
 CALL:makeLink . chromium\src\third_party\libvpx\source\libvpx ..\libvpx
 CALL:makeLink . chromium\src\testing ..\chromium\testing
 CALL:makeLink . testing chromium\src\testing
+CALL:makeLink . base ..\chromium\base
 CALL:makeLink . tools\protoc_wrapper chromium\src\tools\protoc_wrapper
 CALL:makeLink . third_party\yasm chromium\src\third_party\yasm
 CALL:makeLink . third_party\yasm\binaries ..\yasm\binaries
