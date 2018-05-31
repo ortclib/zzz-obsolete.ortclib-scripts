@@ -54,10 +54,8 @@ rem SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
 
-SET templateWebrtcRtcBaseGnBuildFile=..\templates\gn\webrtc_rtc_base_BUILD.gn
-SET templateWebrtcRtcBaseDestination=webrtc\rtc_base\BUILD.gn
-SET templateThirdPartyJsonCppGnBuildFile=..\templates\gn\third_party_jsoncpp_BUILD.gn
-SET templateThirdPartyJsonCppDestination=third_party\jsoncpp\BUILD.gn
+SET webrtcRtcBaseDestination=webrtc\rtc_base\BUILD.gn
+SET thirdPartyJsonCppDestination=third_party\jsoncpp\BUILD.gn
 SET webrtcCommonAudioDestination=webrtc\common_audio\BUILD.gn
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
@@ -188,7 +186,6 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
-CALL:appendJsonTemplates
 CALL:changeSourceSetsToStaticLibsInWebrtcGnBuildFiles
 
 CALL:updateFolders
@@ -285,34 +282,28 @@ IF /I "%target%"=="ortc" (
 
 GOTO:EOF
 
-:appendJsonTemplates
-CALL:print %trace% "Entered appendJsonTemplates function, current dir is %cd%"
-
-FINDSTR /C:"rtc_json_sl" %templateWebrtcRtcBaseDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateWebrtcRtcBaseDestination% + %templateWebrtcRtcBaseGnBuildFile% %templateWebrtcRtcBaseDestination% 
-) ELSE (
-	CALL:print %info% "rtc_json_sl already appended"
-)
-
-FINDSTR /C:"jsoncpp_sl" %templateThirdPartyJsonCppDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateThirdPartyJsonCppDestination% + %templateThirdPartyJsonCppGnBuildFile% %templateThirdPartyJsonCppDestination%
-) ELSE (
-	CALL:print %info% "jsoncpp_sl already appended"
-)
-GOTO:EOF
-
 
 :changeSourceSetsToStaticLibsInWebrtcGnBuildFiles
 
+::change "source_set("jsoncpp")" to "static_library("jsoncpp")" in third_party\jsoncpp\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %thirdPartyJsonCppDestination% "source_set\("""jsoncpp"""\)" "static_library("""jsoncpp""")" %thirdPartyJsonCppDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing source_set to static_library for jsoncpp"
+
+::change "rtc_source_set("rtc_json")" to "rtc_static_library("rtc_json")" in webrtc\rtc_base\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %webrtcRtcBaseDestination% "rtc_source_set\("""rtc_json"""\)" "rtc_static_library("""rtc_json""")" %webrtcRtcBaseDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for rtc_json"
+
 ::change "rtc_source_set("rtc_task_queue_impl")" to "rtc_static_library("rtc_task_queue_impl")" in webrtc\rtc_base\BUILD.gn
-%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %templateWebrtcRtcBaseDestination% "rtc_source_set\("""rtc_task_queue_impl"""\)" "rtc_static_library("""rtc_task_queue_impl""")" %templateWebrtcRtcBaseDestination%
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %webrtcRtcBaseDestination% "rtc_source_set\("""rtc_task_queue_impl"""\)" "rtc_static_library("""rtc_task_queue_impl""")" %webrtcRtcBaseDestination%
 IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for rtc_task_queue_impl"
 
 ::change "rtc_source_set("common_audio_c")" to "rtc_static_library("common_audio_c")" in webrtc\common_audio\BUILD.gn
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %webrtcCommonAudioDestination% "rtc_source_set\("""common_audio_c"""\)" "rtc_static_library("""common_audio_c""")" %webrtcCommonAudioDestination%
 IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for common_audio_c"
+
+::change "rtc_source_set("common_audio_neon_c")" to "rtc_static_library("common_audio_neon_c")" in webrtc\common_audio\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %webrtcCommonAudioDestination% "rtc_source_set\("""common_audio_neon_c"""\)" "rtc_static_library("""common_audio_neon_c""")" %webrtcCommonAudioDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for common_audio_neon_c"
 	
 GOTO:EOF
 
