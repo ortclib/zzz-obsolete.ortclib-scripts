@@ -58,6 +58,7 @@ SET templateWebrtcRtcBaseGnBuildFile=..\templates\gn\webrtc_rtc_base_BUILD.gn
 SET templateWebrtcRtcBaseDestination=webrtc\rtc_base\BUILD.gn
 SET templateThirdPartyJsonCppGnBuildFile=..\templates\gn\third_party_jsoncpp_BUILD.gn
 SET templateThirdPartyJsonCppDestination=third_party\jsoncpp\BUILD.gn
+SET webrtcCommonAudioDestination=webrtc\common_audio\BUILD.gn
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
 SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
@@ -188,6 +189,7 @@ CALL:generateChromiumFolders
 CALL:makeJunctionLinks
 
 CALL:appendJsonTemplates
+CALL:changeSourceSetsToStaticLibsInWebrtcGnBuildFiles
 
 CALL:updateFolders
 
@@ -300,6 +302,20 @@ if %ERRORLEVEL% NEQ 0 (
 	CALL:print %info% "jsoncpp_sl already appended"
 )
 GOTO:EOF
+
+
+:changeSourceSetsToStaticLibsInWebrtcGnBuildFiles
+
+::change "rtc_source_set("rtc_task_queue_impl")" to "rtc_static_library("rtc_task_queue_impl")" in webrtc\rtc_base\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %templateWebrtcRtcBaseDestination% "rtc_source_set\("""rtc_task_queue_impl"""\)" "rtc_static_library("""rtc_task_queue_impl""")" %templateWebrtcRtcBaseDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for rtc_task_queue_impl"
+
+::change "rtc_source_set("common_audio_c")" to "rtc_static_library("common_audio_c")" in webrtc\common_audio\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 %webrtcCommonAudioDestination% "rtc_source_set\("""common_audio_c"""\)" "rtc_static_library("""common_audio_c""")" %webrtcCommonAudioDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for common_audio_c"
+	
+GOTO:EOF
+
 
 :updateFolders
 
