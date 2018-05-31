@@ -6,9 +6,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 inputArray=sys.argv
 
 eventJsonPath=inputArray[1]
-toolchain=inputArray[2]
-tempToolchain=toolchain.split(":")
-toolchainCPU=tempToolchain[1]
+toolchainCPU=inputArray[2]
+#tempToolchain=toolchain.split(":")
+#toolchainCPU=tempToolchain[1]
 
 
 #eventProviderPath=inputArray[2]
@@ -47,6 +47,6 @@ if not os.path.isfile(eventCompilationPath):
   if (result==0):
     open(eventCompilationPath,'w').close()
   else:
-    sys.exit("Failed event compilation")
+    sys.exit("Failed event compilation" + str(result))
 else:
   print("Events " + eventJsonPath + " have been already compiled")

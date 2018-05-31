@@ -7,9 +7,9 @@ inputArray=sys.argv
 
 idlPath=inputArray[1]
 sourcePathPrefix=inputArray[2]
-toolchain=inputArray[3]
-tempToolchain=toolchain.split(":")
-toolchainCPU=tempToolchain[1]
+toolchainCPU=inputArray[3]
+#tempToolchain=toolchain.split(":")
+#toolchainCPU=tempToolchain[1]
 
 if (os.name == "posix"):
   compilerPath="zslib-eventing-tool-compiler"
@@ -41,11 +41,11 @@ if not os.path.isfile(idlCompilationPath):
   #os.system(compilerNewPath + " -idl cx c dotnet json wrapper -c config.json -o .")
   result=os.system(compilerNewPath + " -idl c dotnet json -c " + jsonFile + " -o .")
   if (result!=0):
-    sys.exit("Failed event compilation")
+    sys.exit("Failed idl compilation" + str(result))
     
   result=os.system(compilerNewPath + " -idl cx json wrapper -c " + jsonFile + " -s winuwp.json -o .")
   if (result!=0):
-    sys.exit("Failed event compilation")
+    sys.exit("Failed idl compilation" + str(result))
     
   updateScriptPath = os.path.dirname(os.path.realpath(__file__)) + "/../../../../bin/updateGniFileWithSources.py"
 
