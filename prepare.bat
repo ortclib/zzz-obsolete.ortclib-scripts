@@ -21,15 +21,15 @@ SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 SET ortciOSBinariesDestinationFolder=ortc\apple\libs\
 SET ortciOSBinariesDestinationPath=ortc\apple\libs\libOrtc.dylib
 SET webrtcGnPath=webrtc\xplatform\webrtc\
-SET ortcGnPath=webrtc\xplatform\webrtc\ortc\
+SET ortcGnPath=webrtc\xplatform\webrtc\third_party\ortc\
 SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
 SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
-SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
+SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\third_party\ortc\BUILD.gn
 SET gnEventingPythonScriptSource=bin\runEventCompiler.py
-SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runEventCompiler.py
+SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\third_party\ortc\runEventCompiler.py
 SET gnIDLPythonScriptSource=bin\runIDLCompiler.py
-SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
+SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\third_party\ortc\runIDLCompiler.py
 
 ::downloads
 SET pythonVersion=2.7.9
@@ -448,7 +448,7 @@ CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
 CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
 ::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib\ortc\idl\wrapper\cx ortc\windows\wrapper\cx
+CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\ortclib\ortc\idl\wrapper\cx ortc\windows\wrapper\cx
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
 GOTO:EOF
@@ -501,6 +501,7 @@ GOTO:EOF
 CALL:cleanup
 
 CALL:makeDirectory %ortcGNPath%
+CALL:makeDirectory webrtc\xplatform\webrtc\third_party
 
 REN %webrtcGnPath%build.gn originalBuild.gn
 IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
@@ -511,13 +512,13 @@ CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
 CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
 CALL:copyTemplates %gnIDLPythonScriptSource% %gnIDLPythonScriptDestination%
 
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib ortc\xplatform\ortclib-cpp
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib ortc\xplatform\zsLib
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
+CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\ortclib ortc\xplatform\ortclib-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
+CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\zsLib ortc\xplatform\zsLib
+CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
 
 IF %platform_win32% EQU 1 (
-    CALL:makeLink . webrtc\xplatform\webrtc\ortc\curl ortc\xplatform\curl
+    CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\curl ortc\xplatform\curl
 )
 
 GOTO:EOF
