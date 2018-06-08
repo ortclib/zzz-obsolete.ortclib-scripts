@@ -51,6 +51,8 @@ CALL:setCompilerOption %currentPlatform%
 
 CALL:buildNativeLibs
 
+CALL:makeOutputLinks
+
 GOTO:done
 
 :determineVisualStudioPath
@@ -144,14 +146,30 @@ GOTO:EOF
     
     IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
-        !ninjaPath! third_party/jsoncpp:jsoncpp_sl
-        !ninjaPath! webrtc/rtc_base:rtc_json_sl          
-      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
+REM        !ninjaPath! third_party/jsoncpp:jsoncpp_sl
+REM        !ninjaPath! webrtc/rtc_base:rtc_json_sl          
+REM      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     
     IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
-    CD ..
+    POPD
   )
+GOTO:EOF
+
+:makeOutputLinks
+PUSHD !libsSourcePath!
+echo evo me
+echo *******************************************
+echo %CD%
+echo %libsSourcePath%
+
+IF EXIST %libsSourcePath%obj\third_party\ortc (
+    CALL:makeDirectory ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj
+    CALL:makeLink . ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj\!outputPath! %libsSourcePath%obj\third_party\ortc\ortclib
+) ELSE (
+    echo u kurac
+)
+POPD
 GOTO:EOF
 
 :build
@@ -307,6 +325,27 @@ IF NOT EXIST %~1\NUL (
 	CALL:print %trace% "%~1 folder already exists"
 )
 GOTO:EOF
+
+:makeLink
+IF NOT EXIST %~1\NUL CALL:error 1 "%folderStructureError:"=% %~1 does not exist!"
+
+PUSHD %~1
+IF EXIST .\%~2\NUL GOTO:alreadyexists
+IF NOT EXIST %~3\NUL CALL:error 1 "%folderStructureError:"=% %~3 does not exist!"
+
+CALL:print %trace% In path "%~1" creating symbolic link for "%~2" to "%~3"
+
+IF %logLevel% GEQ %trace% (
+	MKLINK /J %~2 %~3
+) ELSE (
+	MKLINK /J %~2 %~3  >NUL
+)
+
+IF %ERRORLEVEL% NEQ 0 CALL:ERROR 1 "COULD NOT CREATE SYMBOLIC LINK TO %~2 FROM %~3"
+
+:alreadyexists
+CALL:print %trace% "Path "%~2" already exists"
+POPD
 
 REM Print logger message. First argument is log level, and second one is the message
 :print
