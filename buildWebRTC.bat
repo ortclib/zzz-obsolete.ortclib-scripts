@@ -145,7 +145,7 @@ GOTO:EOF
     IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
         !ninjaPath! third_party/jsoncpp:jsoncpp_sl
-        !ninjaPath! webrtc/rtc_base:rtc_json_sl          
+        !ninjaPath! webrtc/rtc_base:rtc_json          
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     
