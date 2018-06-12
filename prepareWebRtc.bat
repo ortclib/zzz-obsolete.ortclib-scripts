@@ -187,7 +187,7 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
-CALL:appendJsonTemplates
+REM CALL:appendJsonTemplates
 
 CALL:updateFolders
 
