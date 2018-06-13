@@ -188,26 +188,26 @@ GOTO:EOF
 
 :strlen
 (
-    setlocal EnableDelayedExpansion
-    set s=%~2
-    set "len=0"
-    echo ////////////// %~2
-    for %%P in (4096 2048 1024 512 256 128 64 32 16 8 4 2 1) do (
-        if "!s:~%%P,1!" NEQ "" ( 
-            set /a "len+=%%P"
-            set "s=!s:~%%P!"
+    SETLOCAL EnableDelayedExpansion
+    SET s=%~2
+    SET "len=0"
+    FOR %%P IN (4096 2048 1024 512 256 128 64 32 16 8 4 2 1) DO (
+        IF "!s:~%%P,1!" NEQ "" ( 
+            SET /a "len+=%%P"
+            SET "s=!s:~%%P!"
         )
     )
-    echo !len!
 )
 ( 
-    endlocal
-    set "%~1=%len%"
-    exit /b
+    ENDLOCAL
+    SET "%~1=%len%"
+    EXIT /b
 )
 GOTO:EOF
 
 :combineLibs
+CALL:print %debug% "Combining object files into library."
+
 CALL:setPaths %~dp1
 
 CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
@@ -221,37 +221,35 @@ IF NOT EXIST %destinationPath% (
 SET webRtcLibs=
 SET counter=0
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @relpath"') DO ( 
-    echo ************** %%~A
     SET temp=%%~A
     IF "!temp!"=="!temp:ortclib\=!" (
         SET webRtcLibs=!webRtcLibs! %%~A 
-        echo +++++++ !webRtcLibs!
+        CALL:print %trace%  !webRtcLibs!
         call :strlen result "!webRtcLibs!"
-        echo ------------- e!result!
         if !result! lss 7000 echo counter je !counter!
         if !result! gtr 7000 (
             PUSHD %libsSourcePath%obj
             IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
             IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
             SET /A counter = counter + 1
-            echo !counter!
+            CALL:print %trace% "Curernt library counter is !counter!"
             POPD
             SET webRtcLibs=
         )
      ) ELSE (
-        echo ^^^^^^^^^^^^^^^^^^^^^^ Nije uzeto u obzir !temp!
+        CALL:print %debug% "Object file !temp! is ignored"
      )
 )
 
 
 SET /A counter = counter + 1
-echo counter for o files is !counter!
+
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( SET webRtcLibs=!webRtcLibs! %%~A )
 PUSHD %libsSourcePath%obj
 
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
-popd
+POPD
 
 PUSHD %libsSourcePath%obj
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
@@ -262,7 +260,7 @@ SET webRtcLibs=
 FOR /f %%A IN ('forfiles -p !destinationPath! /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
 PUSHD !destinationPath!
-echo !webRtcLibs!
+CALL:print %debug% "Merging libraries from !webRtcLibs!"
 IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 POPD
