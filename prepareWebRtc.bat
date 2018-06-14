@@ -55,10 +55,8 @@ rem SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
 
-SET templateRtcJsonGnBuildFile=..\templates\gn\rtcJsonBUILD.gn
-SET templateRtcJsonDestination=webrtc\rtc_base\BUILD.gn
-SET templateJsonCppGnBuildFile=..\templates\gn\jsonCppBUILD.gn
-SET templateJsonCppDestination=third_party\jsoncpp\BUILD.gn
+SET templateThirdPartyJsonCppGnBuildFile=..\templates\gn\third_party_jsoncpp_BUILD.gn
+SET templateThirdPartyJsonCppDestination=third_party\jsoncpp\BUILD.gn
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
 SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
@@ -290,23 +288,18 @@ IF /I "%target%"=="ortc" (
 
 GOTO:EOF
 
+
 :appendJsonTemplates
 CALL:print %trace% "Entered appendJsonTemplates function, current dir is %cd%"
 
-FINDSTR /C:"rtc_json_sl" %templateRtcJsonDestination%
+FINDSTR /C:"jsoncpp_sl" %templateThirdPartyJsonCppDestination%
 if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
-) ELSE (
-	CALL:print %info% "rtc_json_sl already appended"
-)
-
-FINDSTR /C:"jsoncpp_sl" %templateJsonCppDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
+	COPY /B %templateThirdPartyJsonCppDestination% + %templateThirdPartyJsonCppGnBuildFile% %templateThirdPartyJsonCppDestination%
 ) ELSE (
 	CALL:print %info% "jsoncpp_sl already appended"
 )
 GOTO:EOF
+
 
 :updateFolders
 

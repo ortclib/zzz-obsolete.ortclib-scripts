@@ -26,13 +26,15 @@ SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
 SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\ortc\BUILD.gn
+SET webrtcRtcBaseDestination=webrtc\xplatform\webrtc\webrtc\rtc_base\BUILD.gn
+SET webrtcCommonAudioDestination=webrtc\xplatform\webrtc\webrtc\common_audio\BUILD.gn
 SET gnEventingPythonScriptSource=bin\runEventCompiler.py
 SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runEventCompiler.py
 SET gnIDLPythonScriptSource=bin\runIDLCompiler.py
 SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\ortc\runIDLCompiler.py
 
 ::downloads
-SET pythonVersion=2.7.6
+SET pythonVersion=2.7.9
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
  
@@ -442,6 +444,28 @@ IF %ERRORLEVEL% EQU 1 (
 
 GOTO:EOF
 
+
+:changeSomeSourceSetsToStaticLibsInWebrtcGnBuildFiles
+
+::change "rtc_source_set("rtc_json")" to "rtc_static_library("rtc_json")" in webrtc\rtc_base\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %webrtcRtcBaseDestination% "rtc_source_set\("""rtc_json"""\)" "rtc_static_library("""rtc_json""")" %webrtcRtcBaseDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for rtc_json"
+
+::change "rtc_source_set("rtc_task_queue_impl")" to "rtc_static_library("rtc_task_queue_impl")" in webrtc\rtc_base\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %webrtcRtcBaseDestination% "rtc_source_set\("""rtc_task_queue_impl"""\)" "rtc_static_library("""rtc_task_queue_impl""")" %webrtcRtcBaseDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for rtc_task_queue_impl"
+
+::change "rtc_source_set("common_audio_c")" to "rtc_static_library("common_audio_c")" in webrtc\common_audio\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %webrtcCommonAudioDestination% "rtc_source_set\("""common_audio_c"""\)" "rtc_static_library("""common_audio_c""")" %webrtcCommonAudioDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for common_audio_c"
+
+::change "rtc_source_set("common_audio_neon_c")" to "rtc_static_library("common_audio_neon_c")" in webrtc\common_audio\BUILD.gn
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 %webrtcCommonAudioDestination% "rtc_source_set\("""common_audio_neon_c"""\)" "rtc_static_library("""common_audio_neon_c""")" %webrtcCommonAudioDestination%
+IF ERRORLEVEL 1 CALL:error 0 "Failed changing rtc_source_set to rtc_static_library for common_audio_neon_c"
+	
+GOTO:EOF
+
+
 :prepareORTC
 
 :: Create solutions folder where will be stored links to real solutions
@@ -511,6 +535,8 @@ CALL:makeDirectory %ortcGNPath%
 
 REN %webrtcGnPath%build.gn originalBuild.gn
 IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
+
+CALL:changeSomeSourceSetsToStaticLibsInWebrtcGnBuildFiles
 
 CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
 CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
