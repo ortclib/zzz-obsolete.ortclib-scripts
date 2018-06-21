@@ -448,7 +448,6 @@ CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
 CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
 ::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
 
-CALL:makeLink . webrtc\xplatform\webrtc\ortc\ortclib\ortc\idl\wrapper\cx ortc\windows\wrapper\cx
 ::START solutions\ortc-lib-sdk-win.vs20151.sln
 
 GOTO:EOF

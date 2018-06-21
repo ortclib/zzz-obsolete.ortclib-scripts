@@ -406,16 +406,14 @@ GOTO:EOF
 
 IF EXIST webrtc\xplatform\webrtc\ortc\idl.flg GOTO:EOF
 
-CALL:print %warning% "Preparing IDL wrappers [cx/c/dotnet/json] ..."
+CALL:print %warning% "Preparing IDL wrappers [cx cppwinrt json wrapper c python dotnet] ..."
 
 PUSHD %idlOutput%
 
 IF %logLevel% GEQ %trace% (
-	CALL %compilerPath% -idl cx json wrapper -c config.json -s winuwp.json -o .
-  CALL %compilerPath% -idl c dotnet json -c config.json -o .
+  CALL %compilerPath% -idl cx cppwinrt json wrapper c python dotnet -c config.json -o .
 ) ELSE (
-	CALL %compilerPath% -idl cx json wrapper -c config.json -s winuwp.json -o . > NUL
-  CALL %compilerPath% -idl c dotnet json -c config.json -o . > NUL
+  CALL %compilerPath% -idl cx cppwinrt json wrapper c python dotnet -c config.json -o > NUL
 )
 
 POPD
