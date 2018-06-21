@@ -38,12 +38,7 @@ if not os.path.isfile(idlCompilationPath):
   print "runIDLCompiler - NewWorkingPath:" + os.getcwd()
   print "runIDLCompiler - compilerNewPath: " + compilerNewPath
 
-  #os.system(compilerNewPath + " -idl cx c dotnet json wrapper -c config.json -o .")
-  result=os.system(compilerNewPath + " -idl c dotnet json -c " + jsonFile + " -o .")
-  if (result!=0):
-    sys.exit("Failed event compilation")
-    
-  result=os.system(compilerNewPath + " -idl cx json wrapper -c " + jsonFile + " -s winuwp.json -o .")
+  result=os.system(compilerNewPath + " -idl c dotnet json cx json wrapper python cppwinrt -c " + jsonFile + " -o .")
   if (result!=0):
     sys.exit("Failed event compilation")
     
