@@ -203,7 +203,7 @@ GOTO:EOF
 CALL:print %trace% "Determining compiler options ..."
 REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
 
-CALL:print %trace% "CPU arhitecture is %CPU%"
+CALL:print %trace% "CPU architecture is %CPU%"
 
 IF /I %CPU% == x86 (
 	SET x86BuildCompilerOption=x86

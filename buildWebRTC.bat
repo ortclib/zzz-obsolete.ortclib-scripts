@@ -21,6 +21,11 @@ SET x86Win32BuildCompilerOption=amd64_x86
 SET x64Win32BuildCompilerOption=amd64
 SET currentBuildCompilerOption=amd64
 
+If /I "%CONFIGURATION%"=="" (
+  echo Usage: buildWebRTC [debug/release] [win32/win32_x64/x86/x64] [webrtc/ortc]
+  CALL bin\batchTerminator.bat
+)
+
 SET startTime=0
 SET endingTime=0
 
@@ -83,7 +88,7 @@ GOTO:EOF
 CALL:print %trace% "Determining compiler options ..."
 REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
 
-CALL:print %trace% "CPU arhitecture is %CPU%"
+CALL:print %trace% "CPU architecture is %CPU%"
 
 IF /I %CPU% == x86 (
 	SET x86BuildCompilerOption=x86
@@ -94,11 +99,11 @@ IF /I %CPU% == x86 (
 	SET x86Win32BuildCompilerOption=x86
   SET x64Win32BuildCompilerOption=x86_amd64
 )
-	
-IF /I %~1==x86 (
+
+IF /I "%~1"=="x86" (
 	SET currentBuildCompilerOption=%x86BuildCompilerOption%
 ) ELSE (
-	IF /I %~1==ARM (
+	IF /I "%~1"=="ARM" (
 		SET currentBuildCompilerOption=%armBuildCompilerOption%
 	) ELSE (
 		IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
@@ -120,6 +125,7 @@ CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
 GOTO:EOF
 
 :buildNativeLibs
+
   IF EXIST !baseBuildPath! (
     PUSHD !baseBuildPath!
     SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
@@ -145,13 +151,14 @@ GOTO:EOF
     IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
         !ninjaPath! third_party/jsoncpp:jsoncpp_sl
-        !ninjaPath! webrtc/rtc_base:rtc_json          
+        !ninjaPath! webrtc/rtc_base:rtc_json
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     
     IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
     CD ..
   )
+
 GOTO:EOF
 
 :build
@@ -182,6 +189,10 @@ IF NOT EXIST %destinationPath% (
 SET webRtcLibs=
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
+
+IF EXIST %libsSourcePath%win_clang_%CPU% (
+  FOR /f %%A IN ('forfiles -p %libsSourcePath%win_clang_%CPU% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! ..\win_clang_%CPU%\%%~A )
+)
 
 PUSHD %libsSourcePath%obj
 
