@@ -189,10 +189,10 @@ GOTO:EOF
 CALL:setPaths %~dp1
 
 IF /I "%currentPlatform%"=="winuwp" (
-  SET destinationExes=%~dp0\winuwp_!CPU!_!CONFIGURATION!
+  SET destinationExes=%~dp0\..\output\winuwp_!CPU!_!CONFIGURATION!
 )
 IF /I "%currentPlatform%"=="win32" (
-  SET destinationExes=%~dp0\win_!CPU!_!CONFIGURATION!
+  SET destinationExes=%~dp0\..\output\win_!CPU!_!CONFIGURATION!
 )
 
 IF NOT EXIST %destinationExes% (
@@ -205,9 +205,6 @@ COPY %libsSourcePath%\*.exe %destinationExes%\*.exe /Y >NUL
 
 echo COPY %libsSourcePath%\*.pdb %destinationExes%\*.pdb /Y
 COPY %libsSourcePath%\*.pdb %destinationExes%\*.pdb /Y >NUL
-
-echo COPY %libsSourcePath%\*.ilk %destinationExes%\*.ilk /Y
-COPY %libsSourcePath%\*.ilk %destinationExes%\*.ilk /Y >NUL
 
 echo COPY %libsSourcePath%\*.dll %destinationExes%\*.dll /Y
 COPY %libsSourcePath%\*.dll %destinationExes%\*.dll /Y >NUL
