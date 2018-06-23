@@ -1,10 +1,10 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-SET CPU=""
+SET HOSTCPU=""
 SET CONFIGURATION=Release
 ::SET PLATFORM=x64
-SET eventingToolCompilerPlatform=x86
+SET eventingToolCompilerCpu=x86
 SET solutionPath=ortc\windows\solutions\zsLib.Eventing.sln
 SET msVS_Path=""
 SET tools_MSVC_Path=""
@@ -16,7 +16,7 @@ SET currentBuildCompilerOption=amd64
 
 SET ortcZsLibTemplatePath=ortc\windows\templates\events\zsLib.Eventing.sln
 SET ortcZsLibDestinationPath=ortc\windows\solutions\
-SET compilerOutputPath=%cd%\ortc\windows\solutions\Build\Output\!eventingToolCompilerPlatform!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
+SET compilerOutputPath=%cd%\ortc\windows\solutions\Build\Output\!eventingToolCompilerCpu!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
 SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
 
 
@@ -32,8 +32,9 @@ SET startTime=0
 SET endingTime=0
 
 ::input arguments
-SET supportedInputArguments=;platform;managedBuild;logLevel;
-SET platform=x64
+SET supportedInputArguments=;platform;cpu;managedBuild;logLevel;
+SET platform=win32
+SET cpu=x64
 SET managedBuild=0
 SET help=0
 SET logLevel=2
@@ -53,7 +54,8 @@ CALL:print %info% "================================="
 IF "%1"=="" (
 	CALL:print %warning% "Running script with default parameters: "
 	CALL:print %warning% "Managed Build: No"
-	CALL:print %warning% "Platform: x64"
+	CALL:print %warning% "Platform: win32"
+	CALL:print %warning% "Cpu: x64"
 	CALL:print %warning% "Log level: %logLevel% ^(warning^)"
 )
 
@@ -85,20 +87,27 @@ GOTO parseInputArguments
 :: Start execution of main flow (if parsing input parameters passed without issues)
 
 :main
+
+IF /I "%platform%"=="all" SET platform="win32"
+IF /I "%cpu%"=="all" SET platform="x64"
+
 SET currentPlatform=%platform%
-CALL:print %warning% "Platform: %currentPlatform%"
+SET currentCpu=%cpu%
+CALL:print %warning% "Cpu: %currentCpu%"
 
 CALL:determineWindowsSDK
 
-SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\%currentPlatform%\"
-IF /I %currentPlatform%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\x86\"
+SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\%currentCpu%\"
+IF /I %currentCpu%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\x86\"
 SET startTime=%time%
 
 CALL:checkPlatform
+CALL:checkCpu
+CALL:checkManagedBuild
 
 CALL:determineVisualStudioPath
 
-CALL:setCompilerOption %eventingToolCompilerPlatform%
+CALL:setCompilerOption %eventingToolCompilerCpu%
 
 CALL:buildEventingToolCompiler
 
@@ -113,13 +122,32 @@ GOTO:done
 :checkPlatform
 SET validInput=0
 
-IF /I "%currentPlatform%"=="x64" SET validInput=1
-
-IF /I "%currentPlatform%"=="x86" SET validInput=1
-
 IF /I "%currentPlatform%"=="win32" SET validInput=1
+
+IF /I "%currentPlatform%"=="winuwp" SET validInput=1
 	
 IF !validInput!==0 CALL:error 1 "Invalid platform"
+
+GOTO:EOF
+
+:checkCpu
+SET validInput=0
+
+IF /I "%currentCpu%"=="x64" SET validInput=1
+
+IF /I "%currentCpu%"=="x86" SET validInput=1
+
+IF /I "%currentCpu%"=="arm" SET validInput=1
+	
+IF !validInput!==0 CALL:error 1 "Invalid cpu"
+
+GOTO:EOF
+
+:checkManagedBuild
+
+managedBuild=0
+
+IF /I "%currentPlatform%"=="winuwp" SET managedBuild=1
 
 GOTO:EOF
 
@@ -201,11 +229,11 @@ GOTO:EOF
 
 :setCompilerOption
 CALL:print %trace% "Determining compiler options ..."
-REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
+REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET HOSTCPU=x86 || SET HOSTCPU=x64
 
-CALL:print %trace% "CPU architecture is %CPU%"
+CALL:print %trace% "Host CPU architecture is %HOSTCPU%"
 
-IF /I %CPU% == x86 (
+IF /I %HOSTCPU% == x86 (
 	SET x86BuildCompilerOption=x86
 	SET x64BuildCompilerOption=x86_amd64
 	SET armBuildCompilerOption=x86_arm
@@ -237,17 +265,17 @@ CALL:print %warning% "Building eventing tool compiler ..."
 SET currentFolder=%CD%
 IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentBuildCompilerOption%
-	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %eventingToolCompilerPlatform%"
+	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %eventingToolCompilerCpu%"
 	CD !currentFolder!
 	CALL:copyFiles %ortcZsLibTemplatePath% %ortcZsLibDestinationPath%
 	
 	IF %logLevel% GEQ %trace% (
-		MSBuild %solutionPath% /property:Configuration=%CONFIGURATION% /property:Platform=%eventingToolCompilerPlatform% /t:Clean;Build /nodeReuse:False /m
+		MSBuild %solutionPath% /property:Configuration=%CONFIGURATION% /property:Platform=%eventingToolCompilerCpu% /t:Clean;Build /nodeReuse:False /m
 	) ELSE (
-		MSBuild %solutionPath% /property:Configuration=%CONFIGURATION% /property:Platform=%eventingToolCompilerPlatform% /t:Clean;Build /nodeReuse:False /m > NUL
+		MSBuild %solutionPath% /property:Configuration=%CONFIGURATION% /property:Platform=%eventingToolCompilerCpu% /t:Clean;Build /nodeReuse:False /m > NUL
 	)
 
-	IF ERRORLEVEL 1 CALL:error 1 "Building zsLib.Eventing.Tool.Compiler projects for %eventingToolCompilerPlatform% has failed"
+	IF ERRORLEVEL 1 CALL:error 1 "Building zsLib.Eventing.Tool.Compiler projects for %eventingToolCompilerCpu% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
 )
@@ -264,7 +292,7 @@ SET eventPath=%~dp1
 SET providerName=%~n1
 SET intermediatePath=!eventPath!%eventsIntermediatePath%\
 SET headersPath=!eventPath!%eventsIncludePath%
-SET outputPath=%eventsOutput%!providerName!\%currentPlatform%
+SET outputPath=%eventsOutput%!providerName!\%currentCpu%
 
 IF EXIST webrtc\xplatform\webrtc\ortc\!providerName!_eventsCompiled.flg GOTO:EOF
 
@@ -309,7 +337,7 @@ IF %logLevel% GEQ %trace% (
 )
 IF ERRORLEVEL 1 CALL:error 1 "Creating resource has failed"
 
-CALL:print %debug% "Creating manifest resource dll for !currentPlatform! ..."
+CALL:print %debug% "Creating manifest resource dll for !currentCpu! ..."
 
 IF %managedBuild% EQU 1 (
 	echo csc
@@ -320,13 +348,12 @@ IF %managedBuild% EQU 1 (
 	)
 ) ELSE (  
 	echo link
-	SET tempPlatform=%currentPlatform%
-	IF /I %currentPlatform%==win32 SET tempPlatform=x86
-    echo %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link
+	SET tempCpu=%currentCpu%
+  echo %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempCpu!\link
 	IF %logLevel% GEQ %trace% (
-        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link -verbose -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
+        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempCpu!\link -verbose -dll -noentry /MACHINE:%currentCpu% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res
 	) ELSE (
-        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempPlatform!\link -dll -noentry /MACHINE:%currentPlatform% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
+        %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!tempCpu!\link -dll -noentry /MACHINE:%currentCpu% -out:!intermediatePath!!providerName!_win_etw.dll !intermediatePath!!providerName!_win_etw.res > NUL
 	)
 )
 IF ERRORLEVEL 1 CALL:error 1 "Creating manifest resource dll has failed"

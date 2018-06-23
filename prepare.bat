@@ -50,15 +50,16 @@ SET endingTime=0
 SET defaultProperties=0
 
 ::targets
-SET prepare_ORTC_Environemnt=0
-SET prepare_WebRTC_Environemnt=0
+SET prepare_ORTC_Environment=0
+SET prepare_WebRTC_Environment=0
 
 ::platforms
-SET platform_ARM=1
-SET platform_x86=1
-SET platform_x64=1
-SET platform_win32=1
-SET platform_win32_x64=0
+SET platform_winuwp=0
+SET platform_win32=0
+
+SET CPU_arm=0
+SET CPU_x86=0
+SET CPU_x64=0
 
 ::log levels
 SET globalLogLevel=2											
@@ -69,9 +70,10 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
+SET supportedInputArguments=;platform;cpu;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
 SET target=all
 SET platform=all
+SET cpu=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
@@ -84,6 +86,7 @@ SET gn=1
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidCpu="Invalid cpu name. For the list of available targets and usage examples, please run script with -help option."
 SET folderStructureError="ORTC invalid folder structure."
 
 CALL:precheck
@@ -91,7 +94,8 @@ CALL:precheck
 IF "%1"=="" (
 	CALL:print %warning% "Running script with default parameters: "
 	CALL:print %warning% "Target: all ^(Ortc and WebRtc^)"
-	CALL:print %warning% "Platform: all ^(x64, x86, arm and win32^)"
+	CALL:print %warning% "Platform: all ^(winuwp, win32^)"
+	CALL:print %warning% "Cpu: all ^(x64, x86, arm^)"
 	CALL:print %warning% "Log level: %logLevel% ^(warning^)"
 	SET defaultProperties=1
 )
@@ -146,6 +150,7 @@ IF %defaultProperties% EQU 0 (
 	CALL:print %warning% "Running script parameters:"
 	CALL:print %warning% "Target: %target%"
 	CALL:print %warning% "Platform: %platform%"
+	CALL:print %warning% "Cpu: %cpu%"
 	CALL:print %warning% "Log level: %logLevel%"
 	SET defaultProperties=1
 )
@@ -158,6 +163,9 @@ CALL:identifyTarget
 
 ::Determine targeted platforms
 CALL:identifyPlatform
+
+::Determine targeted platforms
+CALL:identifyCpu
 
 ::Check is perl installed
 CALL:perlCheck
@@ -173,14 +181,14 @@ CALL:pythonSetup
 
 
 IF %gn% EQU 1 (
-    IF %prepare_ORTC_Environemnt% EQU 1 CALL:prepareGN
+    IF %prepare_ORTC_Environment% EQU 1 CALL:prepareGN
 )
 
 ::Generate WebRTC VS2015 projects from gn files
 CALL:prepareWebRTC
 
 
-IF %prepare_ORTC_Environemnt% EQU 1 (
+IF %prepare_ORTC_Environment% EQU 1 (
 	::Prepare ORTC development environment
 	CALL:prepareORTC
 
@@ -248,22 +256,22 @@ SET validInput=0
 SET messageText=
 
 IF /I "%target%"=="all" (
-	SET prepare_ORTC_Environemnt=%ortcAvailable%
-	SET prepare_WebRTC_Environemnt=1
+	SET prepare_ORTC_Environment=%ortcAvailable%
+	SET prepare_WebRTC_Environment=1
 	SET validInput=1
-	IF !prepare_ORTC_Environemnt! EQU 1 (
+	IF !prepare_ORTC_Environment! EQU 1 (
 		SET messageText=Preparing webRTC and ORTC development environment ...
 	) ELSE (
 		SET messageText=Preparing webRTC development environment ...
 		)
 ) ELSE (
 	IF /I "%target%"=="webrtc" (
-		SET prepare_WebRTC_Environemnt=1
+		SET prepare_WebRTC_Environment=1
 		SET validInput=1
 	)
 	IF /I "%target%"=="ortc" (
 	IF %ortcAvailable% EQU 0 CALL:ERROR 1 "ORTC is not available!"
-		SET prepare_ORTC_Environemnt=1
+		SET prepare_ORTC_Environment=1
 		SET validInput=1
 	)
 
@@ -280,31 +288,19 @@ IF !validInput!==1 (
 )
 GOTO:EOF
 
-REM Based on input arguments determine targeted platforms (x64, x86 or ARM)
+REM Based on input arguments determine targeted platforms (winuwp, win32)
 :identifyPlatform
 SET validInput=0
 SET messageText=
 
 IF /I "%platform%"=="all" (
-	SET platform_ARM=1
-	SET platform_x64=1
-	SET platform_x86=1
+	SET platform_winuwp=1
 	SET platform_win32=1
 	SET validInput=1
-	SET messageText=Preparing development environment for ARM, x64, x86 and win32 platforms ...
+	SET messageText=Preparing development environment for WinUWP and Win32 platforms ...
 ) ELSE (
-	IF /I "%platform%"=="arm" (
-		SET platform_ARM=1
-		SET validInput=1
-	)
-	
-	IF /I "%platform%"=="x64" (
-		SET platform_x64=1
-		SET validInput=1
-	)
-
-	IF /I "%platform%"=="x86" (
-		SET platform_x86=1
+	IF /I "%platform%"=="winuwp" (
+		SET platform_winuwp=1
 		SET validInput=1
 	)
 	
@@ -312,12 +308,7 @@ IF /I "%platform%"=="all" (
 		SET platform_win32=1
 		SET validInput=1
 	)
-	
-	IF /I "%platform%"=="win32_x64" (
-		SET platform_win32_x64=1
-		SET validInput=1
-	)
-	
+
 	IF !validInput!==1 (
 		SET messageText=Preparing development environment for %platform% platform...
 	)
@@ -327,6 +318,46 @@ IF !validInput!==1 (
 	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidPlatform%
+)
+GOTO:EOF
+
+
+REM Based on input arguments determine targeted cpu (x64, x86 or ARM)
+:identifyCpu
+SET validInput=0
+SET messageText=
+
+IF /I "%cpu%"=="all" (
+	SET cpu_arm=1
+	SET cpu_x86=1
+	SET cpu_x64=1
+	SET validInput=1
+	SET messageText=Preparing development environment for arm, x86, and x64 cpus ...
+) ELSE (
+	IF /I "%cpu%"=="arm" (
+		SET cpu_arm=1
+		SET validInput=1
+	)
+	
+	IF /I "%cpu%"=="x86" (
+		SET cpu_x86=1
+		SET validInput=1
+	)
+
+	IF /I "%cpu%"=="x64" (
+		SET cpu_x86=1
+		SET validInput=1
+	)
+
+	IF !validInput!==1 (
+		SET messageText=Preparing development environment for %cpu% cpu...
+	)
+)
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidCpu%
 )
 GOTO:EOF
 
@@ -479,10 +510,10 @@ GOTO:EOF
 ::Generate WebRTC projects
 :prepareWebRTC
 
-IF %prepare_ORTC_Environemnt% EQU 1 (
-  CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel% -target ortc
+IF %prepare_ORTC_Environment% EQU 1 (
+  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -logLevel %logLevel% -target ortc
 ) ELSE (
-  CALL bin\prepareWebRtc.bat -platform %platform% -logLevel %logLevel%
+  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -logLevel %logLevel%
 )
 
 GOTO:EOF
@@ -514,7 +545,7 @@ GOTO:EOF
 :prepareEventing
 
 IF %noEventing% EQU 0 (
-	CALL bin\prepareEventing.bat -platform x64 -logLevel %logLevel%
+	CALL bin\prepareEventing.bat -platform %platform% -cpu %cpu% -logLevel %logLevel%
 )
 
 GOTO:EOF
@@ -549,11 +580,11 @@ GOTO:EOF
 
 :buildPeerCCServer
   IF NOT "%platform%"=="all" (
-    IF NOT "%platform%"=="win32" CALL bin\prepareWebRtc.bat -platform win32 -logLevel %logLevel%
+    IF NOT "%platform%"=="win32" CALL bin\prepareWebRtc.bat -platform win32 -cpu x86 -logLevel %logLevel%
   )
-  
+
   CALL:print %info% "Building PeerConnection server"
-  CALL bin\buildWebRtc.bat Release win32 webrtc/examples:peerconnection_server
+  CALL bin\buildWebRtc.bat Release win32 x86 webrtc/examples:peerconnection_server
   IF !ERRORLEVEL! EQU 0 (
     CALL:copyTemplates webrtc\xplatform\webrtc\out\win_x86_release\peerconnection_server.exe .\bin\
   )
@@ -838,7 +869,9 @@ ECHO		[93m-noEventing[0m 	Flag not to run eventing preparations for Ortc
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
 ECHO.
-ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (win32,x86,x64,arm)
+ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (winuwp,win32)
+ECHO.
+ECHO		[93m-cpu[0m 	Cpu name to set environment for. Default is All (arm,x86,x64)
 ECHO.
 CALL bin\batchTerminator.bat
 
