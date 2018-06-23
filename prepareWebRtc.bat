@@ -20,6 +20,9 @@ SET cpu_arm=0
 SET cpu_x86=0
 SET cpu_x64=0
 
+SET CONFIG_debug=0
+SET CONFIG_release=0
+
 SET platform_winuwp_cpu_arm_prepared=0
 SET platform_winuwp_cpu_x86_prepared=0
 SET platform_winuwp_cpu_x64_prepared=0
@@ -37,18 +40,21 @@ SET debug=3
 SET trace=4	
 
 ::input arguments
-SET supportedInputArguments=;platform;cpu;help;logLevel;diagnostic;target;			
+SET supportedInputArguments=;platform;cpu;config;help;logLevel;diagnostic;target;			
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET target=webrtc
+SET cpu=all
+SET config=all
 
 ::predefined messages
 SET folderStructureError="WebRTC invalid folder structure."
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidCpu="Invalid cpu name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidConfig="Invalid config name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageMissingDebuggerTools="Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version. You can download installer from this link https://developer.microsoft.com/de-de/windows/downloads/sdk-archive"
 
 ::path constants
@@ -111,6 +117,8 @@ CALL:showHelp
 CALL:identifyPlatform
 
 CALL:identifyCpu
+
+CALL:identifyConfig
 
 CALL:prepareWebRTC
 
@@ -190,15 +198,21 @@ SET validInput=0
 SET messageText=
 
 IF /I "%cpu%"=="all" (
-	SET cpu_arm=1
+	SET cpu_arm=0
 	SET cpu_x86=1
 	SET cpu_x64=1
 	SET validInput=1
 	SET messageText=Preparing WebRTC development environment for arm, x86, x64 cpus ...
 ) ELSE (
 	IF /I "%cpu%"=="arm" (
-		SET cpu_arm=1
-		SET validInput=1
+		IF /I "%platform%"=="win32" (
+			CALL:print %warning% "Win32 ARM is not a valid target thus assuming an x86 cpu ..."
+			SET cpu_x86=1
+			SET validInput=1
+		) ELSE (
+			SET cpu_arm=1
+			SET validInput=1
+		)
 	)
 	
 	IF /I "%cpu%"=="x86" (
@@ -221,6 +235,42 @@ IF !validInput!==1 (
 	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidCpu%
+)
+GOTO:EOF
+
+
+REM Based on input arguments determine targeted cpu (debug/release)
+:identifyConfig
+SET validInput=0
+SET messageText=
+
+IF /I "%config%"=="all" (
+	SET CONFIG_debug=1
+	SET CONFIG_release=1
+	SET validInput=1
+	SET messageText=Preparing WebRTC development environment for debug and release configurations ...
+) ELSE (
+
+	IF /I "%config%"=="debug" (
+		SET CONFIG_debug=1
+		SET validInput=1
+	)
+	
+	IF /I "%config%"=="release" (
+		SET CONFIG_release=1
+		SET validInput=1
+	)
+	
+	IF !validInput!==1 (
+		SET messageText=Preparing WebRTC development environment for %config% configuration ...
+	)
+)
+
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidConfig%
 )
 GOTO:EOF
 
@@ -462,32 +512,48 @@ IF %cpu_x86% EQU 1 (
 	IF %platform_winuwp% EQU 1 (
 		CALL:print %warning% "Generating WebRTC WinUWP projects for x86 cpu ..."
 		SET platform_winuwp_cpu_x86_prepared=1
-		CALL:generateProjectsForPlatform winuwp x86 debug
-		CALL:generateProjectsForPlatform winuwp x86 release
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x86 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x86 release
+		)
 		SET platform_winuwp_cpu_x86_prepared=2
 	)
 	IF %platform_win32% EQU 1 (
 		CALL:print %warning% "Generating WebRTC Win32 projects for x86 cpu ..."
 		SET platform_win32_cpu_x86_prepared=1
-		CALL:generateProjectsForPlatform win x86 debug
-		CALL:generateProjectsForPlatform win x86 release
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform win x86 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform win x86 release
+		)
 		SET platform_win32_cpu_x86_prepared=2
 	)
 )
 
-IF %platform_x64% EQU 1 (
+IF %cpu_x64% EQU 1 (
 	IF %platform_winuwp% EQU 1 (
 		CALL:print %warning% "Generating WebRTC WinUWP projects for x64 cpu ..."
 		SET platform_winuwp_cpu_x64_prepared=1
-		CALL:generateProjectsForPlatform winuwp x64 debug
-		CALL:generateProjectsForPlatform winuwp x64 release
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x64 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x64 release
+		)
 		SET platform_winuwp_cpu_x64_prepared=2
 	)
 	IF %platform_win32% EQU 1 (
 		CALL:print %warning% "Generating WebRTC Win32 projects for x64 cpu ..."
 		SET platform_win32_cpu_x64_prepared=1
-		CALL:generateProjectsForPlatform win x64 debug
-		CALL:generateProjectsForPlatform win x64 release
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform win x64 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform win x64 release
+		)
 		SET platform_win32_cpu_x64_prepared=2
 	)
 )
@@ -496,8 +562,12 @@ IF %cpu_arm% EQU 1 (
 	IF %platform_winuwp% EQU 1 (
 		CALL:print %warning% "Generating WebRTC WinUWP projects for arm cpu ..."
 		SET platform_winuwp_cpu_arm_prepared=1
-		CALL:generateProjectsForPlatform winuwp arm debug
-		CALL:generateProjectsForPlatform winuwp arm release
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp arm debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp arm release
+		)
 		SET platform_winuwp_cpu_arm_prepared=2
 	)
 )
@@ -652,9 +722,9 @@ IF %platform_winuwp_cpu_arm_prepared% EQU 2 (
 	CALL:print %info% "          winuwp                 arm               prepared"
 ) ELSE (
 	IF %platform_winuwp_cpu_arm_prepared% EQU 1 (
-		CALL:print %error% "         winuwp  							  arm               failed"
+		CALL:print %error% "          winuwp                 arm               failed"
 	) ELSE (
-		CALL:print %warning% "       winuwp    						  arm               not run"
+		CALL:print %warning% "          winuwp                 arm               not run"
 	)
 )
 
@@ -662,9 +732,9 @@ IF %platform_winuwp_cpu_x86_prepared% EQU 2 (
 	CALL:print %info% "          winuwp                 x86               prepared"
 ) ELSE (
 	IF %platform_winuwp_cpu_x86_prepared% EQU 1 (
-		CALL:print %error% "         winuwp  							  x86               failed"
+		CALL:print %error% "          winuwp                 x86               failed"
 	) ELSE (
-		CALL:print %warning% "       winuwp    						  x86               not run"
+		CALL:print %warning% "          winuwp                 x86               not run"
 	)
 )
 
@@ -672,33 +742,33 @@ IF %platform_winuwp_cpu_x64_prepared% EQU 2 (
 	CALL:print %info% "          winuwp                 x64               prepared"
 ) ELSE (
 	IF %platform_winuwp_cpu_x64_prepared% EQU 1 (
-		CALL:print %error% "         winuwp  							  x64               failed"
+		CALL:print %error% "          winuwp                 x64               failed"
 	) ELSE (
-		CALL:print %warning% "       winuwp    						  x64               not run"
+		CALL:print %warning% "          winuwp                 x64               not run"
 	)
 )
 
 IF %platform_win32_cpu_x86_prepared% EQU 2 (
-	CALL:print %info% "          win32                 	x86               prepared"
+	CALL:print %info% "          win32                  x86               prepared"
 ) ELSE (
 	IF %platform_win32_cpu_x86_prepared% EQU 1 (
-		CALL:print %error% "         win32  							  x86               failed"
+		CALL:print %error% "          win32                  x86               failed"
 	) ELSE (
-		CALL:print %warning% "       win32    						  x86               not run"
+		CALL:print %warning% "          win32                  x86               not run"
 	)
 )
 
 IF %platform_win32_cpu_x64_prepared% EQU 2 (
-	CALL:print %info% "          win32                 	x64               prepared"
+	CALL:print %info% "          win32                  x64               prepared"
 ) ELSE (
 	IF %platform_win32_cpu_x64_prepared% EQU 1 (
-		CALL:print %error% "         win32  							  x64               failed"
+		CALL:print %error% "          win32                  x64               failed"
 	) ELSE (
-		CALL:print %warning% "       win32    						  x64               not run"
+		CALL:print %warning% "          win32                  x64               not run"
 	)
 )
 
-CALL:print %trace% "================================================="
+CALL:print %trace% "==================================================================="
 ECHO.
 GOTO:EOF
 

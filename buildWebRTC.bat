@@ -10,32 +10,40 @@ SETLOCAL EnableDelayedExpansion
 
 SET CONFIGURATION=%1
 SET PLATFORM=%2
-SET SOFTWARE_PLATFORM=%3
+SET CPU=%3
+SET SOFTWARE_TARGET=%4
 SET msVS_Path=""
 SET failure=0
 SET x86BuildCompilerOption=amd64_x86
 SET x64BuildCompilerOption=amd64
 SET armBuildCompilerOption=amd64_arm
-SET win32BuildCompilerOption=amd64
 SET x86Win32BuildCompilerOption=amd64_x86
 SET x64Win32BuildCompilerOption=amd64
 SET currentBuildCompilerOption=amd64
 
-If /I "%CONFIGURATION%"=="" (
-  echo Usage: buildWebRTC [debug/release] [win32/win32_x64/x86/x64] [webrtc/ortc]
+::log levels
+SET logLevel=4                      
+SET error=0                           
+SET info=1                            
+SET warning=2                         
+SET debug=3                           
+SET trace=4 
+
+If /I "%SOFTWARE_TARGET%"=="" (
+  echo Usage: buildWebRTC [debug/release] [winuwp/win32] [x86,x64,arm] [webrtc/ortc]
   CALL bin\batchTerminator.bat
+)
+
+IF /I "%CPU%"=="win32" SET CPU=x86
+IF /I "%CPU%"=="arm" (
+  IF /I "%PLATFORM%"=="win32" (
+    CALL:print %info% "Win32 ARM is not a valid target thus building for x86 cpu ..."
+    SET CPU=x86
+  )
 )
 
 SET startTime=0
 SET endingTime=0
-
-::log levels
-SET logLevel=4											
-SET error=0														
-SET info=1														
-SET warning=2													
-SET debug=3														
-SET trace=4	
 
 SET baseBuildPath=webrtc\xplatform\webrtc\out
 
@@ -43,16 +51,20 @@ CALL:print %info% "Webrtc build is started. It will take couple of minutes."
 CALL:print %info% "Working ..."
 
 SET currentPlatform=%PLATFORM%
+SET currentCpu=%CPU%
 SET linkPlatform=%currentPlatform%
+SET linkCpu=%currentCpu%
 
 CALL:print %info%  "%PLATFORM%"
-CALL:print %info%  "%Platform !currentPlatform!"
+CALL:print %info%  "%CPU%"
+CALL:print %info%  "Platform !currentPlatform!"
+CALL:print %info%  "Cpu !currentCpu!"
 
 SET startTime=%time%
 
 CALL:determineVisualStudioPath
 
-CALL:setCompilerOption %currentPlatform%
+CALL:setCompilerOption %currentPlatform% %currentCpu%
 
 CALL:buildNativeLibs
 
@@ -86,38 +98,38 @@ GOTO:EOF
 
 :setCompilerOption
 CALL:print %trace% "Determining compiler options ..."
-REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET CPU=x86 || SET CPU=x64
+REG Query "HKLM\Hardware\Description\System\CentralProcessor\0" | FIND /i "x86" > NUL && SET HOSTCPU=x86 || SET HOSTCPU=x64
 
-CALL:print %trace% "CPU architecture is %CPU%"
+CALL:print %trace% "Host CPU architecture is %HOSTCPU%"
 
-IF /I %CPU% == x86 (
+IF /I %HOSTCPU% == x86 (
 	SET x86BuildCompilerOption=x86
 	SET x64BuildCompilerOption=x86_amd64
 	SET armBuildCompilerOption=x86_arm
-	SET win32BuildCompilerOption=x86
 	
 	SET x86Win32BuildCompilerOption=x86
   SET x64Win32BuildCompilerOption=x86_amd64
 )
 
-IF /I "%~1"=="x86" (
-	SET currentBuildCompilerOption=%x86BuildCompilerOption%
-) ELSE (
-	IF /I "%~1"=="ARM" (
-		SET currentBuildCompilerOption=%armBuildCompilerOption%
-	) ELSE (
-		IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
-			IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
-				SET currentBuildCompilerOption=%x64Win32BuildCompilerOption%
-        SET linkPlatform=x64
-			) ELSE (
-				SET currentBuildCompilerOption=%x86Win32BuildCompilerOption%
-        SET linkPlatform=x86
-			)
-		) ELSE (
-			SET currentBuildCompilerOption=%x64BuildCompilerOption%
-		)
-	)
+IF /I "%~1"=="winuwp" (
+  IF /I "%~2"=="x86" (
+    SET currentBuildCompilerOption=%x86BuildCompilerOption%
+  )
+  IF /I "%~2"=="x64" (
+    SET currentBuildCompilerOption=%x64BuildCompilerOption%
+  )
+  IF /I "%~2"=="arm" (
+    SET currentBuildCompilerOption=%armBuildCompilerOption%
+  )
+)
+
+IF /I "%~1"=="win32" (
+  IF /I "%~2"=="x86" (
+    SET currentBuildCompilerOption=%x86Win32BuildCompilerOption%
+  )
+  IF /I "%~2"=="x64" (
+    SET currentBuildCompilerOption=%x64Win32BuildCompilerOption%
+  )
 )
 
 CALL:print %trace% "Selected compiler option is %currentBuildCompilerOption%"
@@ -130,32 +142,30 @@ GOTO:EOF
     PUSHD !baseBuildPath!
     SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
     SET outputPath=win_x64_!CONFIGURATION!
-    
-    IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
-			IF NOT "%currentPlatform%"=="%currentPlatform:x64=%" (
-				SET outputPath=win_x64_!CONFIGURATION!
-			) ELSE (
-				SET outputPath=win_x86_!CONFIGURATION!
-			)
-		) ELSE (
-			SET outputPath=winuwp_!PLATFORM!_!CONFIGURATION!
-		)
 
+    IF /I "%currentPlatform%"=="winuwp" (
+      SET outputPath=winuwp_!CPU!_!CONFIGURATION!
+    )
+    IF /I "%currentPlatform%"=="win32" (
+      SET outputPath=win_!CPU!_!CONFIGURATION!
+    )
+    
     CD !outputPath!
     IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
     
-    CALL:print %warning% "Building %SOFTWARE_PLATFORM% native libs"
-    !ninjaPath! %SOFTWARE_PLATFORM%
-    IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_PLATFORM% in %CD% has failed"s
+    CALL:print %warning% "Building %SOFTWARE_TARGET% native libs"
+    !ninjaPath! %SOFTWARE_TARGET%
+    IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_TARGET% in %CD% has failed"s
     
-    IF /I "%SOFTWARE_PLATFORM%"=="webrtc" (
+    IF /I "%SOFTWARE_TARGET%"=="webrtc" (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
         !ninjaPath! third_party/jsoncpp:jsoncpp_sl
         !ninjaPath! webrtc/rtc_base:rtc_json
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
     )
     
-    IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
+    IF NOT "%SOFTWARE_TARGET%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
+    CALL:copyExes !outputPath!
     CD ..
   )
 
@@ -165,38 +175,67 @@ GOTO:EOF
 
 IF EXIST %msVS_Path% (
 	CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %PLATFORM% %CPU%"
 	
-rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%PLATFORM% /t:Build /nodeReuse:False
-	MSBuild %SOLUTIONPATH% /property:Configuration=GN /property:Platform=%PLATFORM% /t:Build /nodeReuse:False
-	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% has failed"
+  rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%CPU% /t:Build /nodeReuse:False
+	MSBuild %SOLUTIONPATH% /property:Configuration=GN /property:Platform=%CPU% /t:Build /nodeReuse:False
+	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% %CPU% has failed"
 ) ELSE (
 	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
 )
+GOTO:EOF
+
+:copyExes
+CALL:setPaths %~dp1
+
+IF /I "%currentPlatform%"=="winuwp" (
+  SET destinationExes=%~dp0\winuwp_!CPU!_!CONFIGURATION!
+)
+IF /I "%currentPlatform%"=="win32" (
+  SET destinationExes=%~dp0\win_!CPU!_!CONFIGURATION!
+)
+
+IF NOT EXIST %destinationExes% (
+  CALL:makeDirectory %destinationExes%
+  IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationExes%"
+)
+
+echo COPY %libsSourcePath%\*.exe %destinationExes%\*.exe /Y
+COPY %libsSourcePath%\*.exe %destinationExes%\*.exe /Y >NUL
+
+echo COPY %libsSourcePath%\*.pdb %destinationExes%\*.pdb /Y
+COPY %libsSourcePath%\*.pdb %destinationExes%\*.pdb /Y >NUL
+
+echo COPY %libsSourcePath%\*.ilk %destinationExes%\*.ilk /Y
+COPY %libsSourcePath%\*.ilk %destinationExes%\*.ilk /Y >NUL
+
+echo COPY %libsSourcePath%\*.dll %destinationExes%\*.dll /Y
+COPY %libsSourcePath%\*.dll %destinationExes%\*.dll /Y >NUL
+
 GOTO:EOF
 
 :combineLibs
 CALL:setPaths %~dp1
 
 CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for  %PLATFORM%"
+IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %PLATFORM% %CPU%"
 
 IF NOT EXIST %destinationPath% (
 	CALL:makeDirectory %destinationPath%
-	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationPath%libs"
+	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationPath%"
 )
 
 SET webRtcLibs=
 
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
-IF EXIST %libsSourcePath%win_clang_%CPU% (
-  FOR /f %%A IN ('forfiles -p %libsSourcePath%win_clang_%CPU% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! ..\win_clang_%CPU%\%%~A )
+IF EXIST %libsSourcePath%win_clang_%HOSTCPU% (
+  FOR /f %%A IN ('forfiles -p %libsSourcePath%win_clang_%HOSTCPU% /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! ..\win_clang_%HOSTCPU%\%%~A )
 )
 
 PUSHD %libsSourcePath%obj
 
-IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc.lib !webRtcLibs!
+IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Host%HOSTCPU%\!linkCpu!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 
 IF EXIST *.dll (
@@ -236,15 +275,11 @@ GOTO:EOF
 SET basePath=%1
 SET libsSourcePath=%basePath%
 
-SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
+SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
 
 CALL:print %debug% "Source path is "%basePath%""
 
-IF NOT "%currentPlatform%"=="%currentPlatform:win32=%" (
-  SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\win32_%linkPlatform%\
-) ELSE (
-  SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_PLATFORM%\%CONFIGURATION%\%currentPlatform%\
-)
+SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF

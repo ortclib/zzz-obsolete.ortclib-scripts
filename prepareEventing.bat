@@ -5,7 +5,7 @@ SET HOSTCPU=""
 SET CONFIGURATION=Release
 ::SET PLATFORM=x64
 SET eventingToolCompilerCpu=x86
-SET solutionPath=ortc\windows\solutions\zsLib.Eventing.sln
+SET solutionPath=ortc\xplatform\zsLib-eventing\projects\msvc\zsLib.Eventing.Win32.sln
 SET msVS_Path=""
 SET tools_MSVC_Path=""
 SET tools_MSVC_Version=""
@@ -16,7 +16,7 @@ SET currentBuildCompilerOption=amd64
 
 SET ortcZsLibTemplatePath=ortc\windows\templates\events\zsLib.Eventing.sln
 SET ortcZsLibDestinationPath=ortc\windows\solutions\
-SET compilerOutputPath=%cd%\ortc\windows\solutions\Build\Output\!eventingToolCompilerCpu!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
+SET compilerOutputPath=%cd%\ortc\xplatform\zsLib-eventing\projects\msvc\Build\Output\!eventingToolCompilerCpu!\!CONFIGURATION!\zsLib.Eventing.Tool.Compiler\zsLib.Eventing.Tool.Compiler.exe
 SET compilerPath=%cd%\bin\zsLib.Eventing.Tool.Compiler.exe
 
 
@@ -35,6 +35,7 @@ SET endingTime=0
 SET supportedInputArguments=;platform;cpu;managedBuild;logLevel;
 SET platform=win32
 SET cpu=x64
+SET vsCpu=x64
 SET managedBuild=0
 SET help=0
 SET logLevel=2
@@ -89,16 +90,21 @@ GOTO parseInputArguments
 :main
 
 IF /I "%platform%"=="all" SET platform="win32"
-IF /I "%cpu%"=="all" SET platform="x64"
+IF /I "%cpu%"=="all" SET cpu="x64"
+IF /I "%cpu%"=="win32" set cpu=x86
+SET vsCpu=%cpu%
+IF /I "%cpu%"=="x86" (
+	IF /I "%platform%"=="win32" SET vsCpu=Win32
+)
 
 SET currentPlatform=%platform%
 SET currentCpu=%cpu%
+SET currentVsCpu=%vsCpu%
 CALL:print %warning% "Cpu: %currentCpu%"
 
 CALL:determineWindowsSDK
 
 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\%currentCpu%\"
-IF /I %currentCpu%==win32 SET windowsKitPath="C:\Program Files (x86)\Windows Kits\10\bin\%selectedSDKVer%\x86\"
 SET startTime=%time%
 
 CALL:checkPlatform

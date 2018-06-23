@@ -61,6 +61,9 @@ SET CPU_arm=0
 SET CPU_x86=0
 SET CPU_x64=0
 
+SET CONFIG_debug=0
+SET CONFIG_release=0
+
 ::log levels
 SET globalLogLevel=2											
 SET error=0														
@@ -70,10 +73,11 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;cpu;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
+SET supportedInputArguments=;platform;cpu;config;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
 SET target=all
 SET platform=all
 SET cpu=all
+SET config=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
@@ -87,6 +91,7 @@ SET errorMessageInvalidArgument="Invalid input argument. For the list of availab
 SET errorMessageInvalidTarget="Invalid target name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageInvalidCpu="Invalid cpu name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidConfig="Invalid config name. For the list of available targets and usage examples, please run script with -help option."
 SET folderStructureError="ORTC invalid folder structure."
 
 CALL:precheck
@@ -135,6 +140,8 @@ GOTO parseInputArguments
 
 :main
 
+IF /I "%cpu%"=="win32" set cpu=x86
+
 CALL:showHelp
 
 ::Run diganostic if script is run in diagnostic mode
@@ -166,6 +173,9 @@ CALL:identifyPlatform
 
 ::Determine targeted platforms
 CALL:identifyCpu
+
+::Determine targeted platforms
+CALL:identifyConfig
 
 ::Check is perl installed
 CALL:perlCheck
@@ -335,8 +345,15 @@ IF /I "%cpu%"=="all" (
 	SET messageText=Preparing development environment for arm, x86, and x64 cpus ...
 ) ELSE (
 	IF /I "%cpu%"=="arm" (
-		SET cpu_arm=1
-		SET validInput=1
+		IF /I "%platform%"=="win32" (
+			CALL:print %warning% "Win32 ARM is not a valid target thus assuming an x86 cpu ..."
+			SET cpu=x86
+			SET cpu_x86=1
+			SET validInput=1
+		) ELSE (
+			SET cpu_arm=1
+			SET validInput=1
+		)
 	)
 	
 	IF /I "%cpu%"=="x86" (
@@ -358,6 +375,41 @@ IF !validInput!==1 (
 	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidCpu%
+)
+GOTO:EOF
+
+
+REM Based on input arguments determine targeted config (debug/release)
+:identifyConfig
+SET validInput=0
+SET messageText=
+
+IF /I "%config%"=="all" (
+	SET CONFIG_debug=1
+	SET CONFIG_release=1
+	SET validInput=1
+	SET messageText=Preparing development environment for debug and release configurations ...
+) ELSE (
+	
+	IF /I "%config%"=="debug" (
+		SET CONFIG_debug=1
+		SET validInput=1
+	)
+
+	IF /I "%config%"=="release" (
+		SET CONFIG_release=1
+		SET validInput=1
+	)
+
+	IF !validInput!==1 (
+		SET messageText=Preparing development environment for %config% configuration...
+	)
+)
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidConfig%
 )
 GOTO:EOF
 
@@ -511,9 +563,9 @@ GOTO:EOF
 :prepareWebRTC
 
 IF %prepare_ORTC_Environment% EQU 1 (
-  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -logLevel %logLevel% -target ortc
+  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -config %config% -logLevel %logLevel% -target ortc
 ) ELSE (
-  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -logLevel %logLevel%
+  CALL bin\prepareWebRtc.bat -platform %platform% -cpu %cpu% -config %config% -logLevel %logLevel%
 )
 
 GOTO:EOF
@@ -580,7 +632,7 @@ GOTO:EOF
 
 :buildPeerCCServer
   IF NOT "%platform%"=="all" (
-    IF NOT "%platform%"=="win32" CALL bin\prepareWebRtc.bat -platform win32 -cpu x86 -logLevel %logLevel%
+    IF NOT "%platform%"=="win32" CALL bin\prepareWebRtc.bat -platform win32 -cpu x86 -config release -logLevel %logLevel%
   )
 
   CALL:print %info% "Building PeerConnection server"
@@ -872,6 +924,8 @@ ECHO.
 ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (winuwp,win32)
 ECHO.
 ECHO		[93m-cpu[0m 	Cpu name to set environment for. Default is All (arm,x86,x64)
+ECHO.
+ECHO		[93m-config[0m 	Config name to set environment for. Default is All (debug,release)
 ECHO.
 CALL bin\batchTerminator.bat
 
