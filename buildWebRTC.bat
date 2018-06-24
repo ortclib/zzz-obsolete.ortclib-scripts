@@ -253,8 +253,34 @@ COPY %libsSourcePath%\*.dll %destinationExes%\*.dll /Y >NUL
 
 GOTO:EOF
 
+:mergeObjs
+
+
+PUSHD %libsSourcePath%obj
+IF NOT "!webRtcObjs!"=="" (
+  echo IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%\combine
+  IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%\combine
+
+  CALL:print %debug% "Merging objs now..."
+  CALL:print %debug% "SOURCE=%libsSourcePath%"
+  CALL:print %debug% "DEST=%libsSourcePath%\combine"
+  CALL:print %debug% "OUTPUT=%libsSourcePath%\combine\webrtc!counter!.lib"
+  CALL:print %debug% "OBJS=!webRtcObjs!"
+
+  REM %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
+  %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Host%HOSTCPU%\!linkCpu!\lib.exe /IGNORE:4264,4221,4006 /OUT:%libsSourcePath%combine\webrtc!counter!.lib !webRtcObjs!
+  IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
+  set webRtcLibs=!webRtcLibs! webrtc!counter!.lib
+  SET /A counter = counter + 1
+  CALL:print %trace% "Current library counter is !counter!"
+)
+POPD
+SET webRtcObjs=
+
+GOTO:EOF
+
 :combineLibs
-CALL:print %debug% "Combining object files into library."
+CALL:print %debug% "Combining object files into library: %libsSourcePath%"
 
 CALL:setPaths %~dp1
 
@@ -266,64 +292,72 @@ IF NOT EXIST %destinationPath% (
 	IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationPath%"
 )
 
+SET webRtcObjs=
 SET webRtcLibs=
 SET counter=0
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @relpath"') DO ( 
     SET temp=%%~A
-    IF "!temp!"=="!temp:ortclib\=!" (
-        SET webRtcLibs=!webRtcLibs! %%~A 
-        CALL:print %trace%  !webRtcLibs!
-        call :strlen result "!webRtcLibs!"
-        if !result! lss 7000 echo counter je !counter!
-        if !result! gtr 7000 (
-            PUSHD %libsSourcePath%obj
-            IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
-            IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
-            SET /A counter = counter + 1
-            CALL:print %trace% "Curernt library counter is !counter!"
-            POPD
-            SET webRtcLibs=
-        )
+    REM echo !temp!
+
+    SET filterObj=0
+
+    REM Add filter obj paths here...
+    REM IF "!temp!"=="!temp:ortclib\=!" SET filterObj=1
+
+    IF !filterObj! EQU 0 (
+        SET webRtcObjs=!webRtcObjs! %%~A 
+        REM CALL:print %trace%  !webRtcLibs!
+        call :strlen result "!webRtcObjs!"
+        REM echo Obj length is !result!
+        if !result! gtr 7000 CALL:mergeObjs
      ) ELSE (
-        CALL:print %debug% "Object file !temp! is ignored"
+         CALL:print %debug% "Object file !temp! is ignored"
      )
 )
 
+CALL:mergeObjs
 
-SET /A counter = counter + 1
+CALL:print %debug% "Finished merging objs into !webRtcLibs!"
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( SET webRtcLibs=!webRtcLibs! %%~A )
-PUSHD %libsSourcePath%obj
-
-IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
+PUSHD %libsSourcePath%combine
+%msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Host%HOSTCPU%\!linkCpu!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%\webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 POPD
 
-PUSHD %libsSourcePath%obj
-IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
-IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
-POPD
+REM FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( SET webRtcLibs=!webRtcLibs! %%~A )
+REM PUSHD %libsSourcePath%obj
+
+REM IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
+REM IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
+REM POPD
+
+REM PUSHD %libsSourcePath%obj
+REM IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
+REM IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
+REM POPD
             
-SET webRtcLibs=
-FOR /f %%A IN ('forfiles -p !destinationPath! /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
+REM SET webRtcLibs=
+REM FOR /f %%A IN ('forfiles -p !destinationPath! /s /m *.lib /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" SET webRtcLibs=!webRtcLibs! %%~A )
 
-PUSHD !destinationPath!
-CALL:print %debug% "Merging libraries from !webRtcLibs!"
-IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:webrtc.lib !webRtcLibs!
-IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
-POPD
-PUSHD %libsSourcePath%obj
-IF EXIST *.dll (
-	CALL:print %debug% "Copying dlls from %libsSourcePath%obj to %destinationPath%"
-	FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
-)
+REM PUSHD !destinationPath!
+REM CALL:print %debug% "Merging libraries from !webRtcLibs!"
+REM IF NOT "!webRtcLibs!"=="" %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:webrtc.lib !webRtcLibs!
+REM IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
+REM POPD
+REM PUSHD %libsSourcePath%obj
+REM IF EXIST *.dll (
+REM 	CALL:print %debug% "Copying dlls from %libsSourcePath%obj to %destinationPath%"
+REM 	FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.dll /c "CMD /c ECHO @relpath"') DO ( COPY %%~A %destinationPath% >NUL )
+REM )
+REM POPD
 
 CALL:print %debug% "Copying pdbs from %libsSourcePath%obj to %destinationPath%"
 
+PUSHD %libsSourcePath%obj
 FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.pdb /c "CMD /c ECHO @relpath"') DO ( SET temp=%%~A && IF "!temp!"=="!temp:protobuf_full_do_not_use=!" COPY %%~A %destinationPath% >NUL )
-
-IF ERRORLEVEL 1 CALL:error 0 "Failed copying pdb files"
 POPD
+
+REM IF ERRORLEVEL 1 CALL:error 0 "Failed copying pdb files"
 GOTO:EOF
 
 :appendLibPath
