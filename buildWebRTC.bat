@@ -165,11 +165,11 @@ GOTO:EOF
     REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
     IF /I "%SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
     
-    IF %buildJsonCppTarget% EQU 1 (
+    IF !buildJsonCppTarget! EQU 1 (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
       !ninjaPath! third_party/jsoncpp:jsoncpp
       !ninjaPath! rtc_base:rtc_json    
-      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"s
+      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
     )
     
     IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
@@ -181,7 +181,6 @@ GOTO:EOF
 
 :makeOutputLinks
 PUSHD !libsSourcePath!
-echo evo me
 echo *******************************************
 echo %CD%
 echo %libsSourcePath%
@@ -190,7 +189,7 @@ IF EXIST %libsSourcePath%obj\third_party\ortc (
     CALL:makeDirectory ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj
     CALL:makeLink . ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj\!outputPath! %libsSourcePath%obj\third_party\ortc\ortclib
 ) ELSE (
-    echo u kurac
+    echo ORTC output paths were not found.
 )
 POPD
 GOTO:EOF
