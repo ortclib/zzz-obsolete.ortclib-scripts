@@ -43,7 +43,7 @@ goto:eof
 :setCompilerOption
 
 reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set CPU=x86 || set CPU=x64
-echo CPU arhitecture is %CPU%
+echo CPU architecture is %CPU%
 
 if %CPU% == x86 (
 	set x86BuildCompilerOption=x86

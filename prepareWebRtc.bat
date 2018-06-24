@@ -12,16 +12,24 @@ set powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 set taskFailed=0
 
 ::platforms
-SET platform_ARM=0
-SET platform_x86=0
-SET platform_x64=0
+
+SET platform_winuwp=0
 SET platform_win32=0
-SET platform_win32_x64=0
-::platforms
-SET platform_ARM_prepared=0
-SET platform_x86_prepared=0
-SET platform_x64_prepared=0
-SET platform_win32_prepared=0
+
+SET cpu_arm=0
+SET cpu_x86=0
+SET cpu_x64=0
+
+SET CONFIG_debug=0
+SET CONFIG_release=0
+
+SET platform_winuwp_cpu_arm_prepared=0
+SET platform_winuwp_cpu_x86_prepared=0
+SET platform_winuwp_cpu_x64_prepared=0
+
+SET platform_win32_cpu_x86_prepared=0
+SET platform_win32_cpu_x64_prepared=0
+
 ::log variables
 SET globalLogLevel=2											
 
@@ -32,17 +40,21 @@ SET debug=3
 SET trace=4	
 
 ::input arguments
-SET supportedInputArguments=;platform;help;logLevel;diagnostic;target;			
+SET supportedInputArguments=;platform;cpu;config;help;logLevel;diagnostic;target;			
 SET platform=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
 SET target=webrtc
+SET cpu=all
+SET config=all
 
 ::predefined messages
 SET folderStructureError="WebRTC invalid folder structure."
 SET errorMessageInvalidArgument="Invalid input argument. For the list of available arguments and usage examples, please run script with -help option."
 SET errorMessageInvalidPlatform="Invalid platform name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidCpu="Invalid cpu name. For the list of available targets and usage examples, please run script with -help option."
+SET errorMessageInvalidConfig="Invalid config name. For the list of available targets and usage examples, please run script with -help option."
 SET errorMessageMissingDebuggerTools="Windows SDK is not fully installed. Debugger Tools are missing. Please install standalone Windows SDK version. You can download installer from this link https://developer.microsoft.com/de-de/windows/downloads/sdk-archive"
 
 ::path constants
@@ -53,11 +65,6 @@ SET webRtcx86TemplatePath=webrtc\windows\templates\libs\webrtc\WebRtc.x86.sln
 rem SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 
 SET webRTCGnArgsTemplatePath=..\..\..\webrtc\windows\templates\gns\args.gn
-
-SET templateRtcJsonGnBuildFile=..\templates\gn\rtcJsonBUILD.gn
-SET templateRtcJsonDestination=webrtc\rtc_base\BUILD.gn
-SET templateJsonCppGnBuildFile=..\templates\gn\jsonCppBUILD.gn
-SET templateJsonCppDestination=third_party\jsoncpp\BUILD.gn
 
 SET stringToUpdateWithSDKVersion='WindowsTargetPlatformVersion', '10.0.10240.0'
 SET pythonFilePathToUpdateSDKVersion=webrtc\xplatform\webrtc\tools\gyp\pylib\gyp\generator\msvs.py
@@ -102,7 +109,13 @@ GOTO parseInputArguments
 
 :main
 
+CALL:showHelp
+
 CALL:identifyPlatform
+
+CALL:identifyCpu
+
+CALL:identifyConfig
 
 CALL:prepareWebRTC
 
@@ -121,42 +134,45 @@ IF "!supportedInputArguments:;%~1;=!" neq "%supportedInputArguments%" (
 )
 GOTO:EOF
 
-REM Based on input arguments determine targeted platforms (x64, x86 or ARM)
+
+:showHelp
+IF %help% EQU 0 GOTO:EOF
+
+ECHO.
+ECHO    [92mAvailable parameters:[0m
+ECHO.
+ECHO 	[93m-help[0m 		Show script usage
+ECHO.
+ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
+ECHO.
+ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
+ECHO.
+ECHO		[93m-platform[0m 	Platform name to set environment for. Default is All (winuwp,win32)
+ECHO.
+ECHO		[93m-cpu[0m 	Cpu name to set environment for. Default is All (arm,x86,x64)
+ECHO.
+CALL bin\batchTerminator.bat
+
+GOTO:EOF
+
+REM Based on input arguments determine targeted platforms (Win32/WinUWP)
 :identifyPlatform
 SET validInput=0
 SET messageText=
 
 IF /I "%platform%"=="all" (
-	SET platform_ARM=0
-	SET platform_x64=1
-	SET platform_x86=1
+	SET platform_winuwp=1
 	SET platform_win32=1
-  SET platform_win32_x64=1
 	SET validInput=1
-	SET messageText=Preparing WebRTC development environment for arm, x64, x86 and win32 platforms ...
+	SET messageText=Preparing WebRTC development environment for WinUWP and win32 platforms ...
 ) ELSE (
-	IF /I "%platform%"=="arm" (
-		SET platform_ARM=1
-		SET validInput=1
-	)
-	
-	IF /I "%platform%"=="x64" (
-		SET platform_x64=1
-		SET validInput=1
-	)
-
-	IF /I "%platform%"=="x86" (
-		SET platform_x86=1
+	IF /I "%platform%"=="winuwp" (
+		SET platform_winuwp=1
 		SET validInput=1
 	)
 	
 	IF /I "%platform%"=="win32" (
 		SET platform_win32=1
-		SET validInput=1
-	)
-	
-	IF /I "%platform%"=="win32_x64" (
-		SET platform_win32_x64=1
 		SET validInput=1
 	)
 	
@@ -170,6 +186,88 @@ IF !validInput!==1 (
 	CALL:print %warning% "!messageText!"
 ) ELSE (
 	CALL:error 1 %errorMessageInvalidPlatform%
+)
+GOTO:EOF
+
+REM Based on input arguments determine targeted cpu (arm/x86,x64)
+:identifyCpu
+SET validInput=0
+SET messageText=
+
+IF /I "%cpu%"=="all" (
+	SET cpu_arm=0
+	SET cpu_x86=1
+	SET cpu_x64=1
+	SET validInput=1
+	SET messageText=Preparing WebRTC development environment for arm, x86, x64 cpus ...
+) ELSE (
+	IF /I "%cpu%"=="arm" (
+		IF /I "%platform%"=="win32" (
+			CALL:print %warning% "Win32 ARM is not a valid target thus assuming an x86 cpu ..."
+			SET cpu_x86=1
+			SET validInput=1
+		) ELSE (
+			SET cpu_arm=1
+			SET validInput=1
+		)
+	)
+	
+	IF /I "%cpu%"=="x86" (
+		SET cpu_x86=1
+		SET validInput=1
+	)
+	
+	IF /I "%cpu%"=="x64" (
+		SET cpu_x64=1
+		SET validInput=1
+	)
+	
+	IF !validInput!==1 (
+		SET messageText=Preparing WebRTC development environment for %cpu% cpu ...
+	)
+)
+
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidCpu%
+)
+GOTO:EOF
+
+
+REM Based on input arguments determine targeted cpu (debug/release)
+:identifyConfig
+SET validInput=0
+SET messageText=
+
+IF /I "%config%"=="all" (
+	SET CONFIG_debug=1
+	SET CONFIG_release=1
+	SET validInput=1
+	SET messageText=Preparing WebRTC development environment for debug and release configurations ...
+) ELSE (
+
+	IF /I "%config%"=="debug" (
+		SET CONFIG_debug=1
+		SET validInput=1
+	)
+	
+	IF /I "%config%"=="release" (
+		SET CONFIG_release=1
+		SET validInput=1
+	)
+	
+	IF !validInput!==1 (
+		SET messageText=Preparing WebRTC development environment for %config% configuration ...
+	)
+)
+
+:: If input is not valid terminate script execution
+IF !validInput!==1 (
+	CALL:print %warning% "!messageText!"
+) ELSE (
+	CALL:error 1 %errorMessageInvalidConfig%
 )
 GOTO:EOF
 
@@ -187,12 +285,12 @@ CALL:generateChromiumFolders
 
 CALL:makeJunctionLinks
 
-REM CALL:appendJsonTemplates
-
 CALL:updateFolders
 
-IF %platform_win32_x64% EQU 1 (
+IF %platform_win32% EQU 1 (
+	IF %cpu_x64% EQU 1 (
     CALL:updateClang
+  )
 )
 
 CALL:setupDepotTools
@@ -289,23 +387,6 @@ IF /I "%target%"=="ortc" (
 
 GOTO:EOF
 
-:appendJsonTemplates
-CALL:print %trace% "Entered appendJsonTemplates function, current dir is %cd%"
-
-FINDSTR /C:"rtc_json_sl" %templateRtcJsonDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateRtcJsonDestination% + %templateRtcJsonGnBuildFile% %templateRtcJsonDestination% 
-) ELSE (
-	CALL:print %info% "rtc_json_sl already appended"
-)
-
-FINDSTR /C:"jsoncpp_sl" %templateJsonCppDestination%
-if %ERRORLEVEL% NEQ 0 (
-	COPY /B %templateJsonCppDestination% + %templateJsonCppGnBuildFile% %templateJsonCppDestination%
-) ELSE (
-	CALL:print %info% "jsoncpp_sl already appended"
-)
-GOTO:EOF
 
 :updateFolders
 
@@ -416,44 +497,68 @@ CALL:print %trace% "Executing generateProjects function"
 
 SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
-IF %platform_ARM% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for arm platform ..."
-	SET platform_ARM_prepared=1
-	CALL:generateProjectsForPlatform winuwp arm debug
-	CALL:generateProjectsForPlatform winuwp arm release
-	SET platform_ARM_prepared=2
+IF %cpu_x86% EQU 1 (
+	IF %platform_winuwp% EQU 1 (
+		CALL:print %warning% "Generating WebRTC WinUWP projects for x86 cpu ..."
+		SET platform_winuwp_cpu_x86_prepared=1
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x86 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x86 release
+		)
+		SET platform_winuwp_cpu_x86_prepared=2
+	)
+	IF %platform_win32% EQU 1 (
+		CALL:print %warning% "Generating WebRTC Win32 projects for x86 cpu ..."
+		SET platform_win32_cpu_x86_prepared=1
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform win x86 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform win x86 release
+		)
+		SET platform_win32_cpu_x86_prepared=2
+	)
 )
 
-IF %platform_x64% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for x64 platform ..."
-	SET platform_x64_prepared=1
-	CALL:generateProjectsForPlatform winuwp x64 debug
-	CALL:generateProjectsForPlatform winuwp x64 release
-	SET platform_x64_prepared=2
+IF %cpu_x64% EQU 1 (
+	IF %platform_winuwp% EQU 1 (
+		CALL:print %warning% "Generating WebRTC WinUWP projects for x64 cpu ..."
+		SET platform_winuwp_cpu_x64_prepared=1
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x64 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp x64 release
+		)
+		SET platform_winuwp_cpu_x64_prepared=2
+	)
+	IF %platform_win32% EQU 1 (
+		CALL:print %warning% "Generating WebRTC Win32 projects for x64 cpu ..."
+		SET platform_win32_cpu_x64_prepared=1
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform win x64 debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform win x64 release
+		)
+		SET platform_win32_cpu_x64_prepared=2
+	)
 )
 
-IF %platform_x86% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for x86 platform ..."
-	SET platform_x86_prepared=1
-	CALL:generateProjectsForPlatform winuwp x86 debug
-	CALL:generateProjectsForPlatform winuwp x86 release
-	SET platform_x86_prepared=2
-)
-
-IF %platform_win32% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for win32 platform ..."
-	SET platform_win32_prepared=1
-	CALL:generateProjectsForPlatform win x86 debug
-	CALL:generateProjectsForPlatform win x86 release
-	SET platform_win32_prepared=2
-)
-
-IF %platform_win32_x64% EQU 1 (
-	CALL:print %warning% "Generating WebRTC projects for win32 x64 platform ..."
-	SET platform_win32_prepared=1
-	CALL:generateProjectsForPlatform win x64 debug
-	CALL:generateProjectsForPlatform win x64 release
-	SET platform_win32_prepared=2
+IF %cpu_arm% EQU 1 (
+	IF %platform_winuwp% EQU 1 (
+		CALL:print %warning% "Generating WebRTC WinUWP projects for arm cpu ..."
+		SET platform_winuwp_cpu_arm_prepared=1
+		IF %CONFIG_debug% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp arm debug
+		)
+		IF %CONFIG_release% EQU 1 (
+			CALL:generateProjectsForPlatform winuwp arm release
+		)
+		SET platform_winuwp_cpu_arm_prepared=2
+	)
 )
 
 GOTO:EOF
@@ -600,48 +705,59 @@ GOTO:EOF
 :summary
 SET logLevel=%trace%
 CALL:print %trace% "=======   WebRTC prepare script summary   ======="
-CALL:print %trace% "=======   platform   =========   result   ======="
+CALL:print %trace% "=======   platform   =========   cpu   =========   result   ======="
 
-IF %platform_ARM_prepared% EQU 2 (
-	CALL:print %info% "            arm                 prepared"
+IF %platform_winuwp_cpu_arm_prepared% EQU 2 (
+	CALL:print %info% "          winuwp                 arm               prepared"
 ) ELSE (
-	IF %platform_ARM_prepared% EQU 1 (
-		CALL:print %error% "            arm                  failed"
+	IF %platform_winuwp_cpu_arm_prepared% EQU 1 (
+		CALL:print %error% "          winuwp                 arm               failed"
 	) ELSE (
-		CALL:print %warning% "            arm                 not run"
+		CALL:print %warning% "          winuwp                 arm               not run"
 	)
 )
 
-IF %platform_x64_prepared% EQU 2 (
-	CALL:print %info% "            x64                 prepared"
+IF %platform_winuwp_cpu_x86_prepared% EQU 2 (
+	CALL:print %info% "          winuwp                 x86               prepared"
 ) ELSE (
-	IF %platform_x64_prepared% EQU 1 (
-		CALL:print %error% "            x64                  failed"
+	IF %platform_winuwp_cpu_x86_prepared% EQU 1 (
+		CALL:print %error% "          winuwp                 x86               failed"
 	) ELSE (
-		CALL:print %warning% "            x64                 not run"
+		CALL:print %warning% "          winuwp                 x86               not run"
 	)
 )
 
-IF %platform_x86_prepared% EQU 2 (
-	CALL:print %info% "            x86                 prepared"
+IF %platform_winuwp_cpu_x64_prepared% EQU 2 (
+	CALL:print %info% "          winuwp                 x64               prepared"
 ) ELSE (
-	IF %platform_x86_prepared% EQU 1 (
-		CALL:print %error% "            x86                  failed"
+	IF %platform_winuwp_cpu_x64_prepared% EQU 1 (
+		CALL:print %error% "          winuwp                 x64               failed"
 	) ELSE (
-		CALL:print %warning% "            x86                 not run"
+		CALL:print %warning% "          winuwp                 x64               not run"
 	)
 )
 
-IF %platform_win32_prepared% EQU 2 (
-	CALL:print %info% "            win32               prepared"
+IF %platform_win32_cpu_x86_prepared% EQU 2 (
+	CALL:print %info% "          win32                  x86               prepared"
 ) ELSE (
-	IF %platform_win32_prepared% EQU 1 (
-		CALL:print %error% "            win32                failed"
+	IF %platform_win32_cpu_x86_prepared% EQU 1 (
+		CALL:print %error% "          win32                  x86               failed"
 	) ELSE (
-		CALL:print %warning% "            win32               not run"
+		CALL:print %warning% "          win32                  x86               not run"
 	)
 )
-CALL:print %trace% "================================================="
+
+IF %platform_win32_cpu_x64_prepared% EQU 2 (
+	CALL:print %info% "          win32                  x64               prepared"
+) ELSE (
+	IF %platform_win32_cpu_x64_prepared% EQU 1 (
+		CALL:print %error% "          win32                  x64               failed"
+	) ELSE (
+		CALL:print %warning% "          win32                  x64               not run"
+	)
+)
+
+CALL:print %trace% "==================================================================="
 ECHO.
 GOTO:EOF
 
