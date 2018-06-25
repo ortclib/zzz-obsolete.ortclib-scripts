@@ -38,7 +38,7 @@ if not os.path.isfile(idlCompilationPath):
   print "runIDLCompiler - NewWorkingPath:" + os.getcwd()
   print "runIDLCompiler - compilerNewPath: " + compilerNewPath
 
-  result=os.system(compilerNewPath + " -idl c dotnet json cx json wrapper python cppwinrt -c " + jsonFile + " -o .")
+  result=os.system(compilerNewPath + " -idl c dotnet json cx json wrapper python cppwinrt msidl -c " + jsonFile + " -o .")
   if (result!=0):
     sys.exit("Failed idl compilation" + str(result))
     

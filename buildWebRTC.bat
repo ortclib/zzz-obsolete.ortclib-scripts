@@ -295,6 +295,7 @@ SET filterObj=0
 SET checkFilterFile=%1
 
 IF NOT "!checkFilterFile!"=="!checkFilterFile:libOrtc\=!" SET filterObj=1
+IF NOT "!checkFilterFile!"=="!checkFilterFile:zslib-eventing-tool\=!" SET filterObj=1
 IF "!checkFilterFile:~0,5!"=="test\" SET filterObj=1
 IF "!checkFilterFile:~0,8!"=="testing\" SET filterObj=1
 IF "!checkFilterFile:~0,9!"=="examples\" SET filterObj=1
