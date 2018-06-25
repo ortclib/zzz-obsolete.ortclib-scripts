@@ -267,7 +267,6 @@ GOTO:EOF
 
 PUSHD %libsSourcePath%obj
 IF NOT "!webRtcObjs!"=="" (
-  echo IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%combine
   IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%combine
 
   CALL:print %debug% "Merging objs now..."
