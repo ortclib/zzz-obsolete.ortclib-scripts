@@ -203,31 +203,18 @@ GOTO:EOF
 
 :makeOutputLinks
 PUSHD !libsSourcePath!
-echo *******************************************
-echo %CD%
-echo %libsSourcePath%
+CALL:print %info% "*******************************************"
+CALL:print %info% "Current directory = %CD%"
+CALL:print %info% "Libs source path = %libsSourcePath%"
+CALL:print %info% "Current platform = %currentPlatform%"
 
-IF "%PLATFORM%"=="winuwp" (
-  IF EXIST %libsSourcePath%obj\third_party\ortc (
+IF "%currentPlatform%"=="winuwp" (
+  IF EXIST %libsSourcePath%obj\third_party\ortc\NUL (
       CALL:makeDirectory ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj
       CALL:makeLink . ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj\!outputPath! %libsSourcePath%obj\third_party\ortc\ortclib
   )
 )
 POPD
-GOTO:EOF
-
-:build
-
-IF EXIST %msVS_Path% (
-	CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-	IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %PLATFORM% %CPU%"
-	
-  rem	MSBuild %SOLUTIONPATH% /property:Configuration=%CONFIGURATION% /property:Platform=%CPU% /t:Build /nodeReuse:False
-	MSBuild %SOLUTIONPATH% /property:Configuration=GN /property:Platform=%CPU% /t:Build /nodeReuse:False
-	IF ERRORLEVEL 1 CALL:error 1 "Building WebRTC projects for %PLATFORM% %CPU% has failed"
-) ELSE (
-	CALL:error 1 "Could not compile because proper version of Visual Studio is not found"
-)
 GOTO:EOF
 
 :strlen
@@ -280,8 +267,8 @@ GOTO:EOF
 
 PUSHD %libsSourcePath%obj
 IF NOT "!webRtcObjs!"=="" (
-  echo IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%\combine
-  IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%\combine
+  echo IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%combine
+  IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%combine
 
   CALL:print %debug% "Merging objs now..."
   CALL:print %debug% "SOURCE=%libsSourcePath%"
@@ -300,13 +287,38 @@ SET webRtcObjs=
 
 GOTO:EOF
 
+:shouldFilterObj
+
+REM Add filter obj paths here...
+
+SET filterObj=0
+SET checkFilterFile=%1
+
+IF NOT "!checkFilterFile!"=="!checkFilterFile:libOrtc\=!" SET filterObj=1
+IF "!checkFilterFile:~0,5!"=="test\" SET filterObj=1
+IF "!checkFilterFile:~0,8!"=="testing\" SET filterObj=1
+IF "!checkFilterFile:~0,9!"=="examples\" SET filterObj=1
+
+GOTO:EOF
+
 :combineLibs
 CALL:print %debug% "Combining object files into library: %libsSourcePath%"
 
 CALL:setPaths %~dp1
 
+REM vcvarsall replaces varaibles so these need to be put back to the original value afterwards
+SET tempConfiguration=%CONFIGURATION%
+SET tempPlatform=%PLATFORM%
+SET tempCpu=%CPU%
+SET tempHostCpu=%HOSTCPU%
+
 CALL %msVS_Path%\VC\Auxiliary\Build\vcvarsall.bat %currentbuildCompilerOption%
-IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %PLATFORM% %CPU%"
+IF ERRORLEVEL 1 CALL:error 1 "Could not setup compiler for %currentPlatform% %currentCpu%"
+
+SET CONFIGURATION=%tempConfiguration%
+SET PLATFORM=%tempPlatform%
+SET CPU=%tempCpu%
+SET HOSTCPU=%tempHostCpu%
 
 IF NOT EXIST %destinationPath% (
 	CALL:makeDirectory %destinationPath%
@@ -322,11 +334,27 @@ FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @rel
 
     SET filterObj=0
 
+    CALL:shouldFilterObj !temp!
+
+    IF !filterObj! EQU 0 (
+        SET webRtcObjs=!webRtcObjs! %%~A 
+        REM CALL:print %trace%  !webRtcLibs!
+        call :strlen result "!webRtcObjs!"
+        REM echo Obj length is !result!
+        if !result! gtr 7000 CALL:mergeObjs
+     ) ELSE (
+         CALL:print %debug% "Object file !temp! is ignored"
+     )
+)
+
+FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( 
+    SET temp=%%~A
+    REM echo !temp!
+
+    SET filterObj=0
+
     REM Add filter obj paths here...
-    IF NOT "!temp!"=="!temp:libOrtc\=!" SET filterObj=1
-    IF "!temp:~0,5!"=="test\" SET filterObj=1
-    IF "!temp:~0,8!"=="testing\" SET filterObj=1
-    IF "!temp:~0,9!"=="examples\" SET filterObj=1
+    CALL:shouldFilterObj !temp!
 
     IF !filterObj! EQU 0 (
         SET webRtcObjs=!webRtcObjs! %%~A 
