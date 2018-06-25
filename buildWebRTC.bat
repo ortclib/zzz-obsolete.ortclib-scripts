@@ -12,6 +12,7 @@ SET CONFIGURATION=%1
 SET PLATFORM=%2
 SET CPU=%3
 SET SOFTWARE_TARGET=%4
+SET ORIGINAL_SOFTWARE_TARGET=%4
 SET msVS_Path=""
 SET failure=0
 SET x86BuildCompilerOption=amd64_x86
@@ -30,9 +31,30 @@ SET debug=3
 SET trace=4 
 
 If /I "%SOFTWARE_TARGET%"=="" (
-  echo Usage: buildWebRTC [debug/release] [winuwp/win32] [x86,x64,arm] [webrtc/ortc]
+  echo Usage: buildWebRTC [debug/release] [winuwp/win32] [x86,x64,arm] [webrtc/ortc/peerconnection_server]
   CALL bin\batchTerminator.bat
 )
+
+:: Common aliases remapped
+IF /I "%PLATFORM%"=="win" SET PLATFORM=win32
+IF /I "%PLATFORM%"=="uwp" SET PLATFORM=winuwp
+
+:: Map well-known targets to final target
+IF /I "%SOFTWARE_TARGET%"=="ortc" (
+  SET SOFTWARE_TARGET=third_party/ortc:ortc
+)
+IF /I "%SOFTWARE_TARGET%"=="peerconnection_server" (
+  SET SOFTWARE_TARGET=examples:peerconnection_server
+)
+
+:: Reverse mapping of well known targets to common name
+IF /I "%SOFTWARE_TARGET%"=="third_party/ortc:ortc" (
+  SET ORIGINAL_SOFTWARE_TARGET=ortc
+)
+IF /I "%SOFTWARE_TARGET%"=="examples:peerconnection_server" (
+  SET ORIGINAL_SOFTWARE_TARGET=peerconnection_server
+)
+
 
 IF /I "%CPU%"=="win32" SET CPU=x86
 IF /I "%CPU%"=="arm" (
@@ -160,10 +182,10 @@ GOTO:EOF
     IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_TARGET% in %CD% has failed"s
 
     SET buildJsonCppTarget=0
-    IF /I "%SOFTWARE_TARGET%"=="webrtc" SET buildJsonCppTarget=1
+    IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" SET buildJsonCppTarget=1
 
     REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
-    IF /I "%SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
+    IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
     
     IF !buildJsonCppTarget! EQU 1 (
       CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
@@ -172,7 +194,7 @@ GOTO:EOF
       IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
     )
     
-    IF NOT "%SOFTWARE_PLATFORM%"=="webrtc/examples:peerconnection_server" CALL:combineLibs !outputPath!
+    IF NOT "%ORIGINAL_SOFTWARE_TARGET%"=="peerconnection_server" CALL:combineLibs !outputPath!
     CALL:copyExes !outputPath!
     POPD
   )
@@ -185,11 +207,11 @@ echo *******************************************
 echo %CD%
 echo %libsSourcePath%
 
-IF EXIST %libsSourcePath%obj\third_party\ortc (
-    CALL:makeDirectory ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj
-    CALL:makeLink . ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj\!outputPath! %libsSourcePath%obj\third_party\ortc\ortclib
-) ELSE (
-    echo ORTC output paths were not found.
+IF "%PLATFORM%"=="winuwp" (
+  IF EXIST %libsSourcePath%obj\third_party\ortc (
+      CALL:makeDirectory ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj
+      CALL:makeLink . ..\..\..\..\..\ortc\windows\projects\msvc\Org.Ortc.Uwp\obj\!outputPath! %libsSourcePath%obj\third_party\ortc\ortclib
+  )
 )
 POPD
 GOTO:EOF
@@ -237,7 +259,7 @@ IF /I "%currentPlatform%"=="win32" (
   SET destinationExes=%~dp0\..\output\win_!CPU!_!CONFIGURATION!
 )
 
-IF NOT EXIST %destinationExes% (
+IF NOT EXIST %destinationExes%\NUL (
   CALL:makeDirectory %destinationExes%
   IF ERRORLEVEL 1 CALL:error 1 "Could not make a directory %destinationExes%"
 )
@@ -263,8 +285,8 @@ IF NOT "!webRtcObjs!"=="" (
 
   CALL:print %debug% "Merging objs now..."
   CALL:print %debug% "SOURCE=%libsSourcePath%"
-  CALL:print %debug% "DEST=%libsSourcePath%\combine"
-  CALL:print %debug% "OUTPUT=%libsSourcePath%\combine\webrtc!counter!.lib"
+  CALL:print %debug% "DEST=%libsSourcePath%combine"
+  CALL:print %debug% "OUTPUT=%libsSourcePath%combine\webrtc!counter!.lib"
   CALL:print %debug% "OBJS=!webRtcObjs!"
 
   REM %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Hostx64\!linkPlatform!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%webrtc!counter!.lib !webRtcLibs!
@@ -272,7 +294,6 @@ IF NOT "!webRtcObjs!"=="" (
   IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
   set webRtcLibs=!webRtcLibs! webrtc!counter!.lib
   SET /A counter = counter + 1
-  CALL:print %trace% "Current library counter is !counter!"
 )
 POPD
 SET webRtcObjs=
@@ -302,7 +323,10 @@ FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @rel
     SET filterObj=0
 
     REM Add filter obj paths here...
-    REM IF "!temp!"=="!temp:ortclib\=!" SET filterObj=1
+    IF NOT "!temp!"=="!temp:libOrtc\=!" SET filterObj=1
+    IF "!temp:~0,5!"=="test\" SET filterObj=1
+    IF "!temp:~0,8!"=="testing\" SET filterObj=1
+    IF "!temp:~0,9!"=="examples\" SET filterObj=1
 
     IF !filterObj! EQU 0 (
         SET webRtcObjs=!webRtcObjs! %%~A 
@@ -384,11 +408,11 @@ GOTO:EOF
 SET basePath=%1
 SET libsSourcePath=%basePath%
 
-SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
+SET libsSourceBackupPath=%basePath%..\..\WEBRTC_BACKUP_BUILD\%ORIGINAL_SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
 
 CALL:print %debug% "Source path is "%basePath%""
 
-SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
+SET destinationPath=%libsSourcePath%..\..\WEBRTC_BUILD\%ORIGINAL_SOFTWARE_TARGET%\%CONFIGURATION%\%currentPlatform%_%linkCpu%\
 
 CALL:print %debug% "Destination path is %destinationPath%"
 GOTO :EOF
