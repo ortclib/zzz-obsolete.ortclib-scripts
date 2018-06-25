@@ -162,42 +162,43 @@ GOTO:EOF
 
 :buildNativeLibs
 
-  IF EXIST !baseBuildPath! (
-    PUSHD !baseBuildPath!
-    SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
-    SET outputPath=win_x64_!CONFIGURATION!
 
-    IF /I "%currentPlatform%"=="winuwp" (
-      SET outputPath=winuwp_!CPU!_!CONFIGURATION!
-    )
-    IF /I "%currentPlatform%"=="win32" (
-      SET outputPath=win_!CPU!_!CONFIGURATION!
-    )
-    
-    CD !outputPath!
-    IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
-    
-    CALL:print %warning% "Building %SOFTWARE_TARGET% native libs"
-    !ninjaPath! %SOFTWARE_TARGET%
-    IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_TARGET% in %CD% has failed"s
+IF EXIST !baseBuildPath! (
+  PUSHD !baseBuildPath!
+  SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
+  SET outputPath=win_x64_!CONFIGURATION!
 
-    SET buildJsonCppTarget=0
-    IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" SET buildJsonCppTarget=1
-
-    REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
-    IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
-    
-    IF !buildJsonCppTarget! EQU 1 (
-      CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
-      !ninjaPath! third_party/jsoncpp:jsoncpp
-      !ninjaPath! rtc_base:rtc_json    
-      IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
-    )
-    
-    IF NOT "%ORIGINAL_SOFTWARE_TARGET%"=="peerconnection_server" CALL:combineLibs !outputPath!
-    CALL:copyExes !outputPath!
-    POPD
+  IF /I "%currentPlatform%"=="winuwp" (
+    SET outputPath=winuwp_!CPU!_!CONFIGURATION!
   )
+  IF /I "%currentPlatform%"=="win32" (
+    SET outputPath=win_!CPU!_!CONFIGURATION!
+  )
+  
+  CD !outputPath!
+  IF ERRORLEVEL 1 CALL:error 1 "!outputPath! folder doesn't exist"
+  
+  CALL:print %warning% "Building %SOFTWARE_TARGET% native libs"
+  !ninjaPath! %SOFTWARE_TARGET%
+  IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_TARGET% in %CD% has failed"s
+
+  SET buildJsonCppTarget=0
+  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" SET buildJsonCppTarget=1
+
+  REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
+  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
+  
+  IF !buildJsonCppTarget! EQU 1 (
+    CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
+    !ninjaPath! third_party/jsoncpp:jsoncpp
+    !ninjaPath! rtc_base:rtc_json    
+    IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
+  )
+  
+  IF NOT "%ORIGINAL_SOFTWARE_TARGET%"=="peerconnection_server" CALL:combineLibs !outputPath!
+  CALL:copyExes !outputPath!
+  POPD
+)
 
 GOTO:EOF
 
