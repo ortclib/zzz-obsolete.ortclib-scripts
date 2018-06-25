@@ -30,31 +30,25 @@ SET warning=2
 SET debug=3                           
 SET trace=4 
 
+SET shouldCombineLibs=1
+
+REM <target-short-name>#<gn-target-name>#<1=combine-libs;0=no-combine-libs>
+SET inputTargets=
+SET inputTargets=%inputTargets% webrtc#webrtc#1 ortc##third_party/ortc:ortc#1 
+SET inputTargets=%inputTargets% ortc##third_party/ortc:ortc#1
+SET inputTargets=%inputTargets% peerconnection_server#peerconnection_server#examples:peerconnection_server#0
+SET inputTargets=%inputTargets% ortc_idl#third_party/ortc/ortclib:ortclib_idl#0
+
+CALL:remapTarget
+
 If /I "%SOFTWARE_TARGET%"=="" (
-  echo Usage: buildWebRTC [debug/release] [winuwp/win32] [x86,x64,arm] [webrtc/ortc/peerconnection_server]
+  echo Usage: buildWebRTC [debug/release] [winuwp/win32] [x86,x64,arm] [%possibleTargets%]
   CALL bin\batchTerminator.bat
 )
 
 :: Common aliases remapped
 IF /I "%PLATFORM%"=="win" SET PLATFORM=win32
 IF /I "%PLATFORM%"=="uwp" SET PLATFORM=winuwp
-
-:: Map well-known targets to final target
-IF /I "%SOFTWARE_TARGET%"=="ortc" (
-  SET SOFTWARE_TARGET=third_party/ortc:ortc
-)
-IF /I "%SOFTWARE_TARGET%"=="peerconnection_server" (
-  SET SOFTWARE_TARGET=examples:peerconnection_server
-)
-
-:: Reverse mapping of well known targets to common name
-IF /I "%SOFTWARE_TARGET%"=="third_party/ortc:ortc" (
-  SET ORIGINAL_SOFTWARE_TARGET=ortc
-)
-IF /I "%SOFTWARE_TARGET%"=="examples:peerconnection_server" (
-  SET ORIGINAL_SOFTWARE_TARGET=peerconnection_server
-)
-
 
 IF /I "%CPU%"=="win32" SET CPU=x86
 IF /I "%CPU%"=="arm" (
@@ -93,6 +87,30 @@ CALL:buildNativeLibs
 CALL:makeOutputLinks
 
 GOTO:done
+
+:remapTarget
+
+FOR %%a IN (%inputTargets%) DO (
+  FOR /F "tokens=1,2,3 delims=#" %%b in ("%%a") DO (
+    IF "%SOFTWARE_TARGET%"=="%%b" (
+      SET ORIGINAL_SOFTWARE_TARGET=%%b
+      SET SOFTWARE_TARGET=%%c
+      SET shouldCombineLibs=%%d
+    )
+    IF "%ORIGINAL_SOFTWARE_TARGET%"=="%%c" (
+      SET ORIGINAL_SOFTWARE_TARGET=%%b
+      SET SOFTWARE_TARGET=%%c
+      SET shouldCombineLibs=%%d
+    )
+    IF "!possibleTargets!"=="" (
+      SET possibleTargets=%%b
+    ) ELSE (
+      SET possibleTargets=!possibleTargets!/%%b
+    )
+  )
+)
+
+GOTO:EOF
 
 :determineVisualStudioPath
 
@@ -162,7 +180,6 @@ GOTO:EOF
 
 :buildNativeLibs
 
-
 IF EXIST !baseBuildPath! (
   PUSHD !baseBuildPath!
   SET ninjaPath=..\..\..\..\..\webrtc\xplatform\depot_tools\ninja
@@ -195,7 +212,7 @@ IF EXIST !baseBuildPath! (
     IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
   )
   
-  IF NOT "%ORIGINAL_SOFTWARE_TARGET%"=="peerconnection_server" CALL:combineLibs !outputPath!
+  IF %shouldCombineLibs% EQU 1 CALL:combineLibs !outputPath!
   CALL:copyExes !outputPath!
   POPD
 )
