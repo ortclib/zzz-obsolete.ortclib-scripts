@@ -71,7 +71,7 @@ SET debug=3
 SET trace=4														
 
 ::input arguments
-SET supportedInputArguments=;platform;cpu;config;target;help;logLevel;diagnostic;noEventing;getBinaries;gn;server;		
+SET supportedInputArguments=;platform;cpu;config;target;help;logLevel;diagnostic;gn;server;		
 SET target=all
 SET platform=all
 SET cpu=all
@@ -79,8 +79,6 @@ SET config=all
 SET help=0
 SET logLevel=2
 SET diagnostic=0
-SET noEventing=0
-SET getBinaries=0
 SET server=0
 SET gn=1
 
@@ -197,15 +195,14 @@ CALL:prepareWebRTC
 
 
 IF %prepare_ORTC_Environment% EQU 1 (
-	::Prepare ORTC development environment
+	REM Prepare ORTC development environment
 	CALL:prepareORTC
 
-	::Download curl and build it
-	CALL:prepareCurl
+	IF %platform_win32% EQU 1 (
+		REM Download curl and build it
+		CALL:prepareCurl
+	)
 	
-REM CALL:prepareEventing
-REM CALL:getBinaries
-
 )
 
 IF %server% EQU 1 (
@@ -570,15 +567,6 @@ POPD > NUL
 
 GOTO:EOF
 
-::Generate events providers
-:prepareEventing
-
-IF %noEventing% EQU 0 (
-	CALL bin\prepareEventing.bat -platform %platform% -cpu %cpu% -logLevel %logLevel%
-)
-
-GOTO:EOF
-
 :prepareGN
 
 CALL:cleanup
@@ -641,18 +629,6 @@ CALL:print %info% "Donwloading binaries from URL !BINARIES_DOWNLOAD_URL!"
 CALL:makeDirectory %ortciOSBinariesDestinationFolder%
 CALL:download !BINARIES_DOWNLOAD_URL! %ortciOSBinariesDestinationPath%
 IF !taskFailed! EQU 1 CALL:ERROR 1 "Failed downloading binaries from !BINARIES_DOWNLOAD_URL!"
-
-GOTO:EOF
-
-:getBinaries
-
-IF %getBinaries% EQU 1 (
-	IF DEFINED BINARIES_DOWNLOAD_REPO_URL (
-		CALL:downloadBinariesFromRepo
-	) ELSE (
-		IF DEFINED BINARIES_DOWNLOAD_URL CALL:downloadBinariesFromURL
-	)
-)
 
 GOTO:EOF
 
@@ -892,8 +868,6 @@ ECHO.
 ECHO 	[93m-help[0m 		Show script usage
 ECHO.
 ECHO 	[93m-logLevel[0m	Log level (error=0, info =1, warning=2, debug=3, trace=4)
-ECHO.
-ECHO		[93m-noEventing[0m 	Flag not to run eventing preparations for Ortc
 ECHO.
 ECHO 	[93m-target[0m		Name of the target to prepare environment for. Ortc or WebRtc. If this parameter is not set dev environment will be prepared for both available targets.
 ECHO.
