@@ -34,8 +34,8 @@ SET shouldCombineLibs=1
 
 REM <target-short-name>#<gn-target-name>#<1=combine-libs;0=no-combine-libs>
 SET inputTargets=
-SET inputTargets=%inputTargets% webrtc#webrtc#1 ortc##third_party/ortc:ortc#1 
-SET inputTargets=%inputTargets% ortc##third_party/ortc:ortc#1
+SET inputTargets=%inputTargets% webrtc#webrtc#1
+SET inputTargets=%inputTargets% ortc#third_party/ortc:ortc#1
 SET inputTargets=%inputTargets% peerconnection_server#peerconnection_server#examples:peerconnection_server#0
 SET inputTargets=%inputTargets% ortc_idl#third_party/ortc/ortclib:ortclib_idl#0
 SET inputTargets=%inputTargets% webrtc_idl#third_party/ortc/ortclib:webrtc_idl#0
