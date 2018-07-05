@@ -201,15 +201,27 @@ IF EXIST !baseBuildPath! (
   IF ERRORLEVEL 1 CALL:error 1 "Building %SOFTWARE_TARGET% in %CD% has failed"s
 
   SET buildJsonCppTarget=0
-  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" SET buildJsonCppTarget=1
+  SET buildOrtcCppTarget=0
+  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" (
+    SET buildJsonCppTarget=1
+    SET buildOrtcCppTarget=1
+  )
 
   REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
-  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="ortc" SET buildJsonCppTarget=1
+  IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="ortc" (
+    SET buildJsonCppTarget=1
+    SET buildOrtcCppTarget=1
+  )
   
   IF !buildJsonCppTarget! EQU 1 (
     CALL:print %warning% "Building webrtc/rtc_base:rtc_json native lib"
     !ninjaPath! third_party/jsoncpp:jsoncpp
-    !ninjaPath! rtc_base:rtc_json    
+    !ninjaPath! rtc_base:rtc_json
+    IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
+  )
+  IF !buildOrtcCppTarget! EQU 1 (
+    CALL:print %warning% "Building webrtc/ortc native lib"
+    !ninjaPath! ortc:ortc
     IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
   )
   
