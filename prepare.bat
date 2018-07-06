@@ -9,6 +9,8 @@
 
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
+SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
+
 ::paths
 SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
