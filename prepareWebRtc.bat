@@ -195,7 +195,7 @@ SET validInput=0
 SET messageText=
 
 IF /I "%cpu%"=="all" (
-	SET cpu_arm=0
+	SET cpu_arm=1
 	SET cpu_x86=1
 	SET cpu_x64=1
 	SET validInput=1
