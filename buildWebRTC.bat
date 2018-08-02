@@ -360,10 +360,14 @@ IF NOT EXIST %destinationPath% (
 SET webRtcObjs=
 SET webRtcLibs=
 SET counter=0
-FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @relpath"') DO ( 
+
+set numFiles=0
+for /r %%x in (*.obj) do set /a numFiles+=1
+:: echo numFiles *.obj files %numFiles%
+IF %numFiles% NEQ 0 ( 
+  FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @relpath"') DO ( 
     SET temp=%%~A
     REM echo !temp!
-
     SET filterObj=0
 
     CALL:shouldFilterObj !temp!
@@ -377,12 +381,18 @@ FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @rel
      ) ELSE (
          CALL:print %debug% "Object file !temp! is ignored"
      )
+  )
+) ELSE (
+  CALL:print %warning% "There are %numFiles% *.obj files"
 )
 
-FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( 
+set numFiles=0
+for /r %%x in (*.o) do set /a numFiles+=1
+:: echo numFiles *.o files %numFiles% 
+IF %numFiles% NEQ 0 ( 
+  FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( 
     SET temp=%%~A
     REM echo !temp!
-
     SET filterObj=0
 
     REM Add filter obj paths here...
@@ -397,6 +407,9 @@ FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpa
      ) ELSE (
          CALL:print %debug% "Object file !temp! is ignored"
      )
+  )
+) ELSE (
+  CALL:print %warning% "There are %numFiles% *.o files"
 )
 
 CALL:mergeObjs
