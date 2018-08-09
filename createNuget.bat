@@ -276,8 +276,8 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
 	SET nugetName=%nugetWebRtcName%
 	
- CALL:buildNativeLibs webrtc x86
- CALL:buildNativeLibs webrtc x64
+ CALL:buildNativeLibs webrtc x86 winuwp
+ CALL:buildNativeLibs webrtc x64 winuwp
 REM CALL:buildNativeLibs webrtc arm
 
 	CALL:buildWrapper !SolutionPathWebRtc! "WebRtc_Stats_Observer,Api\org_WebRtc\Org_WebRtc_Uwp" x86
@@ -320,9 +320,9 @@ GOTO:EOF
 :buildNativeLibs
 
 IF %logLevel% GEQ %trace% (
-	CALL bin\buildWebRTC.bat %CONFIGURATION% %~2 %~1
+	CALL bin\buildWebRTC.bat %CONFIGURATION% %~3 %~2 %~1
 ) ELSE (
-	CALL bin\buildWebRTC.bat %CONFIGURATION% %~2 %~1 >NUL
+	CALL bin\buildWebRTC.bat %CONFIGURATION% %~3 %~2 %~1 >NUL
 )
 IF ERRORLEVEL 1 CALL:error 1 "Building %nugetName% native libs for %~1 %CONFIGURATION% has failed"
 
