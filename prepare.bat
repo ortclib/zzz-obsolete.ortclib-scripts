@@ -561,8 +561,10 @@ REN %webrtcGnPath%build.gn originalBuild.gn
 IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
 
 IF EXIST ortc\NUL (
-	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """:webrtc"","" "":webrtc"",""//third_party/ortc:ortc""," !webrtcGnBuildPathDestination!
-	IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
+	IF !prepare_ORTC_Environment! EQU 1 (
+		%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """:webrtc"","" "":webrtc"",""//third_party/ortc:ortc""," !webrtcGnBuildPathDestination!
+		IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
+	)
 )
 %powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """:webrtc"","" "":webrtc"",""//third_party/idl:idl""," !webrtcGnBuildPathDestination!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include IDL target"
