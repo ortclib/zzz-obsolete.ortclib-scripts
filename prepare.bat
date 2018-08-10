@@ -183,7 +183,7 @@ CALL:pythonSetup
 
 
 IF %gn% EQU 1 (
-    IF %prepare_ORTC_Environment% EQU 1 CALL:prepareGN
+    CALL:prepareGN
 )
 
 ::Generate WebRTC VS2015 projects from gn files
@@ -555,21 +555,20 @@ GOTO:EOF
 CALL:cleanup
 
 CALL:makeDirectory %ortcGNPath%
-CALL:makeDirectory webrtc\xplatform\webrtc\third_party
+CALL:makeDirectory webrtc\xplatform\webrtc\third_party\idl
 
-REN %webrtcGnPath%build.gn originalBuild.gn
+IF NOT EXIST %webrtcGnPath%originalBuild.gn COPY %webrtcGnPath%BUILD.gn %webrtcGnPath%originalBuild.gn
 IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
 
-IF EXIST ortc\NUL (
-	IF !prepare_ORTC_Environment! EQU 1 (
-		%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """:webrtc"","" "":webrtc"",""//third_party/ortc:ortc""," !webrtcGnBuildPathDestination!
-		IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
-	)
+IF %prepare_ORTC_Environment% EQU 1 (
+	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """":webrtc"","" """":webrtc"",""""//third_party/ortc:ortc"""","" !webrtcGnBuildPathDestination!
+	IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
 )
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """:webrtc"","" "":webrtc"",""//third_party/idl:idl""," !webrtcGnBuildPathDestination!
+
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """":webrtc"","" """":webrtc"",""""//third_party/idl:idl"""","" !webrtcGnBuildPathDestination!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include IDL target"
 
-IF EXIST ortc\NUL (
+IF %prepare_ORTC_Environment% EQU 1 (
 	CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
 )
 CALL:copyTemplates %idlGnBuildPath% %idlGnBuildPathDestination%
