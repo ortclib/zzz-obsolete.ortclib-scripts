@@ -565,7 +565,7 @@ IF %prepare_ORTC_Environment% EQU 1 (
 	IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
 )
 
-%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """":webrtc"","" """":webrtc"",""""//third_party/idl:idl"""","" !webrtcGnBuildPathDestination!
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """"pc"","" """"pc"",""""//third_party/idl:idl"""","" !webrtcGnBuildPathDestination!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include IDL target"
 
 IF %prepare_ORTC_Environment% EQU 1 (
