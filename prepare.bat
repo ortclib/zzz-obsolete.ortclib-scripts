@@ -573,8 +573,10 @@ IF %prepare_ORTC_Environment% EQU 1 (
 )
 CALL:copyTemplates %idlGnBuildPath% %idlGnBuildPathDestination%
 
-IF %platform_win32% EQU 1 (
-    CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\curl ortc\xplatform\curl
+IF %prepare_ORTC_Environment% EQU 1 (
+	IF !platform_win32! EQU 1 (
+	    CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\curl ortc\xplatform\curl
+	)
 )
 
 GOTO:EOF
