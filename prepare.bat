@@ -14,24 +14,18 @@ SET DEPOT_TOOLS_WIN_TOOLCHAIN=0
 ::paths
 SET powershell_path=%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe
 SET curlPath=ortc\xplatform\curl
-SET ortcWebRTCTemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.vs2015.sln
-SET ortcWebRTCDestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.vs2015.sln
-SET ortcWebRTCWin32TemplatePath=ortc\windows\templates\libs\webrtc\webrtcForOrtc.Win32.vs2015.sln
-SET ortcWebRTCWin32DestinationPath=webrtc\xplatform\webrtc\webrtcForOrtc.Win32.vs2015.sln
 SET webRTCTemplatePath=webrtc\windows\templates\libs\webrtc\webrtcLib.sln
 SET webRTCDestinationPath=webrtc\xplatform\webrtc\webrtcLib.sln
 SET ortciOSBinariesDestinationFolder=ortc\apple\libs\
 SET ortciOSBinariesDestinationPath=ortc\apple\libs\libOrtc.dylib
 SET webrtcGnPath=webrtc\xplatform\webrtc\
 SET ortcGnPath=webrtc\xplatform\webrtc\third_party\ortc\
-SET webrtcGnBuildPath=ortc\xplatform\templates\gn\webrtcBUILD.gn
 SET webrtcGnBuildPathDestination=webrtc\xplatform\webrtc\BUILD.gn
-SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortcBUILD.gn
+SET ortcGnBuildPath=ortc\xplatform\templates\gn\ortc_BUILD.gn
 SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\third_party\ortc\BUILD.gn
-SET gnEventingPythonScriptSource=bin\runEventCompiler.py
-SET gnEventingPythonScriptDestination=webrtc\xplatform\webrtc\third_party\ortc\runEventCompiler.py
-SET gnIDLPythonScriptSource=bin\runIDLCompiler.py
-SET gnIDLPythonScriptDestination=webrtc\xplatform\webrtc\third_party\ortc\runIDLCompiler.py
+
+SET idlGnBuildPath=webrtc\xplatform\templates\gn\idl_BUILD.gn
+SET idlGnBuildPathDestination=webrtc\xplatform\webrtc\third_party\idl\BUILD.gn
 
 ::downloads
 SET pythonVersion=2.7.9
@@ -189,7 +183,7 @@ CALL:pythonSetup
 
 
 IF %gn% EQU 1 (
-    IF %prepare_ORTC_Environment% EQU 1 CALL:prepareGN
+    CALL:prepareGN
 )
 
 ::Generate WebRTC VS2015 projects from gn files
@@ -520,19 +514,6 @@ GOTO:EOF
 
 :prepareORTC
 
-:: Create solutions folder where will be stored links to real solutions
-::CALL:makeDirectory .\solutions
-
-:: Make link to ortc-lib-sdk-win.vs2015 solution
-::CALL:makeLinkToFile solutions\ortc-lib-sdk-win.vs20151.sln ortc\windows\wrapper\projects\ortc-lib-sdk-win.vs2015.sln
-
-:: Copy webrtc solution template
-CALL:copyTemplates %ortcWebRTCTemplatePath% %ortcWebRTCDestinationPath%
-CALL:copyTemplates %ortcWebRTCWin32TemplatePath% %ortcWebRTCWin32DestinationPath%
-::CALL:copyTemplates %webRTCTemplatePath% %webRTCDestinationPath%
-
-::START solutions\ortc-lib-sdk-win.vs20151.sln
-
 GOTO:EOF
 
 ::Generate WebRTC projects
@@ -574,24 +555,28 @@ GOTO:EOF
 CALL:cleanup
 
 CALL:makeDirectory %ortcGNPath%
-CALL:makeDirectory webrtc\xplatform\webrtc\third_party
+CALL:makeDirectory webrtc\xplatform\webrtc\third_party\idl
 
-REN %webrtcGnPath%build.gn originalBuild.gn
+IF NOT EXIST %webrtcGnPath%originalBuild.gn COPY %webrtcGnPath%BUILD.gn %webrtcGnPath%originalBuild.gn
 IF !ERRORLEVEL! EQU 1 CALL:error 1 "Failed renamed original webrtc build.gn file" 
 
-CALL:copyTemplates %webrtcGnBuildPath% %webrtcGnBuildPathDestination%
-CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
+IF %prepare_ORTC_Environment% EQU 1 (
+	%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """":webrtc"","" """":webrtc"",""""//third_party/ortc:ortc"""","" !webrtcGnBuildPathDestination!
+	IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include ORTC target"
+)
 
-CALL:copyTemplates %gnEventingPythonScriptSource% %gnEventingPythonScriptDestination%
-CALL:copyTemplates %gnIDLPythonScriptSource% %gnIDLPythonScriptDestination%
+%powershell_path% -ExecutionPolicy ByPass -File bin\TextReplaceInFile.ps1 !webrtcGnBuildPathDestination! """"pc"","" """"pc"",""""//third_party/idl:idl"""","" !webrtcGnBuildPathDestination!
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn to include IDL target"
 
-CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\ortclib ortc\xplatform\ortclib-cpp
-CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\ortclib-services ortc\xplatform\ortclib-services-cpp
-CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\zsLib ortc\xplatform\zsLib
-CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\zsLib-eventing ortc\xplatform\zsLib-eventing
+IF %prepare_ORTC_Environment% EQU 1 (
+	CALL:copyTemplates %ortcGnBuildPath% %ortcGnBuildPathDestination%
+)
+CALL:copyTemplates %idlGnBuildPath% %idlGnBuildPathDestination%
 
-IF %platform_win32% EQU 1 (
-    CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\curl ortc\xplatform\curl
+IF %prepare_ORTC_Environment% EQU 1 (
+	IF !platform_win32! EQU 1 (
+	    CALL:makeLink . webrtc\xplatform\webrtc\third_party\ortc\curl ortc\xplatform\curl
+	)
 )
 
 GOTO:EOF

@@ -39,7 +39,7 @@ SET inputTargets=%inputTargets% webrtc#webrtc#1
 SET inputTargets=%inputTargets% ortc#third_party/ortc:ortc#1
 SET inputTargets=%inputTargets% peerconnection_server#peerconnection_server#examples:peerconnection_server#0
 SET inputTargets=%inputTargets% ortc_idl#third_party/ortc/ortclib:ortclib_idl#0
-SET inputTargets=%inputTargets% webrtc_idl#third_party/ortc/ortclib:webrtc_idl#0
+SET inputTargets=%inputTargets% webrtc_idl#sdk/windows:webrtc_wrappers#0
 
 CALL:remapTarget
 
@@ -205,7 +205,7 @@ IF EXIST !baseBuildPath! (
   SET buildOrtcCppTarget=0
   IF /I "%ORIGINAL_SOFTWARE_TARGET%"=="webrtc" (
     SET buildJsonCppTarget=1
-    SET buildOrtcCppTarget=1
+    SET buildWebrtcCppTarget=1
   )
 
   REM This should be removed later when do not have to target ORTC to build WebRTC generated wrappers
@@ -223,7 +223,7 @@ IF EXIST !baseBuildPath! (
   IF !buildOrtcCppTarget! EQU 1 (
     CALL:print %warning% "Building webrtc/ortc native lib"
     !ninjaPath! ortc:ortc
-    IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/rtc_base:rtc_json in %CD% has failed"
+    IF ERRORLEVEL 1 CALL:error 1 "Building webrtc/ortc in %CD% has failed"
   )
   
   IF %shouldCombineLibs% EQU 1 CALL:combineLibs !outputPath!

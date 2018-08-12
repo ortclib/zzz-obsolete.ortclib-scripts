@@ -321,8 +321,6 @@ CALL:makeDirectory chromium\src\third_party
 CALL:makeDirectory chromium\src\third_party\winsdk_samples
 CALL:makeDirectory chromium\src\third_party\libjingle\source\talk\media\testdata\
 CALL:makeDirectory third_party
-::CALL:makeDirectory third_party\gflags
-::CALL:makeDirectory third_party\winsdk_samples
 CALL:makeDirectory tools
 
 GOTO:EOF
@@ -379,10 +377,23 @@ CALL:makeLink . third_party\freetype ..\chromium\third_party\freetype
 CALL:makeLink . third_party\zlib ..\chromium\third_party\zlib
 CALL:makeLink . third_party\libpng ..\chromium\third_party\libpng
 CALL:makeLink . third_party\icu ..\icu
+
+REM wrapper generation dependency libraries
+
+CALL:makeDirectory third_party\idl
+
+CALL:makeLink . third_party\idl\cryptopp ..\cryptopp
+CALL:makeLink . third_party\idl\zsLib ..\zsLib
+CALL:makeLink . third_party\idl\zsLib-eventing ..\zsLib-eventing
+CALL:makeLink . sdk\windows ..\webrtc-apis\windows
+CALL:makeLink . sdk\idl ..\webrtc-apis\idl
+
 IF /I "%target%"=="ortc" (
-  CALL:makeLink . third_party\udns ..\..\..\ortc\xplatform\udns
-  CALL:makeLink . third_party\idnkit ..\..\..\ortc\xplatform\idnkit
-  CALL:makeLink . third_party\cryptopp ..\..\..\ortc\xplatform\cryptopp
+	CALL:makeDirectory third_party\ortc
+	CALL:makeLink . third_party\ortc\udns ..\..\..\ortc\xplatform\udns
+  CALL:makeLink . third_party\ortc\idnkit ..\..\..\ortc\xplatform\idnkit
+	CALL:makeLink . third_party\ortc\ortclib ..\..\..\ortc\xplatform\ortclib-cpp
+	CALL:makeLink . third_party\ortc\ortclib-services ..\..\..\ortc\xplatform\ortclib-services-cpp
 )
 
 GOTO:EOF
@@ -470,8 +481,7 @@ CALL:makeDirectory !outputPath!
 CALL:copyTemplates %webRTCGnArgsTemplatePath% !webRTCGnArgsDestinationPath!
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_os-" "%~1" !webRTCGnArgsDestinationPath!
-IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platfrom %~1"
-
+IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for platform %~1"
 
 %powershell_path% -ExecutionPolicy ByPass -File ..\..\..\bin\TextReplaceInFile.ps1 !webRTCGnArgsDestinationPath! "-target_cpu-" "%2" !webRTCGnArgsDestinationPath!
 IF ERRORLEVEL 1 CALL:error 1 "Failed updating gn arguments for CPU %~2"
