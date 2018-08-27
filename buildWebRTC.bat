@@ -296,8 +296,8 @@ GOTO:EOF
 
 :mergeObjs
 
+PUSHD %1
 
-PUSHD %libsSourcePath%obj
 IF NOT "!webRtcObjs!"=="" (
   IF NOT EXIST %libsSourcePath%combine\NUL mkdir %libsSourcePath%combine
 
@@ -323,7 +323,8 @@ GOTO:EOF
 REM Add filter obj paths here...
 
 SET filterObj=0
-SET checkFilterFile=%1
+SET fileFolder=%1
+SET checkFilterFile=%2
 
 IF NOT "!checkFilterFile!"=="!checkFilterFile:libOrtc\=!" SET filterObj=1
 IF NOT "!checkFilterFile!"=="!checkFilterFile:zslib-eventing-tool\=!" SET filterObj=1
@@ -332,6 +333,49 @@ IF "!checkFilterFile:~0,8!"=="testing\" SET filterObj=1
 IF "!checkFilterFile:~0,9!"=="examples\" SET filterObj=1
 
 GOTO:EOF
+
+:combineLibsFromFolder
+
+SET libsFolderPath=%1
+SET filesExtension=%2
+SET numFiles=0
+
+IF NOT EXIST !libsFolderPath! (
+    CALL:print %debug% "!libsFolderPath! doesn't exist. There is no libs to combine"
+    GOTO:EOF
+)
+CALL:print %debug% "Merging libs from !libsFolderPath!"
+
+PUSHD !libsFolderPath!
+DIR /b *!filesExtension! /s 2> NUL | FIND "" /v /c > tmp && SET /p numFiles=<tmp && del tmp
+POPD
+
+IF !numFiles! NEQ 0 ( 
+  FOR /f %%A IN ('forfiles -p !libsFolderPath! /s /m *!filesExtension! /c "CMD /c ECHO @relpath"') DO ( 
+    SET temp=%%~A
+    SET filterObj=0
+
+    REM Add filter obj paths here...
+    CALL:shouldFilterObj !libsFolderPath! !temp!
+
+    IF !filterObj! EQU 0 (
+        SET webRtcObjs=!webRtcObjs! %%~A 
+        CALL :strlen result "!webRtcObjs!"
+        IF !result! gtr 7000 CALL:mergeObjs !libsFolderPath!
+     ) ELSE (
+         CALL:print %debug% "Object file !temp! is ignored"
+     )
+  )
+  CALL:mergeObjs !libsFolderPath!
+  
+  CALL:print %debug% "Merged !numFiles! object files from !libsFolderPath!"
+) ELSE (
+  CALL:print %warning% "There are %numFiles% *!filesExtension! files"
+  
+)
+
+GOTO:EOF
+
 
 :combineLibs
 CALL:print %debug% "Combining object files into library: %libsSourcePath%"
@@ -361,62 +405,19 @@ SET webRtcObjs=
 SET webRtcLibs=
 SET counter=0
 
-set numFiles=0
-for /r %%x in (*.obj) do set /a numFiles+=1
-:: echo numFiles *.obj files %numFiles%
-IF %numFiles% NEQ 0 ( 
-  FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.obj /c "CMD /c ECHO @relpath"') DO ( 
-    SET temp=%%~A
-    REM echo !temp!
-    SET filterObj=0
+CALL:combineLibsFromFolder %libsSourcePath%obj .obj
 
-    CALL:shouldFilterObj !temp!
+CALL:combineLibsFromFolder %libsSourcePath%obj .o
 
-    IF !filterObj! EQU 0 (
-        SET webRtcObjs=!webRtcObjs! %%~A 
-        REM CALL:print %trace%  !webRtcLibs!
-        call :strlen result "!webRtcObjs!"
-        REM echo Obj length is !result!
-        if !result! gtr 7000 CALL:mergeObjs
-     ) ELSE (
-         CALL:print %debug% "Object file !temp! is ignored"
-     )
-  )
-) ELSE (
-  CALL:print %warning% "There are %numFiles% *.obj files"
-)
+CALL:combineLibsFromFolder %libsSourcePath%gen .obj
 
-set numFiles=0
-for /r %%x in (*.o) do set /a numFiles+=1
-:: echo numFiles *.o files %numFiles% 
-IF %numFiles% NEQ 0 ( 
-  FOR /f %%A IN ('forfiles -p %libsSourcePath%obj /s /m *.o /c "CMD /c ECHO @relpath"') DO ( 
-    SET temp=%%~A
-    REM echo !temp!
-    SET filterObj=0
 
-    REM Add filter obj paths here...
-    CALL:shouldFilterObj !temp!
-
-    IF !filterObj! EQU 0 (
-        SET webRtcObjs=!webRtcObjs! %%~A 
-        REM CALL:print %trace%  !webRtcLibs!
-        call :strlen result "!webRtcObjs!"
-        REM echo Obj length is !result!
-        if !result! gtr 7000 CALL:mergeObjs
-     ) ELSE (
-         CALL:print %debug% "Object file !temp! is ignored"
-     )
-  )
-) ELSE (
-  CALL:print %warning% "There are %numFiles% *.o files"
-)
-
-CALL:mergeObjs
+CALL:combineLibsFromFolder %libsSourcePath%gen .o
 
 CALL:print %debug% "Finished merging objs into !webRtcLibs!"
 
 PUSHD %libsSourcePath%combine
+
 %msVS_Path%\VC\Tools\MSVC\%tools_MSVC_Version%\bin\Host%HOSTCPU%\!linkCpu!\lib.exe /IGNORE:4264,4221,4006 /OUT:%destinationPath%\webrtc.lib !webRtcLibs!
 IF ERRORLEVEL 1 CALL:error 1 "Failed combining libs"
 POPD
