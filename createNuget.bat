@@ -256,13 +256,7 @@ IF %generate_Ortc_Nuget% EQU 1 (
 	SET WebRtcSolutionPath=%OrtcWebRtcSolutionPath%
 	SET nugetName=%nugetOrtcName%
 	
-	CALL:buildNativeLibs ortc x86
-	CALL:buildNativeLibs ortc x64
-REM CALL:buildNativeLibs arm
-	
-  CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp x86
-  CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp x64
-REM CALL:buildWrapper !SolutionPathOrtc! Api\org_Ortc\org_ortc_uwp arm
+	CALL:buildTarget
   
 	CALL:preparePackage Ortc
 )
@@ -271,21 +265,25 @@ IF %generate_WebRtc_Nuget% EQU 1 (
 	CALL:print %warning% "Creating WebRtc nuget package ..."
 
 	CALL:prepareTemplates webrtc
-	
 	SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln
-	SET WebRtcSolutionPath=%WinrtWebRtcSolutionPath%
-	SET nugetName=%nugetWebRtcName%
-	
- CALL:buildNativeLibs webrtc x86 winuwp
- CALL:buildNativeLibs webrtc x64 winuwp
-REM CALL:buildNativeLibs webrtc arm
-
-	CALL:buildWrapper !SolutionPathWebRtc! "WebRtc_Stats_Observer,Api\org_WebRtc\Org_WebRtc_Uwp" x86
-	CALL:buildWrapper !SolutionPathWebRtc! "WebRtc_Stats_Observer,Api\org_WebRtc\Org_WebRtc_Uwp" x64
-REM CALL:buildWrapper !SolutionPathWebRtc! Api\org_WebRtc\Org.WebRtc arm
-
+	SET ProjectName=Org_WebRtc
+	CALL:buildTarget
 	CALL:preparePackage WebRtc
 )
+GOTO:EOF
+
+:buildTarget
+    
+    REM SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!WebRtc.Universal.sln
+    REM SET SolutionPathWebRtc=!nugetWebRtcTemplateProjectDestinationPath!WebRtc.Nuget.sln
+    REM SET ProjectName=Api\Org_WebRtc\Org_WebRtc
+    REM SET ProjectName=Org_WebRtc
+    REM SET ProjectName=Utility\WebRtc_UWP_Native_Builder
+    
+    CALL:buildWrapper !SolutionPathWebRtc! !ProjectName! x86
+	CALL:buildWrapper !SolutionPathWebRtc! !ProjectName! x64
+    CALL:buildWrapper !SolutionPathWebRtc! !ProjectName! arm
+    
 GOTO:EOF
 
 :generateXamarinNugetPackages
@@ -466,7 +464,7 @@ CALL:print %debug% "nugetRuntimesx64Path: !nugetRuntimesx64Path!"
 CALL:print %debug% "nugetRuntimesARMPath: !nugetRuntimesARMPath!"
 
 IF !xamarinNuget! NEQ  1 (
-	SET sourcex86Path=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\x86
+	SET sourcex86Path=!libSourceBasePath!\!BuildingProjectName!\Release\x86
 	SET sourcex86DllPath=!sourcex86Path!\!projectNameForNuget!.dll
 	SET sourcex86WinmdPath=!sourcex86Path!\!projectNameForNuget!.winmd
 	SET sourcex86PdbPath=!sourcex86Path!\!projectNameForNuget!.pdb
@@ -475,13 +473,13 @@ IF !xamarinNuget! NEQ  1 (
 
 	SET sourcex86XmlPath=!sourcex86Path!\!projectNameForNuget!.xml
 
-	SET sourcex64Path=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\x64
+	SET sourcex64Path=!libSourceBasePath!\!BuildingProjectName!\Release\x64
 	SET sourcex64DllPath=!sourcex64Path!\!projectNameForNuget!.dll
 	SET sourcex64WinmdPath=!sourcex64Path!\!projectNameForNuget!.winmd
 	SET sourcex64PdbPath=!sourcex64Path!\!projectNameForNuget!.pdb
 	SET sourcex64PriPath=!sourcex64Path!\!projectNameForNuget!.pri
 
-	SET sourcexARMPath=!libSourceBasePath!\!BuildingProjectName!.UWP\Release\ARM
+	SET sourcexARMPath=!libSourceBasePath!\!BuildingProjectName!\Release\ARM
 	SET sourcexARMDllPath=!sourcexARMPath!\!projectNameForNuget!.dll
 	SET sourcexARMWinmdPath=!sourcexARMPath!\!projectNameForNuget!.winmd
 	SET sourcexARMPdbPath=!sourcexARMPath!\!projectNameForNuget!.pdb
@@ -564,8 +562,8 @@ IF !xamarinNuget! NEQ 1 (
 	CALL::copyFiles !sourcex86WinmdPath! !nugetLibUAPPath!
 	IF EXIST !sourcex86XmlPath! CALL::copyFiles !sourcex86XmlPath! !nugetLibUAPPath!
 	
-REM CALL::copyFiles !sourcexARMDllPath! !nugetRuntimesARMPath!
-REM CALL::copyFiles !sourcexARMPriPath! !nugetRuntimesARMPath!
+    CALL::copyFiles !sourcexARMDllPath! !nugetRuntimesARMPath!
+    CALL::copyFiles !sourcexARMPriPath! !nugetRuntimesARMPath!
 
 	CALL::copyFiles !sourcex64DllPath! !nugetRuntimesx64Path!
 	CALL::copyFiles !sourcex64PriPath! !nugetRuntimesx64Path!
