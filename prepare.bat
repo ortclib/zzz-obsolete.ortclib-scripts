@@ -26,14 +26,18 @@ SET ortcGnBuildPathDestination=webrtc\xplatform\webrtc\third_party\ortc\BUILD.gn
 
 SET idlGnBuildPath=webrtc\xplatform\templates\gn\idl_BUILD.gn
 SET idlGnBuildPathDestination=webrtc\xplatform\webrtc\third_party\idl\BUILD.gn
+SET pythonPipPath=C:\Python27\Scripts
+SET pywin32VersionFile=C:\Python27\Lib\site-packages\pywin32.version.txt
 
 ::downloads
 SET pythonVersion=2.7.9
 SET pythonDestinationPath=python-%pythonVersion%.msi
+SET pythonPipDestinationPath=get-pip.py
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
  
 ::urls
 SET pythonDownloadUrl=https://www.python.org/ftp/python/%pythonVersion%/python-%pythonVersion%.msi
+SET pythonPipUrl=https://bootstrap.pypa.io/get-pip.py
 SET binariesGitPath=https://github.com/ortclib/ortc-binaries.git
 
 ::helper flags
@@ -507,6 +511,27 @@ IF %ERRORLEVEL% EQU 1 (
     IF "!verFound!" GEQ "3.0" (
         CALL:error 1 "Please install python 2.7, and in the PATH place it in front of python !verFound!"
    )    
+)
+
+CALL:print %warning%  "Pip and pywin32 setup..."
+::echo %PATH%
+CALL bin\addPathToEnvPATH.bat %pythonPipPath% 
+::echo %PATH%
+
+WHERE pip > NUL 2>&1
+IF %ERRORLEVEL% EQU 1 (
+	CALL:print %debug%  "Installing Python Pip..."
+	CALL:download %pythonPipUrl% %pythonPipDestinationPath%
+    python %pythonPipDestinationPath%
+) ELSE (
+	CALL:print %trace%  "Pip is present."   
+)
+
+IF NOT EXIST %pywin32VersionFile% (
+	CALL:print %trace% "Installing pywin32..."
+	pip install pywin32
+) ELSE (
+	CALL:print %trace% "pywin32 already exists"
 )
 
 GOTO:EOF
