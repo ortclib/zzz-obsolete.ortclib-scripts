@@ -528,8 +528,16 @@ IF %ERRORLEVEL% EQU 1 (
 )
 
 IF NOT EXIST %pywin32VersionFile% (
-	CALL:print %trace% "Installing pywin32..."
+	CALL:print %trace% "Updating pip ..."
+    python.exe -m pip install --upgrade pip
+    IF !ERRORLEVEL! NEQ 0 (
+		CALL:error 1  "Unable to update Python pip tool."
+    )
+    CALL:print %trace% "Installing pywin32..."
 	pip install pywin32
+    IF !ERRORLEVEL! NEQ 0 (
+		CALL:error 1  "Unable to install pywin32 module."
+    )
 ) ELSE (
 	CALL:print %trace% "pywin32 already exists"
 )
