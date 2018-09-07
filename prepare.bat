@@ -558,6 +558,8 @@ IF NOT EXIST %pywin32VersionFile% (
 	CALL:print %trace% "pywin32 already exists"
 )
 
+IF EXIST get-pip.py DEL /f /q get-pip.py
+
 GOTO:EOF
 
 
