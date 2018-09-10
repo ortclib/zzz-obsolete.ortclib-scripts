@@ -609,7 +609,7 @@ PUSHD %~1
 IF EXIST .\%~2\NUL GOTO:alreadyexists
 IF NOT EXIST %~3\NUL CALL:error 1 "%folderStructureError:"=% %~3 does not exist!"
 
-CALL:print %trace% In path "%~1" creating symbolic link for "%~2" to "%~3"
+CALL:print %trace% "In path %~1 creating symbolic link for %~2 to %~3"
 
 IF %logLevel% GEQ %trace% (
 	MKLINK /J %~2 %~3

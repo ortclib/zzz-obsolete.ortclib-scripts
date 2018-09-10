@@ -466,10 +466,7 @@ IF %ERRORLEVEL% EQU 1 (
 )
 GOTO:EOF
 
-:pythonSetup
-WHERE python > NUL 2>&1
-IF %ERRORLEVEL% EQU 1 (
-	CALL:print %warning%  "NOTE: Installing Python and continuing build..."
+:pythonDownloadAndInstall
 	CALL:print %debug%  "Installing Python ..."
 	CALL:download %pythonDownloadUrl% %pythonDestinationPath%
 	IF !taskFailed!==1 (
@@ -497,9 +494,17 @@ IF %ERRORLEVEL% EQU 1 (
 	) else (
 		CALL:print %debug%  "Python is added to the path."
 	)
+GOTO:EOF
+	
+:pythonSetup
+WHERE python > NUL 2>&1
+IF %ERRORLEVEL% EQU 1 (
+	CALL:print %warning%  "NOTE: Installing Python and continuing build..."
+    CALL:pythonDownloadAndInstall
 ) ELSE (
 	CALL:print %trace%  "Python is present."
-	    
+	
+	:: check version that is installed
     python -V > NUL 2> tmpPyVerFile.txt
     set /p pyVer= < tmpPyVerFile.txt 
     del tmpPyVerFile.txt 
@@ -511,6 +516,17 @@ IF %ERRORLEVEL% EQU 1 (
     IF "!verFound!" GEQ "3.0" (
         CALL:error 1 "Please install python 2.7, and in the PATH place it in front of python !verFound!"
    )    
+    IF "!verFound!" LSS "2.7.9" (
+        :: rename old Python, random is used to prevent error on renaming
+	    IF EXIST C:\Python27\nul (
+		    REN C:\Python27 Python27_VERSION_!verFound!_RANDOM_SUFFIX_%RANDOM%
+		) 
+	    IF EXIST D:\Python27\nul (
+		    REN D:\Python27 Python27_VERSION_!verFound!_RANDOM_SUFFIX_%RANDOM%		
+		)
+        :: install Python 2.7.9
+	    CALL:pythonDownloadAndInstall
+   )      
 )
 
 CALL:print %warning%  "Pip and pywin32 setup..."
@@ -541,6 +557,8 @@ IF NOT EXIST %pywin32VersionFile% (
 ) ELSE (
 	CALL:print %trace% "pywin32 already exists"
 )
+
+IF EXIST get-pip.py DEL /f /q get-pip.py
 
 GOTO:EOF
 
