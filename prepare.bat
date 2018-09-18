@@ -472,7 +472,7 @@ GOTO:EOF
 	IF !taskFailed!==1 (
 		CALL:error 1  "Downloading python installer has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 	) ELSE (
-		START "Python install" /wait msiexec /i %pythonDestinationPath% /quiet
+		START "Python install" /wait msiexec /a %pythonDestinationPath% /quiet
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 1  "Python installation has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 		) ELSE (
