@@ -30,7 +30,7 @@ SET pythonPipPath=C:\Python27\Scripts
 SET pywin32VersionFile=C:\Python27\Lib\site-packages\pywin32.version.txt
 
 ::downloads
-SET pythonVersion=2.7.9
+SET pythonVersion=2.7.15
 SET pythonDestinationPath=python-%pythonVersion%.msi
 SET pythonPipDestinationPath=get-pip.py
 SET ortcBinariesDestinationPath=ortc\windows\projects\msvc\OrtcBinding\libOrtc.dylib
@@ -472,7 +472,7 @@ GOTO:EOF
 	IF !taskFailed!==1 (
 		CALL:error 1  "Downloading python installer has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 	) ELSE (
-		START "Python install" /wait msiexec /i %pythonDestinationPath% /quiet
+		START "Python install" /wait msiexec /a %pythonDestinationPath% /quiet
 		IF !ERRORLEVEL! NEQ 0 (
 			CALL:error 1  "Python installation has failed. Script execution will be terminated. Please, run script once more, if python doesn't get installed again, please do it manually."
 		) ELSE (
@@ -511,12 +511,17 @@ IF %ERRORLEVEL% EQU 1 (
     CALL:print %trace% "!pyVer!"
 
     for /f "tokens=2" %%a in ("!pyVer!") do (set verFound=%%a)
-    CALL:print %trace% "!verFound!"
+    CALL:print %trace% "Currently installed Python version: !verFound!"
 
     IF "!verFound!" GEQ "3.0" (
         CALL:error 1 "Please install python 2.7, and in the PATH place it in front of python !verFound!"
    )    
-    IF "!verFound!" LSS "2.7.9" (
+   
+	for /f "tokens=3 delims=." %%a in ("!verFound!") do (set /a ver27Found=%%a)
+	CALL:print %trace% "Currently installed Python 2.7 subversion: !ver27Found!"
+   
+    IF !ver27Found! LSS 15 (
+		CALL:print %trace% "Installing the latest Python 2.7 version"
         :: rename old Python, random is used to prevent error on renaming
 	    IF EXIST C:\Python27\nul (
 		    REN C:\Python27 Python27_VERSION_!verFound!_RANDOM_SUFFIX_%RANDOM%
@@ -524,7 +529,7 @@ IF %ERRORLEVEL% EQU 1 (
 	    IF EXIST D:\Python27\nul (
 		    REN D:\Python27 Python27_VERSION_!verFound!_RANDOM_SUFFIX_%RANDOM%		
 		)
-        :: install Python 2.7.9
+        :: install the latest Python 2.7 version
 	    CALL:pythonDownloadAndInstall
    )      
 )
